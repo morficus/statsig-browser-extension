@@ -30,14 +30,14 @@ The fork doesn't take automatic updates, and future sessions have a `CLAUDE.md` 
 
 ### F03-T2: Replace `CLAUDE.md`
 
-- **Status:** In progress
+- **Status:** Done (WL-039)
 - **Owner:** Claude
 - **Size:** S
 - **Depends on:** None
 - **Description:** Replace the Speckit stub. Include the build, test, lint, format, type-check, and e2e commands. Include the spec's hard rules: Console Key handling (SEC-001 to SEC-004), the single API module (SEC-005), no `eval` or remote code (SEC-006), the write-call allowlist (SEC-007), never touch other users' overrides (OVR-009), keep the page reader self-contained (§7 rule 3), and no new dependencies without need (§7 rule 4). Point to `planning/README.md` and `planning/WORKLOG.md`.
 - **Acceptance criteria:**
-  - [ ] Every command listed runs as written
-  - [ ] Each rule cites its REQ ID
+  - [x] Every command listed runs as written. `pnpm dev:chrome` needed a fix first (WL-039).
+  - [x] Each rule cites its REQ ID
 - **Verification:** Run each listed command once.
 - **Files likely touched:** `CLAUDE.md`
 

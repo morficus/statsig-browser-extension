@@ -297,3 +297,11 @@ Before the fix, "adds a second project, activates it and keeps its client keys" 
 The code review found one more gap. In "switching back to another project" and "removes a project", the final value is the same as the value from before the add, so a poll could pass on stale data. Each test now first waits until the add is in storage.
 
 **Risk, not fixed:** `e2e/error-handling.e2e.ts:105` and `e2e/login-flow.e2e.ts:42` read the mock's list of requests once, right after a click. No check shows the request has gone out by then. They have not been seen to fail. If they flake, use the same `expect.poll` pattern.
+
+### WL-039 · 2026-10-15 · Discovery · `pnpm dev:chrome` failed on a fresh checkout (F03-T2)
+
+**Tickets:** F03-T2
+
+The F03-T2 check "every command runs as written" found that `pnpm dev:chrome` stopped with `ENOENT: open '.dev-profile/chrome-out.log'`. chrome-launcher 1.2.0 opens its log file in the profile folder before it creates the folder (`dist/chrome-launcher.js:151` and `:167`). `web-ext.config.ts` sets `chromiumProfile: '.dev-profile'`, which is gitignored, so only machines that already had the folder could run dev. `web-ext.config.ts` now creates the folder when it loads. The dev browser also opened `https://cloud.qdrant.io`, which the upstream author left in. It now opens the staging Intake Site (`https://app.staging.talkiatry.com/assessment`, spec §3). After `rm -rf .dev-profile`, `pnpm dev:chrome` opens Chrome.
+
+The new `CLAUDE.md` gives the commands, the definition of done, the CI summary, and 10 hard rules with REQ IDs. Each rule was checked against the spec text. Each command in it was run once: all pass, including `pnpm test:e2e` (62 passed).
