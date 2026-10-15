@@ -4,7 +4,7 @@ import { defineConfig } from 'wxt'
 // Pins the CRX id so the extension origin (chrome-extension://<id>) stays stable across rebuilds.
 // Public half of the signing keypair — not a secret.
 const CRX_PUBLIC_KEY =
-  'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuEhfW2Y3y8I5UZJoO62oxQixOvkdZphdhHyjSfOo0LHI+G4feTt6mkY9b+GnZM2LzyWi/53213eFqiAxonYz64uvLomh+y9QgO6V9+4yVBnr1d16AICUe2UnQ71uKD1BBEoVbLVaZdYW4obML/mb9Txmv/jpK4QxWkCUWntRvKV7I5BrJaujhvX7RxtpLNyOEKXkkuWs3FWNjytWc/KAIZgsQvlXv766F1Gx+bNoTU97mxkUQWW0vPe+2FJLRPN7Vm8nP0GuWpWJ8zlxdXEtrmXiWKSB7LO6yxSsSDmZmD0Z1eQNhi92DkXpWmvNTyGMx+c4BEzC1DzWldvbYRLpYQIDAQAB'
+  'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApaZtQsLgIb4kK9d8LcrHeINf+TZawNvCt7U+bpk0rcoT7x4yd/YF9ESt/rqQzNGAMHXmkus26RfIdr1fSBu6/Ikw41L/gSTDMcS8sZiIz5V/E0iDVUUeDwFA7+B6trIeiS2M1eUMYgjUS9aHYf5qFSB8xpyzMX9ZdDlkPQes0A5TU85aPfFyshEE1fbP7/VfWQgHSr4r4amjMSLx7kY8eFly3QGG5cL+1zgub+dAOO/s08cQ166Wj0XOt+sTlV/XuPog1pdDn2DQUDrLgbPit3Xxejlst9gmceZUQqFr5JuzXVtcutCOWba+KEoY7gQSvZYR35tKuigzEZyH+SynYwIDAQAB'
 
 export default defineConfig({
   manifest: ({ browser }) => ({

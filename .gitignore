@@ -48,3 +48,6 @@ coverage
 
 # Agent scratch space (see .agents/skills/orchestrate)
 .agents/scratch/
+
+# Extension signing keys. The private key stays out of the repository (REQ-SET-006).
+*.pem

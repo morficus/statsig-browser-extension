@@ -203,3 +203,11 @@ Maurice asked to start F01 while F00-T2 to F00-T5 wait for the manual checks. F0
 **Private key (F01-T3).** The key pair is generated outside the repository, in the Claude session scratchpad. Maurice moves the private key to a password manager. `*.pem` is ignored.
 
 **How the work runs.** The three tasks run in parallel. T1 and T2 each run in their own git worktree, and T3 runs in the main tree. Each task edits a different part of `wxt.config.ts`, so the merges stay clean. Briefs: `.agents/plans/f01-t*.md`.
+
+### WL-021 · 2026-10-14 · Discovery · New Chrome signing key and extension ID (F01-T3)
+
+**Tickets:** F01-T3 · REQ-SET-006
+
+The new 2048-bit RSA key pair replaces the base key in `CRX_PUBLIC_KEY` (`wxt.config.ts`). The new extension ID is **`gaeiajloopaabgiminphfojiefoiggpc`**. It was computed from the public key, and Chromium loading `.output/chrome-mv3` (a Playwright script) reports the same ID. The e2e suite passes with the new key (62 tests).
+
+The private key (PKCS#8 PEM, mode 600) is outside the repository, at `/private/tmp/claude-501/-Users-maurice-Dev-Workspace-talkiatry-statsig-browser-extension/c22fe54b-4f5b-4e11-83e9-d7394987bb63/scratchpad/f01-signing-key/intake-experiment-testing.pem`. `/private/tmp` is cleared on reboot, so Maurice must move the key to a password manager. `*.pem` is in `.gitignore`. No `.pem` file is in the tree or in the git history.

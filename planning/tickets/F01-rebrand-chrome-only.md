@@ -43,14 +43,14 @@ The extension becomes "Intake Experiment Testing", built for Chrome only, with i
 
 ### F01-T3: Generate a new Chrome signing key
 
-- **Status:** In progress
+- **Status:** Done (see WL-021). Maurice still has to move the private key to a password manager.
 - **Owner:** Claude generates it, Maurice stores the private key
 - **Size:** S
 - **Depends on:** None
 - **Description:** Generate a new 2048-bit RSA key pair. Put the base64 public key in `CRX_PUBLIC_KEY` in `wxt.config.ts`. Hand the private key to Maurice outside the repository, and add `*.pem` to `.gitignore`. Record the new extension ID.
 - **Acceptance criteria:**
-  - [ ] `key` in the built manifest differs from the base key
-  - [ ] No private key in the git tree or history, and `*.pem` is ignored
-  - [ ] The new extension ID is in a `WORKLOG.md` entry
+  - [x] `key` in the built manifest differs from the base key
+  - [x] No private key in the git tree or history, and `*.pem` is ignored
+  - [x] The new extension ID is in a `WORKLOG.md` entry
 - **Verification:** Load `.output/chrome-mv3` unpacked and check that the ID matches the recorded one.
 - **Files likely touched:** `wxt.config.ts`, `.gitignore`

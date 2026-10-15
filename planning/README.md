@@ -38,7 +38,7 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 | Phase                            | Functionality                                                                  | Status      | Tasks |
 | -------------------------------- | ------------------------------------------------------------------------------ | ----------- | ----- |
 | 0: Pre-build checks              | [F00: Pre-build checks (spec §8.1)](tickets/F00-pre-build-checks.md)           | In progress | 1/5   |
-| 1: Setup & hardening             | [F01: Rebrand and Chrome-only](tickets/F01-rebrand-chrome-only.md)             | In progress | 0/3   |
+| 1: Setup & hardening             | [F01: Rebrand and Chrome-only](tickets/F01-rebrand-chrome-only.md)             | In progress | 1/3   |
 |                                  | [F02: Intake Site scoping](tickets/F02-intake-site-scoping.md)                 | Todo        | 0/4   |
 |                                  | [F03: Repository hygiene](tickets/F03-repo-hygiene.md)                         | Todo        | 0/3   |
 |                                  | [F04: Console API hardening](tickets/F04-console-api-hardening.md)             | Todo        | 0/5   |
