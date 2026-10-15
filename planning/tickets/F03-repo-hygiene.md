@@ -16,15 +16,15 @@ The fork doesn't take automatic updates, and future sessions have a `CLAUDE.md` 
 
 ### F03-T1: Remove automatic dependency updates
 
-- **Status:** In progress
+- **Status:** Done
 - **Owner:** Claude
 - **Size:** XS
 - **Depends on:** Q3 (Dependabot), resolved: remove it (WL-034)
 - **Description:** Delete `renovate.json`, and `.github/dependabot.yml` if Q3 says so (WL-012). Confirm `pnpm-lock.yaml` is committed and not git-ignored. Remove the `.agents/**` Renovate exclusion if anything else references it.
 - **Acceptance criteria:**
-  - [ ] `renovate.json` is gone
-  - [ ] Dependabot is handled as Q3 decides
-  - [ ] `git ls-files pnpm-lock.yaml` lists the lockfile
+  - [x] `renovate.json` is gone
+  - [x] Dependabot is handled as Q3 decides: `.github/dependabot.yml` is deleted, and its `.agents/**` exclusion went with it
+  - [x] `git ls-files pnpm-lock.yaml` lists the lockfile, and `git check-ignore` doesn't match it
 - **Verification:** `git status`; `git ls-files pnpm-lock.yaml`
 - **Files likely touched:** `renovate.json`, `.github/dependabot.yml`
 
