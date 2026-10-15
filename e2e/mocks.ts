@@ -63,7 +63,7 @@ export const seedLegacyApiKey = async (serviceWorker: Worker, apiKey = 'console-
  * real runtime.
  *
  * Patches `browser.runtime.sendMessage` (WXT polyfill). On Chromium the native
- * global is aliased onto `browser` first so Firefox and Chrome share this path.
+ * global is aliased onto `browser` first.
  *
  * Must be called before `page.goto(...)`.
  *

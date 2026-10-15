@@ -17,7 +17,7 @@ When this skill triggers at the start of a piece of work, don't spawn anything y
 
 ## Project facts every brief can rely on
 
-This is a WXT + React browser extension (Chrome/Firefox), pnpm, oxlint/oxfmt, Vitest, Playwright.
+This is a WXT + React browser extension (Chrome), pnpm, oxlint/oxfmt, Vitest, Playwright.
 
 Verification commands agents can be told to run:
 

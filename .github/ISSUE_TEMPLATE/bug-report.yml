@@ -41,7 +41,6 @@ body:
       description: Which browser are you using?
       options:
         - Chrome
-        - Firefox
         - Edge
         - Brave
         - Safari

@@ -24,9 +24,8 @@ Thank you for your interest in contributing to the Statsig Browser Extension! Th
 4.  **Start development server**:
     ```bash
     pnpm dev
-    # Or specific browser:
+    # Or target Chrome explicitly:
     pnpm dev:chrome
-    pnpm dev:firefox
     ```
 
 ## Code Standards
@@ -73,7 +72,7 @@ feat(auth)!: remove support for basic authentication
 ## Release Process
 
 The release process is fully automated using GitHub Actions and `semantic-release`.
-For detailed instructions on how the release process works and how to configure environment variables for publishing to browser stores, please refer to [docs/publishing.md](docs/publishing.md).
+For detailed instructions on how the release process works and how to configure environment variables for publishing to the Chrome Web Store, please refer to [docs/publishing.md](docs/publishing.md).
 
 ## Pull Request Process
 
@@ -96,7 +95,7 @@ advisories visible and review them again by **2026-11-13**:
 - `node-forge` 1.4.0: [GHSA-86w9-cpqp-85rv](https://github.com/advisories/GHSA-86w9-cpqp-85rv).
   It comes through `web-ext > @devicefarmer/adbkit`. The affected RSA verification
   belongs to adbkit's TCP USB server. The reviewed web-ext workflows use its ADB
-  client, not that server, and target Chrome and desktop Firefox. Reassess before
+  client, not that server, and target Chrome. Reassess before
   adding TCP USB server functionality or another node-forge caller.
 - `braces` 3.0.3: [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm).
   It comes through release tooling and micromatch. The reviewed release callers

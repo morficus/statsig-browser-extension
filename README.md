@@ -4,7 +4,6 @@
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=d0whc3r_statsig-browser-extension&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=d0whc3r_statsig-browser-extension)
 
 [![Chrome Web Store](https://img.shields.io/badge/Chrome-Web_Store-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white)](https://chromewebstore.google.com/detail/statsig-browser-extension/dcoabmhfndkoogomhielncgjbaomfkmh)
-[![Firefox Add-ons](https://img.shields.io/badge/Firefox-Add--ons-FF7139?style=for-the-badge&logo=firefox-browser&logoColor=white)](https://addons.mozilla.org/en-GB/firefox/addon/statsig-browser-extension/)
 
 Inspect and override Statsig feature gates, experiments, and dynamic configs from your browser toolbar — no code changes, no dashboard round-trips.
 
@@ -14,7 +13,7 @@ Useful when you need to see why a gate returns `false`, force an experiment grou
 
 ## Getting Started
 
-1. **Install** from the [Chrome Web Store](https://chromewebstore.google.com/detail/statsig-browser-extension/dcoabmhfndkoogomhielncgjbaomfkmh) or [Firefox Add-ons](https://addons.mozilla.org/en-GB/firefox/addon/statsig-browser-extension/).
+1. **Install** from the [Chrome Web Store](https://chromewebstore.google.com/detail/statsig-browser-extension/dcoabmhfndkoogomhielncgjbaomfkmh).
 2. **Open a page** running the Statsig SDK. The extension detects it automatically.
 3. **Click the Statsig icon** in your toolbar.
 4. **Add your Console API Key** in Settings (write access needed for overrides).

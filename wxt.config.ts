@@ -7,7 +7,7 @@ const CRX_PUBLIC_KEY =
   'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApaZtQsLgIb4kK9d8LcrHeINf+TZawNvCt7U+bpk0rcoT7x4yd/YF9ESt/rqQzNGAMHXmkus26RfIdr1fSBu6/Ikw41L/gSTDMcS8sZiIz5V/E0iDVUUeDwFA7+B6trIeiS2M1eUMYgjUS9aHYf5qFSB8xpyzMX9ZdDlkPQes0A5TU85aPfFyshEE1fbP7/VfWQgHSr4r4amjMSLx7kY8eFly3QGG5cL+1zgub+dAOO/s08cQ166Wj0XOt+sTlV/XuPog1pdDn2DQUDrLgbPit3Xxejlst9gmceZUQqFr5JuzXVtcutCOWba+KEoY7gQSvZYR35tKuigzEZyH+SynYwIDAQAB'
 
 export default defineConfig({
-  manifest: ({ browser }) => ({
+  manifest: {
     action: {
       default_icon: {
         '128': 'icon/128.png',
@@ -16,14 +16,6 @@ export default defineConfig({
         '48': 'icon/48.png',
       },
       default_title: 'Intake Experiment Testing',
-    },
-    browser_specific_settings: {
-      gecko: {
-        data_collection_permissions: {
-          required: ['none'],
-        },
-        id: 'statsig-browser-extension@statsig.com',
-      },
     },
     description:
       'Spot-test Statsig experiments on the Intake Site: see your groups, force yourself into a group, and take screenshots.',
@@ -35,10 +27,9 @@ export default defineConfig({
       '48': 'icon/48.png',
       '96': 'icon/96.png',
     },
-    // Chromium-only: AMO rejects `key` as an unknown manifest field.
-    ...(browser === 'firefox' ? {} : { key: CRX_PUBLIC_KEY }),
+    key: CRX_PUBLIC_KEY,
     name: 'Intake Experiment Testing',
     permissions: ['storage', 'scripting', 'activeTab'],
-  }),
+  },
   modules: ['@wxt-dev/module-react'],
 })

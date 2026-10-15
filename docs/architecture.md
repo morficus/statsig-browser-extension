@@ -71,7 +71,7 @@ user overrides before removing a gate. See [Statsig evaluation semantics](https:
 
 ## Build Output
 
-`pnpm build` and `pnpm zip:all` write artifacts to `.output/`.
+`pnpm build` and `pnpm zip:chrome` write artifacts to `.output/`.
 
 ## Related Docs
 

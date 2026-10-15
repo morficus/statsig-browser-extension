@@ -1,13 +1,13 @@
 # Publishing Guide
 
-This project uses `semantic-release` to automatically publish new versions of the extension to the [Chrome Web Store](https://chromewebstore.google.com/detail/statsig-browser-extension/dcoabmhfndkoogomhielncgjbaomfkmh) and [Firefox Add-ons (AMO)](https://addons.mozilla.org/en-GB/firefox/addon/statsig-browser-extension/).
+This project uses `semantic-release` to automatically publish new versions of the extension to the [Chrome Web Store](https://chromewebstore.google.com/detail/statsig-browser-extension/dcoabmhfndkoogomhielncgjbaomfkmh).
 
 ## Prerequisites
 
 Before setting up the automation, ensure you have:
 
-1.  Created developer accounts for all stores.
-2.  Uploaded the initial version of the extension manually to each store at least once. This is required to generate the necessary IDs and to pass initial review.
+1.  Created a Chrome Web Store developer account.
+2.  Uploaded the initial version of the extension manually to the Chrome Web Store at least once. This is required to generate the necessary IDs and to pass initial review.
 
 ## Environment Variables
 
@@ -15,7 +15,7 @@ The publishing workflow uses the [PlasmoHQ/bpp](https://github.com/PlasmoHQ/bpp)
 
 ### `SUBMIT_KEYS` Secret
 
-You must create a single repository secret named `SUBMIT_KEYS` containing a JSON object with the credentials for all stores you want to publish to.
+You must create a single repository secret named `SUBMIT_KEYS` containing a JSON object with your Chrome Web Store credentials.
 
 **Format:**
 
@@ -23,18 +23,11 @@ You must create a single repository secret named `SUBMIT_KEYS` containing a JSON
 {
   "$schema": "https://github.com/PlasmoHQ/bpp/raw/main/keys.schema.json",
   "chrome": {
-    "zip": ".output/statsig-browser-extension-{version}-chrome.zip", // Pattern for the built zip
+    "zip": ".output/intake-experiment-testing-{version}-chrome.zip", // Pattern for the built zip
     "extId": "dcoabmhfndkoogomhielncgjbaomfkmh",
     "clientId": "your-client-id",
     "clientSecret": "your-client-secret",
     "refreshToken": "your-refresh-token"
-  },
-  "firefox": {
-    "file": ".output/statsig-browser-extension-{version}-firefox.zip", // Pattern for the built output
-    "sourceFile": ".output/statsig-browser-extension-{version}-sources.zip", // Pattern for source code
-    "extId": "your-extension-id",
-    "apiKey": "your-jwt-issuer",
-    "apiSecret": "your-jwt-secret"
   }
 }
 ```
@@ -49,12 +42,6 @@ You must create a single repository secret named `SUBMIT_KEYS` containing a JSON
     - Enable **Chrome Web Store API**.
     - Create OAuth 2.0 Client ID (Desktop app).
     - Use credentials to generate a refresh token (e.g., via [chrome-webstore-upload-cli](https://github.com/DrewML/chrome-webstore-upload-cli)).
-
-#### Firefox Add-ons (AMO)
-
-1.  **extId**: The UUID of your extension (e.g., `{uuid}`).
-2.  **apiKey**, **apiSecret**:
-    - Go to [Mozilla Add-on Developer Hub](https://addons.mozilla.org/en-US/developers/) -> Settings -> Manage API Keys.
 
 ### GitHub Token
 
@@ -79,8 +66,8 @@ The release process is fully automated via GitHub Actions on the `main` branch.
 4.  **Submit Workflow (`submit.yml`)**:
     - Triggered automatically by the `release` (published) event.
     - Can also be triggered manually via "Run workflow" (workflow_dispatch).
-    - Builds the extension for Chrome and Firefox using `wxt` (`pnpm zip:chrome && pnpm zip:firefox`).
-    - Publishes the generated `.zip` artifacts to Chrome Web Store and Firefox AMO using `PlasmoHQ/bpp`.
+    - Builds the extension for Chrome using `wxt` (`pnpm zip:chrome`).
+    - Publishes the generated `.zip` artifacts to the Chrome Web Store using `PlasmoHQ/bpp`.
 
 ## Manual Trigger (Emergency)
 
@@ -95,6 +82,6 @@ If the automatic submission fails or you need to retry without creating a new ve
 
 ### Common Issues
 
-1.  **"No extension artifacts found"**: The workflow uses `pnpm zip:all` to generate artifacts in `.output/`. Ensure this command works locally.
-2.  **Authentication Errors**: Double-check your `SUBMIT_KEYS` secret in GitHub. Ensure tokens haven't expired (especially for Chrome, though the refresh token should handle it).
+1.  **"No extension artifacts found"**: The workflow uses `pnpm zip:chrome` to generate artifacts in `.output/`. Ensure this command works locally.
+2.  **Authentication Errors**: Double-check your `SUBMIT_KEYS` secret in GitHub. Ensure tokens haven't expired (the refresh token should handle it).
 3.  **Version Conflicts**: If the version in `package.json` (managed by semantic-release) conflicts with a version already on the store (e.g., if you manually uploaded a version with the same number), the publish will fail. Always let semantic-release handle versioning.

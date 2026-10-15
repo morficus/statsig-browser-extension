@@ -16,7 +16,6 @@
 <!-- Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. -->
 
 - [ ] Manual testing (Chrome)
-- [ ] Manual testing (Firefox)
 - [ ] Manual testing (Edge)
 - [ ] Unit tests
 

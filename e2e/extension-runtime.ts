@@ -3,7 +3,7 @@
  * closures). Each function below is self-contained on purpose.
  *
  * WXT app code uses `import { browser } from 'wxt/browser'`. Chromium's native
- * global is still `chrome`; Firefox's is `browser`. These helpers alias once
+ * global is `chrome`, not `browser`. These helpers alias once
  * and then only call `browser`.
  */
 
