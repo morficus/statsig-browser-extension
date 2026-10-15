@@ -2,7 +2,7 @@
 
 | Field      | Value                                |
 | ---------- | ------------------------------------ |
-| Status     | Todo                                 |
+| Status     | In progress                          |
 | Phase      | 1: Setup & hardening                 |
 | Spec       | REQ-SET-001 to REQ-SET-006 · T-SET-1 |
 | Depends on | Phase 0 checkpoint (see README Q2)   |
@@ -16,7 +16,7 @@ The extension becomes "Intake Experiment Testing", built for Chrome only, with i
 
 ### F01-T1: Rename the product
 
-- **Status:** Todo
+- **Status:** In progress
 - **Owner:** Claude
 - **Size:** M
 - **Depends on:** None
@@ -30,7 +30,7 @@ The extension becomes "Intake Experiment Testing", built for Chrome only, with i
 
 ### F01-T2: Remove the Firefox targets
 
-- **Status:** Todo
+- **Status:** In progress
 - **Owner:** Claude
 - **Size:** M
 - **Depends on:** None
@@ -43,7 +43,7 @@ The extension becomes "Intake Experiment Testing", built for Chrome only, with i
 
 ### F01-T3: Generate a new Chrome signing key
 
-- **Status:** Todo
+- **Status:** In progress
 - **Owner:** Claude generates it, Maurice stores the private key
 - **Size:** S
 - **Depends on:** None

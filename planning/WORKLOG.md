@@ -177,3 +177,29 @@ The documented `401` message is `"This endpoint only accepts an active CONSOLE k
 **Tickets:** F04-T1
 
 The Console API overview says to send `STATSIG-API-VERSION: 20240601`, and that it "becomes required in the future". The base code never sends it. Add it in the single API module (F04-T1), so the change sits in one place (REQ-SEC-005).
+
+### WL-019 · 2026-10-14 · Decision · F01 starts before the phase 0 checkpoint
+
+**Tickets:** F01, Q2
+
+Maurice asked to start F01 while F00-T2 to F00-T5 wait for the manual checks. F01 (rename, Chrome only, new signing key) uses no phase 0 result, so starting it early puts nothing at risk. Spec §11 orders the phases; this is a deliberate exception for F01 only. Q2 stays open for F02 to F04.
+
+### WL-020 · 2026-10-14 · Decision · F01 scope, copy, and boundaries
+
+**Tickets:** F01-T1, F01-T2, F01-T3, F03-T3, F12-T1 · REQ-SET-003 to REQ-SET-006
+
+**Name and copy (F01-T1).**
+
+- The manifest `name` and `action.default_title`, the popup `<title>`, and the header use "Intake Experiment Testing". The `package.json` name is `intake-experiment-testing`.
+- The manifest and `package.json` description is "Spot-test Statsig experiments on the Intake Site: see your groups, force yourself into a group, and take screenshots." It is 117 characters, under Chrome's 132 limit.
+- `keywords` don't change. They name the service and the category, not the product.
+- The header's Statsig logo becomes a text wordmark, "Intake Experiment Testing". The version badge stays. A Statsig logo as the brand makes the extension look like a Statsig product (REQ-SET-004).
+- The `[Statsig Extension]` log prefix becomes `[Intake Experiment Testing]`.
+
+**Firefox removal (F01-T2).** This removes Firefox from the build, the scripts, `.releaserc.json`, and the Firefox steps in `submit.yml`. The workflow itself stays until Q6 decides it (F03-T3). In `README.md`, `CONTRIBUTING.md`, and the GitHub templates, only the Firefox content goes. The rebrand of those docs is F12-T1. `web/` is out of scope (F03-T3). The package rename changes the WXT zip file names, so explicit zip names in release docs change with it.
+
+**Not in F01.** The `homepage`, `bugs`, and `repository` URLs in `package.json` still point to the upstream repository. F03-T3 can fix them along with the CI review.
+
+**Private key (F01-T3).** The key pair is generated outside the repository, in the Claude session scratchpad. Maurice moves the private key to a password manager. `*.pem` is ignored.
+
+**How the work runs.** The three tasks run in parallel. T1 and T2 each run in their own git worktree, and T3 runs in the main tree. Each task edits a different part of `wxt.config.ts`, so the merges stay clean. Briefs: `.agents/plans/f01-t*.md`.
