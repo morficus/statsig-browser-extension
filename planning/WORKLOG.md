@@ -244,3 +244,29 @@ Left for F03-T3, because these aren't about Firefox:
 **Tickets:** F03-T2 · corrects WL-024 item 1
 
 Maurice installed pnpm 12. `pnpm` now resolves through proto (`~/.proto/shims/pnpm`) to 12.11.2 and runs without a shim, and `pnpm type-check` passes. Item 1 of WL-024 no longer applies. Item 2 (agent worktrees leaking into lint and tests) still stands.
+
+### WL-033 · 2026-10-15 · Decision · F03 starts before the phase 0 checkpoint
+
+**Tickets:** F03, Q2
+
+Maurice asked to start F03 while F00-T2 to F00-T5 wait for the manual checks. F03 (no automatic updates, `CLAUDE.md`, CI, the flaky e2e test, and the worktree leak) uses no phase 0 result, so starting it early puts nothing at risk. As with F01 (WL-019), this exception covers F03 only. Q2 stays open for F02 and F04.
+
+### WL-034 · 2026-10-15 · Decision · Q3: remove Dependabot
+
+**Tickets:** F03-T1 · Q3 · REQ-SET-011 · resolves WL-012
+
+Remove `.github/dependabot.yml` along with `renovate.json`. Spec §9 says the fork takes no automatic updates, and Dependabot does the same job as Renovate. Dependabot security alerts are a repository setting, not this file, so this change doesn't affect them.
+
+### WL-035 · 2026-10-15 · Decision · Q6: CI keeps only the checks; publishing and the `web/` site go
+
+**Tickets:** F03-T3 · Q6 · spec §2.1, §2.2
+
+The fork (`morficus/statsig-browser-extension`) is public, and Actions are enabled on it. Testers load the extension unpacked (§2.1), and there is no store listing (§2.2). Maurice agreed to these changes:
+
+- **`build.yml`: keep and adapt.** It runs on pull requests, on pushes to `main`, and on manual dispatch. It adds `pnpm type-check` and `pnpm format:check`, so CI runs the same checks as the definition of done. It drops the Codecov upload and the coverage flag. It keeps the Chrome zip artifact and the e2e job. Its token gets `contents: read` only.
+- **`release.yml`, `.releaserc.json`, and the semantic-release dev dependencies: remove.** On every push to `main`, semantic-release pushed a version commit and a tag, and published a public GitHub release. Version bumps are now manual edits to `package.json`.
+- **`submit.yml`: remove.** It publishes to the Chrome Web Store, which is out of scope. It ran on every `v*` tag and needed the `SUBMIT_KEYS` secret, which the fork doesn't have.
+- **`pages.yml` and `web/`: remove.** The site is the Statsig-branded landing page and privacy policy for the store listing. GitHub Pages is off on the fork.
+- **Codecov, SonarCloud (`sonar-project.properties`, `.sonarcloud.properties`), and `.github/release-drafter.yml`: remove.** Codecov and SonarCloud point at the upstream owner's accounts. No workflow uses release-drafter.
+- **Docs:** delete `docs/publishing.md`, and remove the badges and links for the removed services from `README.md`, `CONTRIBUTING.md`, and `docs/architecture.md`. F12-T1 still owns the README rewrite, including its install steps.
+- **`new-feature-spec.md`:** `oxfmt` pads its tables. That is whitespace only, and it lets the new `format:check` step pass.

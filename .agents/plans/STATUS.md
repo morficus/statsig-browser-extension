@@ -8,6 +8,10 @@ Planning of record lives in `planning/` (board, tickets, WORKLOG). This list tra
 
 ## Agreed
 
+- f03-t1-t3-ci — F03-T1 + F03-T3 no automatic updates, CI keeps only the checks (WL-034, WL-035)
+- f03-t2-claude-md — F03-T2 replace `CLAUDE.md` (phase 1 draft, phase 2 after the others land)
+- f03-t4-flaky-e2e — F03-T4 fix the flaky e2e test (WL-023), own worktree `f03-t4-e2e`
+- f03-t5-worktree-ignore — F03-T5 ignore `.claude/worktrees/` in git, lint, format, tests (WL-024)
 
 ## Done
 
