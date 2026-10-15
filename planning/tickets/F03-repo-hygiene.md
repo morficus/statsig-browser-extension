@@ -69,13 +69,13 @@ The fork doesn't take automatic updates, and future sessions have a `CLAUDE.md` 
 
 ### F03-T5: Keep agent worktrees out of git, lint, format, and tests
 
-- **Status:** In progress
+- **Status:** Done (WL-036)
 - **Owner:** Claude
 - **Size:** XS
 - **Depends on:** None
 - **Description:** Claude Code agent worktrees live in `.claude/worktrees/` inside the repo. That folder isn't ignored, so lint and vitest runs in the main checkout pick up the copies in the worktrees and fail (WL-024 item 2). Ignore the folder in git, and make vitest, oxlint, oxfmt, knip, and tsc skip it.
 - **Acceptance criteria:**
-  - [ ] `git check-ignore .claude/worktrees/x` matches
-  - [ ] A planted file under `.claude/worktrees/` with a lint error, a format error, and a failing test is skipped by `pnpm lint`, `pnpm format:check`, `pnpm vitest run`, `pnpm knip`, and `pnpm type-check`
+  - [x] `git check-ignore .claude/worktrees/x` matches
+  - [x] A planted file under `.claude/worktrees/` with a lint error, a format error, and a failing test is skipped by `pnpm lint`, `pnpm format:check`, `pnpm vitest run`, `pnpm knip`, and `pnpm type-check`
 - **Verification:** Plant the file, run the five commands, delete the file.
 - **Files likely touched:** `.gitignore`, `vitest.config.ts`

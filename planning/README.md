@@ -40,7 +40,7 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 | 0: Pre-build checks              | [F00: Pre-build checks (spec §8.1)](tickets/F00-pre-build-checks.md)           | In progress | 1/5   |
 | 1: Setup & hardening             | [F01: Rebrand and Chrome-only](tickets/F01-rebrand-chrome-only.md)             | Done        | 3/3   |
 |                                  | [F02: Intake Site scoping](tickets/F02-intake-site-scoping.md)                 | Todo        | 0/4   |
-|                                  | [F03: Repository hygiene](tickets/F03-repo-hygiene.md)                         | In progress | 0/5   |
+|                                  | [F03: Repository hygiene](tickets/F03-repo-hygiene.md)                         | In progress | 1/5   |
 |                                  | [F04: Console API hardening](tickets/F04-console-api-hardening.md)             | Todo        | 0/5   |
 | 2: Job 2 (force me into a group) | [F05: Stable ID and environment detection](tickets/F05-stable-id-detection.md) | Todo        | 0/2   |
 |                                  | [F06: Override engine](tickets/F06-override-engine.md)                         | Todo        | 0/5   |

@@ -270,3 +270,9 @@ The fork (`morficus/statsig-browser-extension`) is public, and Actions are enabl
 - **Codecov, SonarCloud (`sonar-project.properties`, `.sonarcloud.properties`), and `.github/release-drafter.yml`: remove.** Codecov and SonarCloud point at the upstream owner's accounts. No workflow uses release-drafter.
 - **Docs:** delete `docs/publishing.md`, and remove the badges and links for the removed services from `README.md`, `CONTRIBUTING.md`, and `docs/architecture.md`. F12-T1 still owns the README rewrite, including its install steps.
 - **`new-feature-spec.md`:** `oxfmt` pads its tables. That is whitespace only, and it lets the new `format:check` step pass.
+
+### WL-036 · 2026-10-15 · Resolved · Only vitest picked up the agent worktrees (F03-T5)
+
+**Tickets:** F03-T5 · corrects WL-024 item 2
+
+A test file planted in `.claude/worktrees/zz-plant/` held a failing test, a lint error, a type error, and bad formatting. Only `pnpm vitest run` reported it. `oxlint.config.ts` already ignores `.claude`, and oxfmt, knip, and tsc skipped the plant. So WL-024 item 2 was right about vitest and wrong about lint. F03-T5 adds `.claude/worktrees/` to `.gitignore`, and adds `.claude/**` to the vitest `test.exclude` and `coverage.exclude` lists. With the plant in place, all five commands pass. `.claude/skills` is a symlink, and it stays tracked.
