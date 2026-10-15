@@ -8,6 +8,10 @@ Planning of record lives in `planning/` (board, tickets, WORKLOG). This list tra
 
 ## Agreed
 
+- f04-t1-t2-api-module — F04-T1 + T2 API module, host and write allowlists — agent f04-api
+- f04-t4-audit — F04-T4 key handling, remote code, telemetry audit — agent f04-audit
+- f04-t5-t3-keys — F04-T5 key guidance + F04-T3 key type per project and write gating — agent f04-keys
+
 
 ## Done
 

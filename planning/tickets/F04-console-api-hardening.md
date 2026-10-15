@@ -16,7 +16,7 @@ The Console Key can only reach `statsigapi.net`, only the allowed write calls ca
 
 ### F04-T1: One API module with a host allowlist
 
-- **Status:** Todo
+- **Status:** In progress
 - **Owner:** Claude
 - **Size:** M
 - **Depends on:** None
@@ -49,7 +49,7 @@ The Console Key can only reach `statsigapi.net`, only the allowed write calls ca
 
 ### F04-T3: Make read-key mode work, and disable writes with a reason
 
-- **Status:** Todo
+- **Status:** In progress
 - **Owner:** Claude
 - **Size:** M
 - **Depends on:** Q7 (resolved: the Tester picks the type per project, WL-026)
@@ -63,7 +63,7 @@ The Console Key can only reach `statsigapi.net`, only the allowed write calls ca
 
 ### F04-T4: Audit key handling, remote code, and telemetry
 
-- **Status:** Todo
+- **Status:** In progress
 - **Owner:** Claude
 - **Size:** S
 - **Depends on:** None
@@ -77,7 +77,7 @@ The Console Key can only reach `statsigapi.net`, only the allowed write calls ca
 
 ### F04-T5: Personal Console Key guidance in the UI
 
-- **Status:** Todo
+- **Status:** In progress
 - **Owner:** Claude
 - **Size:** XS
 - **Depends on:** None
