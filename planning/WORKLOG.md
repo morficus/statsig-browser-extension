@@ -106,3 +106,74 @@ A grep for `poster`, `.post(`, `.delete(`, `.patch(`, and `.put(` finds write ca
 **Tickets:** F11-T1
 
 REQ-SET-010 allows only `storage`, `scripting`, `activeTab`, and the optional `debugger`. There's no `downloads` permission, so the background script can't save files by itself. A popup closes when it loses focus, and a three-preset full-page capture takes several seconds, so a capture driven by the popup may die halfway. F11-T1 must pick the design (for example, capture in the background and save from an extension page) before any capture code is written.
+
+### WL-016 · 2026-10-14 · Discovery · Console API contract for overrides, layers, and experiments (F00-T1)
+
+**Tickets:** F00-T1, F00-T3, F04-T2, F06, F07-T1, F08, F10-T2 · OPEN-004 · REQ-OVR-001, REQ-OVR-008, REQ-OVR-009, REQ-OVR-010, REQ-OVR-014
+
+**Sources:** the API reference pages linked below and the official OpenAPI spec, `https://api.statsig.com/openapi/20240601.json` (version `20240601`, the only one). The docs don't state replace-or-add behavior in words. Where it says "suggests" below, the evidence is the endpoint name and the example payload. F00-T3 must confirm those points.
+
+**Experiment overrides.** Path `id` is the experiment name.
+
+| Call                                                                                                                                                   | Body or query                                       | Behavior                                                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`GET /experiments/{id}/overrides`](https://docs.statsig.com/api-reference/experiments/get-experiment-overrides)                                       | none                                                | Returns `{ overrides[], userIDOverrides[] }` under `data`.                                                                                                                                                                                                 |
+| [`POST /experiments/{id}/overrides`](https://docs.statsig.com/api-reference/experiments/update-experiment-overrides) "Update"                          | `{ overrides[], userIDOverrides[] }`, both required | Suggests **replace** (example IDs are `updated_control_id_list`). The base code uses this (WL-003). **Don't use for forcing.**                                                                                                                             |
+| [`PATCH /experiments/{id}/overrides`](https://docs.statsig.com/api-reference/experiments/partially-update-experiment-overrides) "Partially Update"     | same shape, both arrays required                    | Suggests **add** (example ID `newly_added_id`). Proposed call for forcing. Send `overrides: []`.                                                                                                                                                           |
+| [`DELETE /experiments/{id}/overrides`](https://docs.statsig.com/api-reference/experiments/delete-experiment-overrides)                                 | **no request body in the docs or OpenAPI**          | Undocumented. The base code sends a body anyway (WL-004). **Don't use.**                                                                                                                                                                                   |
+| [`DELETE /experiments/{id}/overrides/userID/{userID}`](https://docs.statsig.com/api-reference/experiments/delete-a-single-experiment-user-id-override) | query `groupID`*, `unitType`, `environment`         | **Documented:** removes one ID from one bucket. **Idempotent** (200 even if the ID isn't there). Other buckets stay. Returns the full override set. Leaving out `environment` targets the all-environments bucket, so pass the exact environment we wrote. |
+
+- `userIDOverrides[]` items: `groupID`_, `ids[]`_, `environment` (nullable), `unitType` (nullable). **`groupID` is the group _name_** ("Control", "Test"; the single delete calls it "the experiment group name").
+- Conditional overrides: the request body uses `id`, but the GET example uses `name`. The base `ExperimentOverride` type uses `name`. This doesn't matter as long as we always send `overrides: []`.
+
+**Layer overrides.** Path `id` is the layer name. The shape differs from experiments: `groupName`, `idType`, `experimentName`.
+
+| Call                                                                                                                                    | Body or query                                                        | Behavior                                                               |
+| --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| [`GET /layers/{id}/overrides`](https://docs.statsig.com/api-reference/layers/get-layer-overrides)                                       | none                                                                 | Returns `{ conditionalOverrides[], idOverrides[] }`.                   |
+| [`POST /layers/{id}/overrides`](https://docs.statsig.com/api-reference/layers/update-layer-overrides) "Update"                          | `{ conditionalOverrides[], idOverrides[] }`                          | Suggests replace. **Don't use.**                                       |
+| [`PATCH /layers/{id}/overrides`](https://docs.statsig.com/api-reference/layers/add-layer-overrides) "Add Layer Overrides"               | `{ op: "add", conditionalOverrides[], idOverrides[] }`, all required | Proposed call for forcing in a layer. Send `conditionalOverrides: []`. |
+| [`DELETE /layers/{id}/overrides`](https://docs.statsig.com/api-reference/layers/delete-layer-overrides)                                 | no documented body                                                   | **Don't use.**                                                         |
+| [`DELETE /layers/{id}/overrides/userID/{userID}`](https://docs.statsig.com/api-reference/layers/delete-a-single-layer-user-id-override) | query `groupName`_, `experimentName`_, `idType`, `environment`       | **Documented:** idempotent single-ID removal from one bucket.          |
+
+- `idOverrides[]` items: `groupName`_, `ids[]`_, `idType`, `environment`, `experimentName` (all nullable).
+
+**Experiments** ([get](https://docs.statsig.com/api-reference/experiments/get-experiment), [list](https://docs.statsig.com/api-reference/experiments/list-experiments)):
+
+- **`layerID`** (nullable) is the experiment's layer (closes the question in WL-007). F00-T3 should confirm it works as the layer path `id`.
+- `status` is one of `active`, `setup`, `decision_made`, `abandoned`, `archived`, `experiment_stopped`, `assignment_stopped`. **Not started = `setup`. Archived = `archived`.** Proposed: "running" (REQ-ASG-008) means `active`.
+- `groups[]` has `name` and a nullable `id`.
+- The list endpoint accepts `status` (a string or an array), `fields` (sparse fieldset, e.g. `id,name,status,groups,layerID,idType`), `ids` (up to 100), `limit` (default 10), and `page`. The docs don't say whether archived experiments are in the default list, so filter them out on our side too.
+
+**Rate limits** ([Console API overview](https://docs.statsig.com/console-api/introduction)):
+
+- Mutations (POST, PATCH, PUT, DELETE) share a quota of about 1,800 _attempts_ per 15 minutes per project, across all keys. There's also burst protection.
+- Over either limit, the API returns `429`, and rejected attempts count toward the quota. Back off with jitter and keep retries few.
+- So Clear all (F08-T2) must run one call at a time, with no immediate retries.
+
+**Errors.** The OpenAPI spec lists only `200`/`401`/`404` (and `400` for the single deletes, when the required query is missing). `403` isn't documented per endpoint, and `429` appears only in the overview. F00-T5 should record the real `403`.
+
+**What this means:**
+
+1. **Force (REQ-OVR-006, REQ-OVR-010).**
+   - Find the Tester's ID in other groups from a GET.
+   - Remove it there with the single-ID DELETE.
+   - Add it with PATCH: a body holding only `{ groupID, ids: [stableId], unitType: "stableID", environment }`.
+   - Removing first means a failure leaves the Tester in no group, never in two. Decide in F06-T1.
+2. **Clear (REQ-OVR-014).** Use only the single-ID DELETE, which is safe for REQ-OVR-009 by contract. The record must store the exact group name, environment, and ID type.
+3. **Write allowlist (F04-T2).**
+   - Ours: `PATCH /experiments/{id}/overrides`, `DELETE /experiments/{id}/overrides/userID/{userID}`, `PATCH /layers/{id}/overrides`, `DELETE /layers/{id}/overrides/userID/{userID}`.
+   - Plus the base gate calls (REQ-GAT-001).
+   - Plus the base experiment-modal calls (POST and bulk DELETE), depending on Q4.
+
+### WL-017 · 2026-10-14 · Risk · The 401 response body may echo the Console Key
+
+**Tickets:** F04-T4, F06-T5, F00-T5 · REQ-SEC-003, REQ-SEC-004
+
+The documented `401` message is `"This endpoint only accepts an active CONSOLE key, but an invalid key was sent. Key: console-xxxXXXxxxXXXxxx"`. If the real API puts the full key there, any code that shows or logs the raw error body leaks it. `handleApiError` already maps 401 to a fixed message (`src/lib/utils.ts:15-19`). But F04-T4 must check that no other path (wretch `error.message`, `console.*`, the background error) passes the raw body through. F00-T5 should record what a real 401 says. The base mapper also doesn't handle `429` or network errors (F06-T5).
+
+### WL-018 · 2026-10-14 · Discovery · The `STATSIG-API-VERSION` header is optional for now, but will become required
+
+**Tickets:** F04-T1
+
+The Console API overview says to send `STATSIG-API-VERSION: 20240601`, and that it "becomes required in the future". The base code never sends it. Add it in the single API module (F04-T1), so the change sits in one place (REQ-SEC-005).

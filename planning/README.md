@@ -35,21 +35,21 @@ Work tracking for the changes in [`new-feature-spec.md`](../new-feature-spec.md)
 
 Delivery order follows spec §11. Each phase must pass its checkpoint before the next one starts.
 
-| Phase                            | Functionality                                                                  | Status | Tasks |
-| -------------------------------- | ------------------------------------------------------------------------------ | ------ | ----- |
-| 0: Pre-build checks              | [F00: Pre-build checks (spec §8.1)](tickets/F00-pre-build-checks.md)           | Todo   | 0/5   |
-| 1: Setup & hardening             | [F01: Rebrand and Chrome-only](tickets/F01-rebrand-chrome-only.md)             | Todo   | 0/3   |
-|                                  | [F02: Intake Site scoping](tickets/F02-intake-site-scoping.md)                 | Todo   | 0/4   |
-|                                  | [F03: Repository hygiene](tickets/F03-repo-hygiene.md)                         | Todo   | 0/3   |
-|                                  | [F04: Console API hardening](tickets/F04-console-api-hardening.md)             | Todo   | 0/5   |
-| 2: Job 2 (force me into a group) | [F05: Stable ID and environment detection](tickets/F05-stable-id-detection.md) | Todo   | 0/2   |
-|                                  | [F06: Override engine](tickets/F06-override-engine.md)                         | Todo   | 0/5   |
-|                                  | [F07: "Force me into this group" UI](tickets/F07-force-me-ui.md)               | Todo   | 0/4   |
-|                                  | [F08: Active overrides and badge](tickets/F08-active-overrides.md)             | Todo   | 0/4   |
-| 3: Job 1 (see my group)          | [F09: SDK values reader](tickets/F09-sdk-values-reader.md)                     | Todo   | 0/4   |
-|                                  | [F10: "My groups" UI](tickets/F10-my-groups-ui.md)                             | Todo   | 0/4   |
-| 4: Job 3 (screenshots)           | [F11: Screenshots](tickets/F11-screenshots.md)                                 | Todo   | 0/5   |
-| 5: Release readiness             | [F12: Docs and acceptance](tickets/F12-docs-and-acceptance.md)                 | Todo   | 0/3   |
+| Phase                            | Functionality                                                                  | Status      | Tasks |
+| -------------------------------- | ------------------------------------------------------------------------------ | ----------- | ----- |
+| 0: Pre-build checks              | [F00: Pre-build checks (spec §8.1)](tickets/F00-pre-build-checks.md)           | In progress | 0/5   |
+| 1: Setup & hardening             | [F01: Rebrand and Chrome-only](tickets/F01-rebrand-chrome-only.md)             | Todo        | 0/3   |
+|                                  | [F02: Intake Site scoping](tickets/F02-intake-site-scoping.md)                 | Todo        | 0/4   |
+|                                  | [F03: Repository hygiene](tickets/F03-repo-hygiene.md)                         | Todo        | 0/3   |
+|                                  | [F04: Console API hardening](tickets/F04-console-api-hardening.md)             | Todo        | 0/5   |
+| 2: Job 2 (force me into a group) | [F05: Stable ID and environment detection](tickets/F05-stable-id-detection.md) | Todo        | 0/2   |
+|                                  | [F06: Override engine](tickets/F06-override-engine.md)                         | Todo        | 0/5   |
+|                                  | [F07: "Force me into this group" UI](tickets/F07-force-me-ui.md)               | Todo        | 0/4   |
+|                                  | [F08: Active overrides and badge](tickets/F08-active-overrides.md)             | Todo        | 0/4   |
+| 3: Job 1 (see my group)          | [F09: SDK values reader](tickets/F09-sdk-values-reader.md)                     | Todo        | 0/4   |
+|                                  | [F10: "My groups" UI](tickets/F10-my-groups-ui.md)                             | Todo        | 0/4   |
+| 4: Job 3 (screenshots)           | [F11: Screenshots](tickets/F11-screenshots.md)                                 | Todo        | 0/5   |
+| 5: Release readiness             | [F12: Docs and acceptance](tickets/F12-docs-and-acceptance.md)                 | Todo        | 0/3   |
 
 ### Checkpoints
 
