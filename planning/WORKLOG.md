@@ -362,7 +362,25 @@ The F03-T2 check "every command runs as written" found that `pnpm dev:chrome` st
 
 The new `CLAUDE.md` gives the commands, the definition of done, the CI summary, and 10 hard rules with REQ IDs. Each rule was checked against the spec text. Each command in it was run once: all pass, including `pnpm test:e2e` (62 passed).
 
-### WL-040 · 2026-10-15 · Decision · F04 starts before phase 0; interim Q4 allowlist; Q7 key type per project
+### WL-040 · 2026-10-15 · Resolved · CI passes on the fork without upstream secrets (F03-T3)
+
+**Tickets:** F03-T3
+
+`main` was pushed to the fork at `44e2829`. The push did not start a CI run. GitHub listed `build.yml` as active, but the fork had no runs after 3 minutes. A manual dispatch (`gh workflow run build.yml --ref main`) started run 38769230604. Both jobs passed: `build` in 1m11s, and `e2e` in 2m50s with 69 passed. No step needs a secret.
+
+The run found one defect that the upstream workflow also has. The zip artifact step uploaded nothing. `actions/upload-artifact` skips hidden paths by default, and `.output/` starts with a dot. The step now sets `include-hidden-files: true`, and `if-no-files-found: error` so that a missing zip fails the run. The next run on `main` must show the `<sha>-prod-build` artifact.
+
+The Playwright report step also found no files. This is correct on a green run. CI uses the `github` reporter, which writes no HTML report, and `test-results/` gets files only when a test fails.
+
+**Open:** check that the next push to `main` starts a run. If it does not, enable workflows on the fork's Actions tab.
+
+### WL-041 · 2026-10-15 · Resolved · A push to `main` starts CI, and the zip artifact uploads (F03-T3)
+
+**Tickets:** F03-T3 · resolves the open item in WL-040
+
+The push of `d21730b` to `main` started run 38776914845 by itself. No change on the fork's Actions tab was needed. The first push (WL-040) probably started no run because the fork had no registered workflows until that push. Both jobs passed, and the e2e job passed 69 tests. The run has the `d21730b…-prod-build` artifact (472 kB), so the `include-hidden-files` fix works.
+
+### WL-042 · 2026-10-15 · Decision · F04 starts before phase 0; interim Q4 allowlist; Q7 key type per project
 
 **Tickets:** F04-T1 to F04-T5, F06-T3, F07 · Q2, Q4, Q7 · REQ-SEC-007, REQ-SEC-008, REQ-SEC-010
 
@@ -375,10 +393,10 @@ Maurice decided the following.
   - Every key entry form (REQ-SEC-010): "Use your own Personal Console Key, not a shared project key."
   - Reason shown when writes are disabled (REQ-SEC-008): "Read-only key. Add a key with write access to change overrides."
   - Key type options: "Read & write" and "Read only".
-- **Renumbered.** This entry and WL-041 and WL-042 were first written as WL-026 to WL-028 on the F04 branch, which collided with F02's entries on `main`. F04 commit messages from before the merge cite the old numbers: WL-026 means WL-040, WL-027 means WL-041, WL-028 means WL-042.
+- **Renumbered twice.** F04's entries collided with F02 and F03 entries on `main`, so they moved. Old F04 citations map like this: WL-026 or WL-040 → WL-042; WL-027 or WL-041 → WL-043; WL-028 or WL-042 → WL-044; WL-043 → WL-045; WL-044 → WL-046. Commit messages from before the final merge use the old numbers.
 - **Defense in depth.** The background script also refuses every non-GET request while the active key type is `read-key`. The UI gating comes first.
 
-### WL-041 · 2026-10-15 · Discovery · Key handling, remote code, and telemetry audit (F04-T4)
+### WL-043 · 2026-10-15 · Discovery · Key handling, remote code, and telemetry audit (F04-T4)
 
 **Tickets:** F04-T4, F04-T3 · REQ-SEC-002, REQ-SEC-003, REQ-SEC-004, REQ-SEC-006, REQ-SEC-009 · WL-017
 
@@ -399,9 +417,9 @@ Audited at `e409c45`. The greps ran over `src`, `entrypoints`, `public`, `wxt.co
 
 Grep scripts and raw output: the agent scratch folder `.agents/scratch/f04-t4-audit/` (`greps.sh`, `greps2.sh`, `audit.md`), which is gitignored.
 
-### WL-042 · 2026-10-15 · Decision · How read-key mode looks and behaves (F04-T3)
+### WL-044 · 2026-10-15 · Decision · How read-key mode looks and behaves (F04-T3)
 
-**Tickets:** F04-T3, F07, F08 · REQ-SEC-008, REQ-GAT-001, REQ-GAT-002 · WL-013, WL-040
+**Tickets:** F04-T3, F07, F08 · REQ-SEC-008, REQ-GAT-001, REQ-GAT-002 · WL-013, WL-042
 
 - **Storage.** `StatsigProject.apiKeyType` is optional (`src/lib/projects.ts`). Missing means `write-key`, so projects saved before F04-T3 keep the base behavior. The settings store writes the active project's type to `local:api_key_type` whenever it writes the active key (`src/store/use-settings-store.ts`). With no active project, it writes `write-key`. The background script reads that item to refuse writes (F04-T2). The forced reset in `use-settings-storage.ts` is gone.
 - **Picking the type.** The login form, the add-project form, and each project row have a `Key type` select ("Read & write" first, the default; then "Read only"). Adding a key that already belongs to a project activates that project and keeps its stored type, as before.
@@ -414,7 +432,7 @@ Grep scripts and raw output: the agent scratch folder `.agents/scratch/f04-t4-au
 - **Tests.** Unit tests cover the hook, the sync, the forms, the project row, and both sections. `e2e/key-type.e2e.ts` covers T-SEC-2: a read-only project disables the gate override controls, and switching to read and write enables them. `e2e/settings.e2e.ts` now finds the theme select by its section, because the new selects broke its `first()` pick.
 - **Copy conflict, open.** The login form's intro still says to log in with a "**Read Only** Statsig Console API Key". That contradicts Job 2, which needs a key with write access. The copy wasn't changed in F04 and needs a decision (Q8).
 
-### WL-043 · 2026-10-15 · Discovery · Opus review of F04: no serious bugs; five fixes, three items left
+### WL-045 · 2026-10-15 · Discovery · Opus review of F04: no serious bugs; five fixes, three items left
 
 **Tickets:** F04-T1 to F04-T5, F06, F07 · REQ-SEC-001, REQ-SEC-003, REQ-SEC-007, REQ-SEC-008
 
@@ -434,9 +452,9 @@ Left as is, on purpose:
 - **ID path segments aren't restricted.** `{id}` and `{userID}` match any non-empty segment, including `%2F`. Restricting them to `[\w.-]+` could reject real user IDs. Only extension pages can send requests, so abusing this needs XSS in the popup.
 - **Disabled flash.** While storage loads, `useWriteAccess` returns `canWrite: false`. Write-key users can see controls disabled for a moment when the popup opens. This only affects looks.
 
-### WL-044 · 2026-10-15 · Resolved · Q8: login form intro copy
+### WL-046 · 2026-10-15 · Resolved · Q8: login form intro copy
 
-**Tickets:** F04-T5, F12-T1 · Q8 · REQ-SEC-010 · WL-042
+**Tickets:** F04-T5, F12-T1 · Q8 · REQ-SEC-010 · WL-044
 
 Maurice decided that the login form should ask for a Console API key and send Testers who don't know how to create one to engineering. The intro (`src/components/modals/AuthForm.tsx`) now reads: "Before you can use this extension, log in with a **Statsig Console API Key**. If you don't know how to create one, reach out to someone from engineering for help."
 

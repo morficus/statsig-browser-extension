@@ -14,7 +14,7 @@ URLs and write calls are allowed) lives in **one new module, `src/lib/api-config
 changes only that file (REQ-SEC-005).
 
 Ticket: `planning/tickets/F04-console-api-hardening.md` (F04-T1, F04-T2). Context: `planning/WORKLOG.md` WL-005,
-WL-014, WL-016 (the endpoint list), WL-018 (version header), WL-040 (decisions for this work).
+WL-014, WL-016 (the endpoint list), WL-018 (version header), WL-042 (decisions for this work).
 
 This brief has **two phases**. Do phase 1, verify, report, and **stop**. The lead commits phase 1 and then messages you
 to do phase 2 in the same worktree.
@@ -91,8 +91,8 @@ The tree will have your phase 1 work in it (committed in the lead's branch; stil
      DELETE /layers/{id}/overrides/userID/{userID}
      POST   /gates/{id}/overrides
      DELETE /gates/{id}/overrides
-     POST   /experiments/{id}/overrides      # base experiment modal, kept until Q4 is decided (WL-040)
-     DELETE /experiments/{id}/overrides      # base experiment modal, kept until Q4 is decided (WL-040)
+     POST   /experiments/{id}/overrides      # base experiment modal, kept until Q4 is decided (WL-042)
+     DELETE /experiments/{id}/overrides      # base experiment modal, kept until Q4 is decided (WL-042)
      ```
 
      Write it as one exported, readable list (data, not a chain of `if`s), with those two comments on the last two

@@ -12,7 +12,7 @@ Two things about Console Keys, done in two phases by one agent because they touc
   Console Key, not a shared project key. That way each change in Statsig is tied to a person.
 - **F04-T3 (REQ-SEC-008, REQ-GAT-002).** Read-key mode is dead code today. `apiKeyTypeStorage` supports `read-key`,
   but nothing sets it, and `src/hooks/use-settings-storage.ts:14-18` forces it back to `write-key` (WL-013). Decision
-  (WL-040, Q7): the **Tester picks** the key type when adding a key, can change it later on the project, and the type
+  (WL-042, Q7): the **Tester picks** the key type when adding a key, can change it later on the project, and the type
   is **stored on each project**. Projects saved before this change count as `write-key`, so the current behavior is
   unchanged for them. With a read key, every write action is disabled (not hidden) and shows the reason. One shared
   hook decides this, so the later override features (F07, F08) reuse it.
@@ -21,7 +21,7 @@ The background script will separately refuse writes when `local:api_key_type` is
 So `apiKeyTypeStorage` must always reflect **the active project's** type.
 
 Ticket: `planning/tickets/F04-console-api-hardening.md` (F04-T3, F04-T5). Context: `planning/WORKLOG.md` WL-013,
-WL-040.
+WL-042.
 
 This brief has **two phases**. Do phase 1, verify, report, and **stop**. The lead commits phase 1, then messages you to
 do phase 2 in the same worktree.

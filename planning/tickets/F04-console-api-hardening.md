@@ -12,6 +12,13 @@
 
 The Console Key can only reach `statsigapi.net`, only the allowed write calls can be made, and a read-only key disables every write action with a stated reason.
 
+## Still to do
+
+All tasks are built and merged. Two manual checks from spec §8.2 are still open (Owner: Maurice). Run them in a real browser against the real Statsig API and the Intake Site:
+
+- [ ] **T-SEC-1:** do a full session with the Network log of the background service worker open (`chrome://extensions` → the extension → "service worker"). All requests go to `statsigapi.net` only.
+- [ ] **T-SEC-2:** in Settings, set a project's key type to Read only. In the gate and experiment Overrides tabs, all write actions are disabled, and "Read-only key. Add a key with write access to change overrides." shows. Set it back to Read & write, and the actions are enabled again.
+
 ## Tasks
 
 ### F04-T1: One API module with a host allowlist
@@ -29,7 +36,7 @@ The Console Key can only reach `statsigapi.net`, only the allowed write calls ca
 
 ### F04-T2: Allowlist the write calls
 
-- **Status:** Done (`5335e4d`). Also refuses requests from content scripts and writes with a read key (WL-040)
+- **Status:** Done (`5335e4d`). Also refuses requests from content scripts and writes with a read key (WL-042)
 - **Owner:** Claude
 - **Size:** S
 - **Depends on:** F04-T1, F00-T1 (the layer override paths)
@@ -49,10 +56,10 @@ The Console Key can only reach `statsigapi.net`, only the allowed write calls ca
 
 ### F04-T3: Make read-key mode work, and disable writes with a reason
 
-- **Status:** Done (`6370c8a`). See WL-042
+- **Status:** Done (`6370c8a`). See WL-044
 - **Owner:** Claude
 - **Size:** M
-- **Depends on:** Q7 (resolved: the Tester picks the type per project, WL-040)
+- **Depends on:** Q7 (resolved: the Tester picks the type per project, WL-042)
 - **Description:** WL-013: nothing sets `read-key`, and `use-settings-storage.ts` forces `write-key`. Let the key type be set (per Q7: chosen when the key is added, or detected), stored per project if possible. Add one shared helper (for example `useWriteAccess()` returning `{ canWrite, reason }`) that the gate and experiment UIs, and later F07 and F08, all use.
 - **Acceptance criteria:**
   - [x] With a read key, every write action is disabled and shows the reason (T-SEC-2)
@@ -63,7 +70,7 @@ The Console Key can only reach `statsigapi.net`, only the allowed write calls ca
 
 ### F04-T4: Audit key handling, remote code, and telemetry
 
-- **Status:** Done (`fb187a4`, `cee1114`; saved-key preview and form errors in `6370c8a`). See WL-041
+- **Status:** Done (`fb187a4`, `cee1114`; saved-key preview and form errors in `6370c8a`). See WL-043
 - **Owner:** Claude
 - **Size:** S
 - **Depends on:** None

@@ -38,8 +38,8 @@ export const ALLOWED_WRITE_CALLS: readonly AllowedWriteCall[] = [
   { method: 'DELETE', path: '/layers/{id}/overrides/userID/{userID}' },
   { method: 'POST', path: '/gates/{id}/overrides' },
   { method: 'DELETE', path: '/gates/{id}/overrides' },
-  { method: 'POST', path: '/experiments/{id}/overrides' }, // Base experiment modal, kept until Q4 is decided (WL-040)
-  { method: 'DELETE', path: '/experiments/{id}/overrides' }, // Base experiment modal, kept until Q4 is decided (WL-040)
+  { method: 'POST', path: '/experiments/{id}/overrides' }, // Base experiment modal, kept until Q4 is decided (WL-042)
+  { method: 'DELETE', path: '/experiments/{id}/overrides' }, // Base experiment modal, kept until Q4 is decided (WL-042)
 ]
 
 const matchesPathTemplate = (template: string, path: string): boolean => {
