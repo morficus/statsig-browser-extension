@@ -12,6 +12,7 @@ Planning of record lives in `planning/` (board, tickets, WORKLOG). This list tra
 
 ## Done
 
+- f04-review-fixes — F04 Opus review fixes (WL-043) — `06231a1`
 - f04-t4-audit — F04-T4 audit — `fb187a4`, `cee1114`
 - f04-t5-t3-keys — F04-T5 guidance + F04-T3 key type and write gating — `b086d7a`, `6370c8a`
 - f04-t1-t2-api-module — F04-T1 + T2 API module, host and write allowlists — `6e255cf`, `5335e4d`

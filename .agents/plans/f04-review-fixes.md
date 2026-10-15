@@ -1,7 +1,7 @@
 # Brief: F04 review fixes
 
 slug: f04-review-fixes
-status: done
+status: done (06231a1)
 agent: f04-fixes (Sonnet, lead worktree, no other agent running)
 
 ## Decision
