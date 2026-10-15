@@ -16,14 +16,14 @@ The Console Key can only reach `statsigapi.net`, only the allowed write calls ca
 
 ### F04-T1: One API module with a host allowlist
 
-- **Status:** In progress
+- **Status:** Done (`6e255cf`)
 - **Owner:** Claude
 - **Size:** M
 - **Depends on:** None
 - **Description:** WL-005. Make the background script reject any `API_REQUEST` whose URL doesn't start with the single base URL constant, and attach the key only after that check. Also send `STATSIG-API-VERSION: 20240601` from this module (WL-018). Share the constant from one module so a later move to a proxy changes only that module (REQ-SEC-005). Today the constant is in `src/lib/fetcher.ts`, which also imports the settings store, so the background script may need the constant split into its own file.
 - **Acceptance criteria:**
-  - [ ] A request to any other host fails, and the key isn't sent (unit tested)
-  - [ ] There's exactly one definition of the base URL (`grep statsigapi.net src entrypoints` finds one constant)
+  - [x] A request to any other host fails, and the key isn't sent (unit tested)
+  - [x] There's exactly one definition of the base URL (`grep statsigapi.net src entrypoints` finds one constant)
 - **Verification:** `pnpm vitest run src/tests/unit/background.test.ts src/lib/fetcher.test.ts`
 - **Files likely touched:** `entrypoints/background.ts`, `src/lib/fetcher.ts`, `src/lib/api-config.ts` (new), tests
 
@@ -77,12 +77,12 @@ The Console Key can only reach `statsigapi.net`, only the allowed write calls ca
 
 ### F04-T5: Personal Console Key guidance in the UI
 
-- **Status:** In progress
+- **Status:** Done (`b086d7a`)
 - **Owner:** Claude
 - **Size:** XS
 - **Depends on:** None
 - **Description:** REQ-SEC-010. Where a key is entered (the login form, Settings, the add-project form), tell the Tester to use their own Personal Console Key and not a shared project key. The README part is in F12-T1.
 - **Acceptance criteria:**
-  - [ ] The guidance shows on every key entry form
+  - [x] The guidance shows on every key entry form
 - **Verification:** `pnpm vitest run src/tests/unit/AuthForm.test.tsx`; manual check
 - **Files likely touched:** `src/components/modals/AuthForm.tsx`, `src/components/sheets/settings/AddProjectForm.tsx`
