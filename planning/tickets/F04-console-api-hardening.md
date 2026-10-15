@@ -2,7 +2,7 @@
 
 | Field      | Value                                                                         |
 | ---------- | ----------------------------------------------------------------------------- |
-| Status     | Todo                                                                          |
+| Status     | In progress                                                                   |
 | Phase      | 1: Setup & hardening                                                          |
 | Spec       | REQ-SEC-001 to REQ-SEC-010 · REQ-GAT-002 · T-SEC-1, T-SEC-2, T-SEC-3, T-GAT-1 |
 | Depends on | None                                                                          |
@@ -52,7 +52,7 @@ The Console Key can only reach `statsigapi.net`, only the allowed write calls ca
 - **Status:** Todo
 - **Owner:** Claude
 - **Size:** M
-- **Depends on:** Q7
+- **Depends on:** Q7 (resolved: the Tester picks the type per project, WL-026)
 - **Description:** WL-013: nothing sets `read-key`, and `use-settings-storage.ts` forces `write-key`. Let the key type be set (per Q7: chosen when the key is added, or detected), stored per project if possible. Add one shared helper (for example `useWriteAccess()` returning `{ canWrite, reason }`) that the gate and experiment UIs, and later F07 and F08, all use.
 - **Acceptance criteria:**
   - [ ] With a read key, every write action is disabled and shows the reason (T-SEC-2)

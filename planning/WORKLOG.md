@@ -244,3 +244,18 @@ Left for F03-T3, because these aren't about Firefox:
 **Tickets:** F03-T2 · corrects WL-024 item 1
 
 Maurice installed pnpm 12. `pnpm` now resolves through proto (`~/.proto/shims/pnpm`) to 12.11.2 and runs without a shim, and `pnpm type-check` passes. Item 1 of WL-024 no longer applies. Item 2 (agent worktrees leaking into lint and tests) still stands.
+
+### WL-026 · 2026-10-15 · Decision · F04 starts before phase 0; interim Q4 allowlist; Q7 key type per project
+
+**Tickets:** F04-T1 to F04-T5, F06-T3, F07 · Q2, Q4, Q7 · REQ-SEC-007, REQ-SEC-008, REQ-SEC-010
+
+Maurice decided the following.
+
+- **Q2, for F04 only.** F04 starts while F00-T2 to F00-T5 wait, like F01 (WL-019). F04-T2 uses the paths from the docs (WL-016). If F00-T3 finds different paths, the allowlist is edited in one place. Q2 stays open for F02 and F03.
+- **Q4, interim.** The write allowlist keeps the base experiment-modal calls (`POST` and bulk `DELETE /experiments/{id}/overrides`) for now, so the base modal works as before. When Q4 is decided (F06-T3, F07), removing them is a one-line allowlist edit. Q4 stays open.
+- **Q7 resolved.** The Tester picks the key type when adding a key, and can change it later on the project. The type is stored on each project. Projects saved before this change count as `write-key`, the base behavior. Auto-detection was rejected: the Console API has no documented way to read a key's permissions, and a probe write is not acceptable.
+- **Copy.**
+  - Every key entry form (REQ-SEC-010): "Use your own Personal Console Key, not a shared project key."
+  - Reason shown when writes are disabled (REQ-SEC-008): "Read-only key. Add a key with write access to change overrides."
+  - Key type options: "Read & write" and "Read only".
+- **Defense in depth.** The background script also refuses every non-GET request while the active key type is `read-key`. The UI gating comes first.
