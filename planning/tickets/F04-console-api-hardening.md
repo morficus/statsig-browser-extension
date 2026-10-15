@@ -20,7 +20,7 @@ The Console Key can only reach `statsigapi.net`, only the allowed write calls ca
 - **Owner:** Claude
 - **Size:** M
 - **Depends on:** None
-- **Description:** WL-005. Make the background script reject any `API_REQUEST` whose URL doesn't start with the single base URL constant, and attach the key only after that check. Share the constant from one module so a later move to a proxy changes only that module (REQ-SEC-005). Today the constant is in `src/lib/fetcher.ts`, which also imports the settings store, so the background script may need the constant split into its own file.
+- **Description:** WL-005. Make the background script reject any `API_REQUEST` whose URL doesn't start with the single base URL constant, and attach the key only after that check. Also send `STATSIG-API-VERSION: 20240601` from this module (WL-018). Share the constant from one module so a later move to a proxy changes only that module (REQ-SEC-005). Today the constant is in `src/lib/fetcher.ts`, which also imports the settings store, so the background script may need the constant split into its own file.
 - **Acceptance criteria:**
   - [ ] A request to any other host fails, and the key isn't sent (unit tested)
   - [ ] There's exactly one definition of the base URL (`grep statsigapi.net src entrypoints` finds one constant)
@@ -33,7 +33,14 @@ The Console Key can only reach `statsigapi.net`, only the allowed write calls ca
 - **Owner:** Claude
 - **Size:** S
 - **Depends on:** F04-T1, F00-T1 (the layer override paths)
-- **Description:** REQ-SEC-007. In the same module, refuse any non-GET request whose path isn't an experiment override, layer override, or gate override path. Today only the two override handlers write (WL-014). The allowlist keeps it that way.
+- **Description:** REQ-SEC-007. In the same module, refuse any non-GET request whose method and path aren't on the list (WL-016):
+  - `PATCH /experiments/{id}/overrides` and `DELETE /experiments/{id}/overrides/userID/{userID}`
+  - `PATCH /layers/{id}/overrides` and `DELETE /layers/{id}/overrides/userID/{userID}`
+  - the base gate override calls (`POST` and `DELETE /gates/{id}/overrides`)
+  - the base experiment-modal calls (`POST` and bulk `DELETE /experiments/{id}/overrides`), unless Q4 removes them
+
+  Today only the two override handlers write (WL-014). The allowlist keeps it that way.
+
 - **Acceptance criteria:**
   - [ ] Unit tests: allowed write paths pass; another POST, DELETE, or PATCH path is refused before any network call
   - [ ] The gate override tests still pass (REQ-GAT-004)

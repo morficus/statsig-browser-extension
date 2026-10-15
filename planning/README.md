@@ -37,7 +37,7 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 
 | Phase                            | Functionality                                                                  | Status      | Tasks |
 | -------------------------------- | ------------------------------------------------------------------------------ | ----------- | ----- |
-| 0: Pre-build checks              | [F00: Pre-build checks (spec §8.1)](tickets/F00-pre-build-checks.md)           | In progress | 0/5   |
+| 0: Pre-build checks              | [F00: Pre-build checks (spec §8.1)](tickets/F00-pre-build-checks.md)           | In progress | 1/5   |
 | 1: Setup & hardening             | [F01: Rebrand and Chrome-only](tickets/F01-rebrand-chrome-only.md)             | Todo        | 0/3   |
 |                                  | [F02: Intake Site scoping](tickets/F02-intake-site-scoping.md)                 | Todo        | 0/4   |
 |                                  | [F03: Repository hygiene](tickets/F03-repo-hygiene.md)                         | Todo        | 0/3   |
@@ -62,9 +62,8 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 
 ## Next up
 
-1. **F00-T1** (Claude): read the Console API reference and record the exact request shapes. No Statsig access needed.
-2. **F00-T2 to F00-T5** (Maurice): the manual checks against Statsig and the Intake Site. Claude can prepare the snippets and curl commands for them.
-3. Then **F01-T1**, unless Q2 below allows phase 1 to start in parallel with phase 0.
+1. **F00-T2 to F00-T5** (Maurice): the manual checks against Statsig and the Intake Site. F00-T1 is done (WL-016), so the exact calls to test are known. Claude can prepare the curl commands (T3, T5) and the DevTools snippet (T4).
+2. Then **F01-T1**, unless Q2 below allows phase 1 to start in parallel with phase 0.
 
 ## Open questions
 

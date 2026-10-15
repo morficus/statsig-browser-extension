@@ -33,7 +33,7 @@ When a Tester opens the popup on the Intake Site, they see right away which expe
 - **Owner:** Claude
 - **Size:** S
 - **Depends on:** F10-T1
-- **Description:** REQ-ASG-008. A two-way switch, with "On this page" as the default. The second view lists every running experiment from the Console API, and those missing from the SDK values show "Not evaluated on this page".
+- **Description:** REQ-ASG-008. A two-way switch, with "On this page" as the default. The second view lists every running experiment from the Console API (proposed: `status: active`, WL-016), and those missing from the SDK values show "Not evaluated on this page".
 - **Acceptance criteria:**
   - [ ] Component tests for the default view and for the "Not evaluated on this page" state
 - **Verification:** `pnpm vitest run src/components`

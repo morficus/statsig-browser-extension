@@ -20,7 +20,7 @@ From the popup, a Tester finds an experiment, picks a group, and lands in it aft
 - **Owner:** Claude
 - **Size:** M
 - **Depends on:** Q1, F00-T1 (status values)
-- **Description:** A list of experiments from the Console API that includes unstarted experiments and leaves out archived ones (REQ-OVR-001), with search by name (REQ-OVR-002). Reuse `useExperiments` (pagination) and the existing Fuse search. Q1 decides where it lives.
+- **Description:** A list of experiments from the Console API that includes unstarted experiments (`status: setup`) and leaves out archived ones (`status: archived`), filtered on our side as well (WL-016) (REQ-OVR-001), with search by name (REQ-OVR-002). Think about `fields=id,name,status,groups,layerID,idType` to keep the payload small. Reuse `useExperiments` (pagination) and the existing Fuse search. Q1 decides where it lives.
 - **Acceptance criteria:**
   - [ ] Archived experiments are left out, and unstarted ones are included (unit tested)
   - [ ] Search by name works with all pages loaded
