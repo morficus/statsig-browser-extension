@@ -44,6 +44,28 @@ describe('isIntakeSiteUrl', () => {
   })
 })
 
+describe('isIntakeSiteUrl bypass attempts', () => {
+  it.each([
+    'https://app.talkiatry.com@evil.example/assessment',
+    'https://app.talkiatry.com./assessment',
+    'blob:https://app.talkiatry.com/assessment',
+    'view-source:https://app.talkiatry.com/assessment',
+    'https://app.talkiatry.com/assessment/../login',
+    'https://xn--pp-8kc.talkiatry.com/assessment',
+    'http://app.talkiatry.com:443/assessment',
+  ])('rejects %s', (url) => {
+    expect(isIntakeSiteUrl(url)).toBeFalsy()
+  })
+
+  it.each([
+    'https://app.talkiatry.com:443/assessment',
+    'https://evil.example@app.talkiatry.com/assessment',
+    'HTTPS://APP.TALKIATRY.COM/assessment',
+  ])('accepts %s', (url) => {
+    expect(isIntakeSiteUrl(url)).toBeTruthy()
+  })
+})
+
 describe('matchesUrlPattern', () => {
   it.each(INTAKE_SITE_MATCHES)('matches the canonical URL of %s', (pattern) => {
     const canonical = new URL(pattern.slice(0, -1))

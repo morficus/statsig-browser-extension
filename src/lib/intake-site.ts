@@ -41,12 +41,20 @@ export function matchesUrlPattern(url: URL, pattern: string): boolean {
   return hostMatches(url.hostname, host.toLowerCase()) && pathToRegExp(path).test(url.pathname + url.search)
 }
 
+function parseUrl(url: string): URL | null {
+  try {
+    return new URL(url)
+  } catch {
+    return null
+  }
+}
+
 /** Whether a tab URL belongs to the Intake Site; invalid or missing URLs return false. */
 export function isIntakeSiteUrl(url: string | null | undefined): boolean {
   if (!url) {
     return false
   }
-  const parsed = URL.parse(url)
+  const parsed = parseUrl(url)
   if (!parsed) {
     return false
   }
