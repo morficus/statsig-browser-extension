@@ -65,7 +65,7 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 1. **Maurice:** move the new private signing key to a password manager before the machine restarts (WL-021).
 2. **F00-T2 to F00-T5** (Maurice): the manual checks against Statsig and the Intake Site. F00-T1 is done (WL-016), so the exact calls to test are known. Claude can prepare the curl commands (T3, T5) and the DevTools snippet (T4).
 3. **F02 is done** (WL-026 to WL-031). T-SET-1 passes. Merged into `main`. F05-T1 and F05-T2 carry two guard follow-ups (WL-031). Then F04, once Q2 is answered for it. F01 is done (WL-019 to WL-022).
-4. **F03 is done** (WL-033 to WL-040). It is merged into `main` and pushed. CI passes on the fork. **Maurice:** check that the next push to `main` starts a CI run, and that the run has the zip artifact (WL-040).
+4. **F03 is done** (WL-033 to WL-041). It is merged into `main` and pushed. Each push to `main` runs CI on the fork, and the run uploads the zip artifact.
 
 ## Open questions
 

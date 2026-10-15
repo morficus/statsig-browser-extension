@@ -43,7 +43,7 @@ The fork doesn't take automatic updates, and future sessions have a `CLAUDE.md` 
 
 ### F03-T3: Review CI workflows and the `web/` site for the fork
 
-- **Status:** Done (WL-035, WL-037, WL-040)
+- **Status:** Done (WL-035, WL-037, WL-040, WL-041)
 - **Owner:** Claude proposes, Maurice decides
 - **Size:** S
 - **Depends on:** Q6, resolved (WL-035)

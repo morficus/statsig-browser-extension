@@ -373,3 +373,9 @@ The run found one defect that the upstream workflow also has. The zip artifact s
 The Playwright report step also found no files. This is correct on a green run. CI uses the `github` reporter, which writes no HTML report, and `test-results/` gets files only when a test fails.
 
 **Open:** check that the next push to `main` starts a run. If it does not, enable workflows on the fork's Actions tab.
+
+### WL-041 · 2026-10-15 · Resolved · A push to `main` starts CI, and the zip artifact uploads (F03-T3)
+
+**Tickets:** F03-T3 · resolves the open item in WL-040
+
+The push of `d21730b` to `main` started run 38776914845 by itself. No change on the fork's Actions tab was needed. The first push (WL-040) probably started no run because the fork had no registered workflows until that push. Both jobs passed, and the e2e job passed 69 tests. The run has the `d21730b…-prod-build` artifact (472 kB), so the `include-hidden-files` fix works.
