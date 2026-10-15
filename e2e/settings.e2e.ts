@@ -19,6 +19,13 @@ const openSettingsSheet = async (page: Page): Promise<void> => {
   await expect(page.getByRole('heading', { name: /Extension Settings/iu })).toBeVisible()
 }
 
+/** The theme select, found through its Appearance section so other selects in the sheet cannot shadow it. */
+const themeSelectOf = (page: Page) =>
+  page
+    .getByRole('heading', { name: /Appearance/iu })
+    .locator('..')
+    .getByRole('combobox')
+
 test.describe('settings sheet', () => {
   test.beforeEach(async ({ serviceWorker }) => {
     await seedApiKey(serviceWorker)
@@ -68,7 +75,7 @@ test.describe('settings sheet', () => {
     await openAuthenticated(page, extensionId)
     await openSettingsSheet(page)
 
-    const themeSelect = page.getByRole('combobox').first()
+    const themeSelect = themeSelectOf(page)
     await themeSelect.click()
 
     const darkOption = page.getByRole('option', { name: /^Dark$/iu })
@@ -85,7 +92,7 @@ test.describe('settings sheet', () => {
     await openAuthenticated(page, extensionId)
     await openSettingsSheet(page)
 
-    const themeSelect = page.getByRole('combobox').first()
+    const themeSelect = themeSelectOf(page)
     await themeSelect.click()
     await page.getByRole('option', { name: /^Dark$/iu }).click()
 
@@ -97,7 +104,7 @@ test.describe('settings sheet', () => {
     await expect(page.locator('html')).toHaveClass(/dark/u)
 
     await openSettingsSheet(page)
-    await expect(page.getByRole('combobox').first()).toHaveText(/dark/iu)
+    await expect(themeSelectOf(page)).toHaveText(/dark/iu)
   })
 
   test('closes sheet via Escape without persisting an edit', async ({ context, extensionId }) => {

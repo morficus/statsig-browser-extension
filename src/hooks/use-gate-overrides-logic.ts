@@ -4,8 +4,7 @@ import type { FeatureGate, GateOverride } from '@/src/types/statsig'
 
 import { useGateOverrideHandlers } from '@/src/hooks/use-gate-override-handlers'
 import { useUserDetails } from '@/src/hooks/use-user-details'
-import { useWxtStorage } from '@/src/hooks/use-wxt-storage'
-import { apiKeyTypeStorage } from '@/src/lib/storage'
+import { useWriteAccess } from '@/src/hooks/use-write-access'
 import { getDetectedUserId } from '@/src/lib/user-utils'
 
 type View = 'form' | 'table'
@@ -15,7 +14,6 @@ export const useGateOverridesLogic = (
   overrides: GateOverride,
   featureGate?: FeatureGate,
 ) => {
-  const [typeApiKey] = useWxtStorage(apiKeyTypeStorage)
   const [view, setView] = useState<View>('table')
   const { data: detectedUser } = useUserDetails()
 
@@ -83,7 +81,7 @@ export const useGateOverridesLogic = (
     return result
   }, [overrides, detectedUser, featureGate])
 
-  const canEdit = typeApiKey === 'write-key'
+  const { canWrite: canEdit, reason: readOnlyReason } = useWriteAccess()
 
   const detectedUserId = useMemo(
     () => getDetectedUserId(detectedUser, featureGate?.idType),
@@ -114,6 +112,7 @@ export const useGateOverridesLogic = (
     handleSwitchToTable,
     isDetectedUserOverridden,
     isPending,
+    readOnlyReason,
     view,
   }
 }

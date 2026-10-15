@@ -52,20 +52,16 @@ const UserOverridesTable = memo(function UserOverridesTable({
     [canEdit, isPending, groups],
   )
 
-  const columns = useMemo((): SortableColumnConfig<UserOverrideItem>[] => {
-    const next: SortableColumnConfig<UserOverrideItem>[] = [
+  const columns = useMemo(
+    (): SortableColumnConfig<UserOverrideItem>[] => [
       { accessor: (item) => item.ids.join(', '), header: 'IDs', id: 'ids' },
       { accessor: (item) => item.environment ?? 'All', header: 'Environment', id: 'environment' },
       { accessor: (item) => item.unitType ?? 'userID', header: 'ID Type', id: 'idType' },
       { accessor: (item) => groupLabel(groups, item.groupID), header: 'Group', id: 'group' },
-    ]
-
-    if (canEdit) {
-      next.push({ className: 'w-[50px]', header: '', id: 'actions' })
-    }
-
-    return next
-  }, [canEdit, groups])
+      { className: 'w-[50px]', header: '', id: 'actions' },
+    ],
+    [groups],
+  )
 
   return (
     <div className="space-y-3">
@@ -76,7 +72,7 @@ const UserOverridesTable = memo(function UserOverridesTable({
         getRowId={getUserOverrideRowId}
         isCurrentUserPredicate={isCurrentUserPredicate}
         onDeleteConfirm={onDelete}
-        colSpan={canEdit ? 5 : 4}
+        colSpan={5}
         emptyEntityName="item"
         renderRow={renderRow}
       />
@@ -101,19 +97,15 @@ const GateOverridesTable = memo(function GateOverridesTable({
   groups,
   onDelete,
 }: GateOverridesTableProps) {
-  const columns = useMemo((): SortableColumnConfig<ExperimentOverride>[] => {
-    const next: SortableColumnConfig<ExperimentOverride>[] = [
+  const columns = useMemo(
+    (): SortableColumnConfig<ExperimentOverride>[] => [
       { accessor: (item) => item.type, header: 'Type', id: 'type' },
       { accessor: (item) => item.name, header: 'Name', id: 'name' },
       { accessor: (item) => groupLabel(groups, item.groupID), header: 'Group', id: 'group' },
-    ]
-
-    if (canEdit) {
-      next.push({ className: 'w-[50px]', header: '', id: 'actions' })
-    }
-
-    return next
-  }, [canEdit, groups])
+      { className: 'w-[50px]', header: '', id: 'actions' },
+    ],
+    [groups],
+  )
 
   const { headerColumns, items: sortedOverrides } = useSortedTable({
     columns,
@@ -145,7 +137,7 @@ const GateOverridesTable = memo(function GateOverridesTable({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={canEdit ? 4 : 3} className="h-24 text-center">
+                <TableCell colSpan={4} className="h-24 text-center">
                   <div className="flex justify-center">
                     <GeneralEmptyState variant="override" entityName="item" />
                   </div>

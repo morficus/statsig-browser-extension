@@ -13,7 +13,6 @@ export interface BaseOverrideContextCardProps {
   detectedUserOverrides?: {
     environment: string | null
   }[]
-  canEdit: boolean
   idType?: string
   children: (selectedEnvironment: string | null) => React.ReactNode
 }
@@ -27,7 +26,6 @@ export const BaseOverrideContextCard = memo(function BaseOverrideContextCard({
   detectedUserId,
   isDetectedUserOverridden,
   detectedUserOverrides = EMPTY_OVERRIDES,
-  canEdit,
   idType = 'userID',
   children,
 }: BaseOverrideContextCardProps) {
@@ -107,7 +105,7 @@ export const BaseOverrideContextCard = memo(function BaseOverrideContextCard({
           </div>
         )}
 
-        {canEdit && detectedUserId && detectedUserId !== 'Unknown ID' && (
+        {detectedUserId && detectedUserId !== 'Unknown ID' && (
           <div className="space-y-4 border-t pt-4">
             <div className="flex flex-col gap-2">
               <Label className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">

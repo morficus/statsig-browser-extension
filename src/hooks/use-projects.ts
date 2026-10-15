@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 
+import type { ApiKeyType } from '@/src/lib/projects'
+
 import { fetchProjectFingerprint } from '@/src/handlers/project-fingerprint'
 import { useActiveTabOrigin } from '@/src/hooks/use-active-tab-origin'
 import { hasProjectFingerprint } from '@/src/lib/projects'
@@ -21,8 +23,8 @@ export const useAddProject = () => {
   const origin = useActiveTabOrigin()
 
   return useCallback(
-    async (apiKey: string, pinOrigin = false) => {
-      const projectId = await addProject(apiKey)
+    async (apiKey: string, pinOrigin = false, apiKeyType: ApiKeyType = 'write-key') => {
+      const projectId = await addProject(apiKey, apiKeyType)
       await updateProject(projectId, await fetchProjectFingerprint(apiKey))
       if (pinOrigin) {
         await setActiveProject(projectId, origin)

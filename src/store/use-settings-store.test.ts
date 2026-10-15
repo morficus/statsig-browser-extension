@@ -4,7 +4,7 @@ import { beforeEach, vi, describe, expect, it } from 'vitest'
 import type { StatsigProject } from '@/src/lib/projects'
 
 import { queryClient } from '@/src/lib/query-client'
-import { activeProjectIdStorage, apiKeyStorage, projectsStorage } from '@/src/lib/storage'
+import { activeProjectIdStorage, apiKeyStorage, apiKeyTypeStorage, projectsStorage } from '@/src/lib/storage'
 import { useUIStore } from '@/src/store/use-ui-store'
 
 import { useSettingsStore } from './use-settings-store'
@@ -17,6 +17,11 @@ vi.mock(import('@/src/lib/storage'), async (importOriginal) => ({
     watch: vi.fn(),
   } as any,
   apiKeyStorage: {
+    getValue: vi.fn(),
+    setValue: vi.fn(),
+    watch: vi.fn(),
+  } as any,
+  apiKeyTypeStorage: {
     getValue: vi.fn(),
     setValue: vi.fn(),
     watch: vi.fn(),
@@ -187,6 +192,56 @@ describe('useSettingsStore', () => {
     expect(state.activeProjectId).toBe(projectId)
     expect(state.apiKey).toBe('console-new')
     expect(apiKeyStorage.setValue).toHaveBeenCalledWith('console-new')
+  })
+
+  it('should save the chosen key type on a new project and mirror it', async () => {
+    await useSettingsStore.getState().addProject('console-new', 'read-key')
+
+    expect(useSettingsStore.getState().projects[0].apiKeyType).toBe('read-key')
+    expect(apiKeyTypeStorage.setValue).toHaveBeenLastCalledWith('read-key')
+  })
+
+  it('should mirror the key type of the project that becomes active', async () => {
+    useSettingsStore.setState({
+      activeProjectId: 'p1',
+      projects: [
+        project({ apiKeyType: 'read-key' }),
+        project({ apiKey: 'console-b', apiKeyType: 'write-key', id: 'p2', label: 'Project 2' }),
+      ],
+    })
+
+    await useSettingsStore.getState().setActiveProject('p2')
+    expect(apiKeyTypeStorage.setValue).toHaveBeenLastCalledWith('write-key')
+
+    await useSettingsStore.getState().setActiveProject('p1')
+    expect(apiKeyTypeStorage.setValue).toHaveBeenLastCalledWith('read-key')
+  })
+
+  it('should count a project saved before key types existed as write-key', async () => {
+    useSettingsStore.setState({
+      activeProjectId: 'p2',
+      projects: [project({ apiKeyType: 'read-key' }), project({ id: 'p2' })],
+    })
+
+    await useSettingsStore.getState().setActiveProject('p2')
+
+    expect(apiKeyTypeStorage.setValue).toHaveBeenLastCalledWith('write-key')
+  })
+
+  it('should mirror a key type change of the active project', async () => {
+    useSettingsStore.setState({ activeProjectId: 'p1', projects: [project()] })
+
+    await useSettingsStore.getState().updateProject('p1', { apiKeyType: 'read-key' })
+
+    expect(apiKeyTypeStorage.setValue).toHaveBeenLastCalledWith('read-key')
+  })
+
+  it('should fall back to write-key when no project is active', async () => {
+    useSettingsStore.setState({ activeProjectId: 'p1', projects: [project({ apiKeyType: 'read-key' })] })
+
+    await useSettingsStore.getState().removeProject('p1')
+
+    expect(apiKeyTypeStorage.setValue).toHaveBeenLastCalledWith('write-key')
   })
 
   it('should activate the existing project when the key is already configured', async () => {

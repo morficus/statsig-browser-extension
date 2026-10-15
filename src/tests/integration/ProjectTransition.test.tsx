@@ -56,7 +56,7 @@ vi.mock('@/src/lib/storage', () => ({
       return Promise.resolve()
     },
   },
-  apiKeyTypeStorage: { getValue: () => Promise.resolve('write-key') },
+  apiKeyTypeStorage: { getValue: () => Promise.resolve('write-key'), setValue: async () => {} },
   projectsStorage: { setValue: projectsWrite },
 }))
 vi.mock('@/src/hooks/use-settings-storage', () => ({

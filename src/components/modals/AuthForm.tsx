@@ -7,16 +7,20 @@ import React, { useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
+import { KeyTypeSelect } from '@/src/components/sheets/settings/AddProjectForm'
 import { Button } from '@/src/components/ui/button'
 import { DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/src/components/ui/dialog'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/src/components/ui/form'
 import { Input } from '@/src/components/ui/input'
+import { Label } from '@/src/components/ui/label'
 import { initialLogin } from '@/src/handlers/initial-login'
 import { useAddProject } from '@/src/hooks/use-projects'
 import { PERSONAL_KEY_GUIDANCE } from '@/src/lib/projects'
+import { handleApiError } from '@/src/lib/utils'
 
 const authSchema = z.object({
   apiKey: z.string().min(1, 'Please enter an API key').startsWith('console-', 'API key should start with "console-"'),
+  apiKeyType: z.enum(['write-key', 'read-key']),
 })
 
 type AuthFormValues = z.infer<typeof authSchema>
@@ -32,6 +36,7 @@ export function AuthForm({ onSuccess }: Readonly<AuthFormProps>) {
   const form = useForm<AuthFormValues>({
     defaultValues: {
       apiKey: '',
+      apiKeyType: 'write-key',
     },
     resolver: zodResolver(authSchema),
   })
@@ -40,7 +45,7 @@ export function AuthForm({ onSuccess }: Readonly<AuthFormProps>) {
     mutationFn: initialLogin,
     onError: (error) => {
       form.setError('apiKey', {
-        message: error instanceof Error ? error.message : 'An unknown error occurred',
+        message: handleApiError(error),
         type: 'manual',
       })
     },
@@ -51,7 +56,7 @@ export function AuthForm({ onSuccess }: Readonly<AuthFormProps>) {
       }
 
       if (data.success) {
-        void addProject(variables)
+        void addProject(variables, false, form.getValues('apiKeyType'))
         void queryClient.invalidateQueries()
         onSuccess()
       }
@@ -86,6 +91,16 @@ export function AuthForm({ onSuccess }: Readonly<AuthFormProps>) {
     [isPending],
   )
 
+  const renderKeyTypeField = useCallback(
+    ({ field }: { field: ControllerRenderProps<AuthFormValues, 'apiKeyType'> }) => (
+      <FormItem>
+        <Label htmlFor="auth-key-type">Key type</Label>
+        <KeyTypeSelect id="auth-key-type" value={field.value} onChange={field.onChange} disabled={isPending} />
+      </FormItem>
+    ),
+    [isPending],
+  )
+
   return (
     <>
       <DialogHeader>
@@ -108,6 +123,7 @@ export function AuthForm({ onSuccess }: Readonly<AuthFormProps>) {
       <Form {...form}>
         <form onSubmit={handleFormSubmit} className="space-y-4 py-4">
           <FormField control={form.control} name="apiKey" render={renderApiKeyField} />
+          <FormField control={form.control} name="apiKeyType" render={renderKeyTypeField} />
 
           <DialogFooter>
             <Button type="submit" disabled={isPending}>

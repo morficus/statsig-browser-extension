@@ -2,41 +2,105 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Loader2, Plus } from 'lucide-react'
 import React, { useCallback, useState } from 'react'
 
+import type { ApiKeyType } from '@/src/lib/projects'
+
 import { Button } from '@/src/components/ui/button'
 import { Input } from '@/src/components/ui/input'
 import { Label } from '@/src/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/components/ui/select'
 import { initialLogin } from '@/src/handlers/initial-login'
 import { useAddProject } from '@/src/hooks/use-projects'
-import { PERSONAL_KEY_GUIDANCE } from '@/src/lib/projects'
+import { isApiKeyType, KEY_TYPE_OPTIONS, PERSONAL_KEY_GUIDANCE } from '@/src/lib/projects'
+import { handleApiError } from '@/src/lib/utils'
 import { useSettingsStore } from '@/src/store/use-settings-store'
+
+interface KeyTypeSelectProps {
+  id: string
+  value: ApiKeyType
+  onChange: (value: ApiKeyType) => void
+  disabled?: boolean
+  className?: string
+}
+
+/** Picks whether a Console Key may change things in Statsig; used wherever a key is added or edited. */
+export function KeyTypeSelect({ className, disabled, id, onChange, value }: Readonly<KeyTypeSelectProps>) {
+  const handleValueChange = useCallback(
+    (next: string) => {
+      if (isApiKeyType(next)) {
+        onChange(next)
+      }
+    },
+    [onChange],
+  )
+
+  return (
+    <Select value={value} onValueChange={handleValueChange} disabled={disabled}>
+      <SelectTrigger id={id} className={className}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {KEY_TYPE_OPTIONS.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  )
+}
 
 interface AddProjectFormProps {
   /** Pin the inspected site to the new project, so the extension keeps using it there. */
   pinOrigin?: boolean
 }
 
-export function AddProjectForm({ pinOrigin = false }: Readonly<AddProjectFormProps>) {
-  const projects = useSettingsStore((state) => state.projects)
+/** Checks the key with Statsig, then adds it as a project of the given key type. */
+const useLoginAndAddProject = ({
+  apiKeyType,
+  onAdded,
+  onError,
+  pinOrigin,
+}: {
+  apiKeyType: ApiKeyType
+  onAdded: () => void
+  onError: (message: string) => void
+  pinOrigin: boolean
+}) => {
   const addProject = useAddProject()
   const queryClient = useQueryClient()
 
-  const [apiKey, setApiKey] = useState('')
-  const [error, setError] = useState<string>()
-
-  const { isPending, mutate } = useMutation({
+  return useMutation({
     mutationFn: initialLogin,
     onError: (mutationError) => {
-      setError(mutationError instanceof Error ? mutationError.message : 'An unknown error occurred')
+      onError(handleApiError(mutationError))
     },
     onSuccess: (data, variables) => {
       if (!data.success || data.error) {
-        setError(data.error ?? 'The API key was rejected by Statsig')
+        onError(data.error ?? 'The API key was rejected by Statsig')
         return
       }
 
-      setApiKey('')
-      void addProject(variables, pinOrigin).then(() => queryClient.invalidateQueries())
+      onAdded()
+      void addProject(variables, pinOrigin, apiKeyType).then(() => queryClient.invalidateQueries())
     },
+  })
+}
+
+export function AddProjectForm({ pinOrigin = false }: Readonly<AddProjectFormProps>) {
+  const projects = useSettingsStore((state) => state.projects)
+
+  const [apiKey, setApiKey] = useState('')
+  const [apiKeyType, setApiKeyType] = useState<ApiKeyType>('write-key')
+  const [error, setError] = useState<string>()
+
+  const clearApiKey = useCallback(() => {
+    setApiKey('')
+  }, [])
+  const { isPending, mutate } = useLoginAndAddProject({
+    apiKeyType,
+    onAdded: clearApiKey,
+    onError: setError,
+    pinOrigin,
   })
 
   const handleApiKeyChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,6 +152,18 @@ export function AddProjectForm({ pinOrigin = false }: Readonly<AddProjectFormPro
         </Button>
       </div>
       <p className="text-xs text-muted-foreground">{PERSONAL_KEY_GUIDANCE}</p>
+      <div className="flex items-center justify-between gap-2 pt-1">
+        <Label htmlFor="add-project-key-type" className="text-sm font-medium">
+          Key type
+        </Label>
+        <KeyTypeSelect
+          id="add-project-key-type"
+          value={apiKeyType}
+          onChange={setApiKeyType}
+          disabled={isPending}
+          className="w-[140px]"
+        />
+      </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   )

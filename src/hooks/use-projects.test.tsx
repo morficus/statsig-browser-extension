@@ -58,9 +58,17 @@ describe('project hooks', () => {
 
     await expect(result.current('console-a')).resolves.toBe('p1')
 
-    expect(addProjectMock).toHaveBeenCalledWith('console-a')
+    expect(addProjectMock).toHaveBeenCalledWith('console-a', 'write-key')
     expect(fetchProjectFingerprintMock).toHaveBeenCalledWith('console-a')
     expect(updateProjectMock).toHaveBeenCalledWith('p1', { clientKeys: ['client-a'], gateHashes: [] })
+  })
+
+  it('saves the chosen key type on the new project', async () => {
+    const { result } = await renderInAct(() => renderHook(() => useAddProject()))
+
+    await result.current('console-a', false, 'read-key')
+
+    expect(addProjectMock).toHaveBeenCalledWith('console-a', 'read-key')
   })
 
   it('re-reads the detection data of an existing project', async () => {

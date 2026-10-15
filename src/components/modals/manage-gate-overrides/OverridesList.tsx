@@ -61,20 +61,16 @@ export const OverridesList = memo(function OverridesList({
     [canEdit, isPending],
   )
 
-  const columns = useMemo((): SortableColumnConfig<GateOverrideItem>[] => {
-    const next: SortableColumnConfig<GateOverrideItem>[] = [
+  const columns = useMemo(
+    (): SortableColumnConfig<GateOverrideItem>[] => [
       { accessor: (item) => item.id, header: 'ID', id: 'id' },
       { accessor: (item) => item.idType ?? 'userID', header: 'Type', id: 'idType' },
       { accessor: (item) => item.environment ?? 'All Environments', header: 'Environment', id: 'environment' },
       { accessor: (item) => item.type, header: 'Result', id: 'result' },
-    ]
-
-    if (canEdit) {
-      next.push({ className: 'w-[50px]', header: '', id: 'actions' })
-    }
-
-    return next
-  }, [canEdit])
+      { className: 'w-[50px]', header: '', id: 'actions' },
+    ],
+    [],
+  )
 
   return (
     <SharedOverridesList onAddManual={onSwitchToForm} canEdit={canEdit}>
@@ -84,7 +80,7 @@ export const OverridesList = memo(function OverridesList({
         getRowId={getGateOverrideRowId}
         isCurrentUserPredicate={isCurrentUserPredicate}
         onDeleteConfirm={handleDeleteConfirm}
-        colSpan={canEdit ? 5 : 4}
+        colSpan={5}
         emptyEntityName="gate"
         renderRow={renderRow}
       />

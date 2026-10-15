@@ -1,13 +1,15 @@
 import { Check, RefreshCw, Trash2 } from 'lucide-react'
 import React, { useCallback, useState } from 'react'
 
-import type { ProjectMatchReason, StatsigProject } from '@/src/lib/projects'
+import type { ApiKeyType, ProjectMatchReason, StatsigProject } from '@/src/lib/projects'
 
+import { KeyTypeSelect } from '@/src/components/sheets/settings/AddProjectForm'
 import { ProjectLabelInput } from '@/src/components/sheets/settings/ProjectLabelInput'
 import { Badge } from '@/src/components/ui/badge'
 import { Button } from '@/src/components/ui/button'
+import { Label } from '@/src/components/ui/label'
 import { useRefreshProject, useSwitchProject } from '@/src/hooks/use-projects'
-import { MATCH_REASON_LABELS } from '@/src/lib/projects'
+import { getProjectKeyType, MATCH_REASON_LABELS } from '@/src/lib/projects'
 import { useSettingsStore } from '@/src/store/use-settings-store'
 
 interface ProjectRowProps {
@@ -16,7 +18,7 @@ interface ProjectRowProps {
   matchReason?: ProjectMatchReason
 }
 
-const KEY_PREVIEW_LENGTH = 14
+const KEY_PREVIEW_LENGTH = 12
 
 const detectionBadge = (project: StatsigProject) => {
   if (project.clientKeys.length > 0) {
@@ -26,6 +28,31 @@ const detectionBadge = (project: StatsigProject) => {
     return { label: 'Gate fingerprint', variant: 'secondary' as const }
   }
   return { label: 'No detection data', variant: 'outline' as const }
+}
+
+function ProjectKeyType({ project }: Readonly<{ project: StatsigProject }>) {
+  const updateProject = useSettingsStore((state) => state.updateProject)
+
+  const handleChange = useCallback(
+    (apiKeyType: ApiKeyType) => {
+      void updateProject(project.id, { apiKeyType })
+    },
+    [project.id, updateProject],
+  )
+
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <Label htmlFor={`key-type-${project.id}`} className="text-xs text-muted-foreground">
+        Key type
+      </Label>
+      <KeyTypeSelect
+        id={`key-type-${project.id}`}
+        value={getProjectKeyType(project)}
+        onChange={handleChange}
+        className="h-7 w-[120px] px-2 text-xs"
+      />
+    </div>
+  )
 }
 
 export function ProjectRow({ isActive, matchReason, project }: Readonly<ProjectRowProps>) {
@@ -70,6 +97,7 @@ export function ProjectRow({ isActive, matchReason, project }: Readonly<ProjectR
         <p className="truncate font-mono text-[10px] text-muted-foreground">
           {project.apiKey.slice(0, KEY_PREVIEW_LENGTH)}…
         </p>
+        <ProjectKeyType project={project} />
         <div className="flex flex-wrap items-center gap-1">
           <Badge variant={detection.variant}>{detection.label}</Badge>
           {matchReason && isActive && <Badge variant="default">{MATCH_REASON_LABELS[matchReason]}</Badge>}

@@ -15,6 +15,8 @@ interface LoginResult {
 
 const noopLoginResolver = (_value: LoginResult) => {}
 
+const { addProjectMock } = vi.hoisted(() => ({ addProjectMock: vi.fn() }))
+
 // Mock initialLogin handler
 vi.mock(import('@/src/handlers/initial-login'), async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/src/handlers/initial-login')>()
@@ -29,7 +31,7 @@ vi.mock(import('@/src/hooks/use-projects'), async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/src/hooks/use-projects')>()
   return {
     ...actual,
-    useAddProject: () => vi.fn().mockResolvedValue('project-1'),
+    useAddProject: () => addProjectMock,
   }
 })
 
@@ -40,6 +42,7 @@ describe('authForm component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    addProjectMock.mockResolvedValue('project-1')
   })
 
   it('renders initial state correctly', () => {
@@ -123,6 +126,62 @@ describe('authForm component', () => {
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith('console-valid-key', expect.anything())
     })
+  })
+
+  it('offers the key types, defaulting to read & write', () => {
+    renderWithProviders(
+      <Dialog open>
+        <DialogContent>
+          <AuthForm {...defaultProps} />
+        </DialogContent>
+      </Dialog>,
+    )
+
+    expect(screen.getByRole('combobox', { name: 'Key type' })).toHaveTextContent('Read & write')
+  })
+
+  it.each([
+    ['Read & write', 'write-key'],
+    ['Read only', 'read-key'],
+  ])('saves the project as %s', async (label, apiKeyType) => {
+    vi.mocked(initialLogin).mockResolvedValue({ data: { message: 'Success' }, error: undefined, success: true })
+
+    const { user } = renderWithProviders(
+      <Dialog open>
+        <DialogContent>
+          <AuthForm {...defaultProps} />
+        </DialogContent>
+      </Dialog>,
+    )
+
+    await user.type(screen.getByPlaceholderText('console-...'), 'console-valid-key')
+    await user.click(screen.getByRole('combobox', { name: 'Key type' }))
+    await user.click(screen.getByRole('option', { name: label }))
+    await user.click(screen.getByRole('button', { name: /Login/iu }))
+
+    await waitFor(() => {
+      expect(addProjectMock).toHaveBeenCalledWith('console-valid-key', false, apiKeyType)
+    })
+  })
+
+  it('does not show the key when the login request fails with it in the message', async () => {
+    vi.mocked(initialLogin).mockRejectedValue(new Error('Request failed for console-abc123'))
+
+    const { user } = renderWithProviders(
+      <Dialog open>
+        <DialogContent>
+          <AuthForm {...defaultProps} />
+        </DialogContent>
+      </Dialog>,
+    )
+
+    await user.type(screen.getByPlaceholderText('console-...'), 'console-abc123')
+    await user.click(screen.getByRole('button', { name: /Login/iu }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/Request failed/u)).toBeInTheDocument()
+    })
+    expect(screen.queryByText(/abc123/u)).not.toBeInTheDocument()
   })
 
   it('disables input and button when pending', async () => {

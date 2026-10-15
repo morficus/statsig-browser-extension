@@ -44,6 +44,7 @@ const ExperimentOverrideControls = memo(function ExperimentOverrideControls({
   isPending,
   isCurrentEnvOverridden,
   groups,
+  canEdit,
 }: {
   currentEnvValue: string | null
   detectedUserId: string
@@ -54,6 +55,7 @@ const ExperimentOverrideControls = memo(function ExperimentOverrideControls({
   isPending: boolean
   isCurrentEnvOverridden: boolean
   groups: Group[]
+  canEdit: boolean
 }) {
   const handleOverride = useCallback(() => {
     if (detectedUserId && selectedGroupId) {
@@ -70,7 +72,7 @@ const ExperimentOverrideControls = memo(function ExperimentOverrideControls({
     <div className="mt-2 flex flex-col gap-2">
       <Label className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">Override Group</Label>
       <div className="flex items-center gap-2">
-        <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
+        <Select value={selectedGroupId} onValueChange={setSelectedGroupId} disabled={!canEdit}>
           <SelectTrigger className="h-8 w-full bg-background" aria-label="Select group for detected user">
             <SelectValue placeholder="Select group" />
           </SelectTrigger>
@@ -87,7 +89,7 @@ const ExperimentOverrideControls = memo(function ExperimentOverrideControls({
           variant="outline"
           className="h-8 border-primary/20 text-xs hover:bg-primary/10 hover:text-primary"
           onClick={handleOverride}
-          disabled={isPending || !selectedGroupId || isCurrentEnvOverridden}
+          disabled={!canEdit || isPending || !selectedGroupId || isCurrentEnvOverridden}
         >
           {isCurrentEnvOverridden ? 'Overridden' : 'Override'}
         </Button>
@@ -119,7 +121,6 @@ export const PageContextCard = memo(function PageContextCard({
       detectedUserId={detectedUserId}
       isDetectedUserOverridden={isDetectedUserOverridden}
       detectedUserOverrides={detectedUserOverrides}
-      canEdit={canEdit}
       idType={idType}
     >
       {(currentEnvValue) => {
@@ -137,6 +138,7 @@ export const PageContextCard = memo(function PageContextCard({
             idType={idType}
             isPending={isPending}
             isCurrentEnvOverridden={isCurrentEnvOverridden}
+            canEdit={canEdit}
             groups={groups}
           />
         )

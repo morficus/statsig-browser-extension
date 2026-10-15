@@ -34,6 +34,7 @@ const GateOverrideControls = memo(function GateOverrideControls({
   idType,
   isPending,
   isCurrentEnvOverridden,
+  canEdit,
 }: {
   currentEnvValue: string | null
   detectedUserId: string
@@ -41,6 +42,7 @@ const GateOverrideControls = memo(function GateOverrideControls({
   idType: string
   isPending: boolean
   isCurrentEnvOverridden: boolean
+  canEdit: boolean
 }) {
   const handlePass = useCallback(() => {
     onAddOverride({ environment: currentEnvValue, idType, type: 'pass', userId: detectedUserId })
@@ -59,7 +61,7 @@ const GateOverrideControls = memo(function GateOverrideControls({
           variant="outline"
           className="h-8 flex-1 border-primary/20 text-xs hover:bg-primary/10 hover:text-primary"
           onClick={handlePass}
-          disabled={isPending || isCurrentEnvOverridden}
+          disabled={!canEdit || isPending || isCurrentEnvOverridden}
         >
           PASS
         </Button>
@@ -68,7 +70,7 @@ const GateOverrideControls = memo(function GateOverrideControls({
           variant="outline"
           className="h-8 flex-1 border-destructive/20 text-xs hover:bg-destructive/10 hover:text-destructive"
           onClick={handleFail}
-          disabled={isPending || isCurrentEnvOverridden}
+          disabled={!canEdit || isPending || isCurrentEnvOverridden}
         >
           FAIL
         </Button>
@@ -97,7 +99,6 @@ export const PageContextCard = memo(function PageContextCard({
       detectedUserId={detectedUserId}
       isDetectedUserOverridden={isDetectedUserOverridden}
       detectedUserOverrides={detectedUserOverrides}
-      canEdit={canEdit}
       idType={idType}
     >
       {(currentEnvValue) => {
@@ -113,6 +114,7 @@ export const PageContextCard = memo(function PageContextCard({
             idType={idType}
             isPending={isPending}
             isCurrentEnvOverridden={isCurrentEnvOverridden}
+            canEdit={canEdit}
           />
         )
       }}

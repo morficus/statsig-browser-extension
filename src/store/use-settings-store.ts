@@ -3,11 +3,11 @@ import type { StoreApi } from 'zustand'
 
 import { create } from 'zustand'
 
-import type { StatsigProject } from '@/src/lib/projects'
+import type { ApiKeyType, StatsigProject } from '@/src/lib/projects'
 
-import { createProject, findProject } from '@/src/lib/projects'
+import { createProject, findProject, getProjectKeyType } from '@/src/lib/projects'
 import { queryClient } from '@/src/lib/query-client'
-import { activeProjectIdStorage, apiKeyStorage, projectsStorage } from '@/src/lib/storage'
+import { activeProjectIdStorage, apiKeyStorage, apiKeyTypeStorage, projectsStorage } from '@/src/lib/storage'
 import { useUIStore } from '@/src/store/use-ui-store'
 
 interface SettingsState {
@@ -18,7 +18,7 @@ interface SettingsState {
   isApiKeyLoading: boolean
 
   initialize: () => Promise<void>
-  addProject: (apiKey: string) => Promise<string>
+  addProject: (apiKey: string, apiKeyType?: ApiKeyType) => Promise<string>
   removeProject: (projectId: string) => Promise<void>
   setActiveProject: (projectId: string, pinOrigin?: string) => Promise<void>
   updateProject: (projectId: string, changes: Partial<Omit<StatsigProject, 'id'>>) => Promise<void>
@@ -29,7 +29,10 @@ const persist = async (projects: StatsigProject[], activeProjectId: string) => {
   await projectsStorage.setValue(projects)
   await activeProjectIdStorage.setValue(activeProjectId)
   // Mirror the active key so the background script can authorize requests without resolving projects.
-  await apiKeyStorage.setValue(findProject(projects, activeProjectId)?.apiKey ?? '')
+  const active = findProject(projects, activeProjectId)
+  await apiKeyStorage.setValue(active?.apiKey ?? '')
+  // The key type travels with the key, so the background script and the UI always see the active project's.
+  await apiKeyTypeStorage.setValue(active ? getProjectKeyType(active) : 'write-key')
 }
 
 const nextLabel = (projects: StatsigProject[]) => `Project ${projects.length + 1}`
@@ -194,14 +197,14 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
   const { initialize, update } = createProjectPersistence(set, get)
   return {
     activeProjectId: '',
-    addProject: async (apiKey: string) => {
+    addProject: async (apiKey: string, apiKeyType: ApiKeyType = 'write-key') => {
       const { projects } = get()
       const existing = projects.find((project) => project.apiKey === apiKey)
       if (existing) {
         await get().setActiveProject(existing.id)
         return existing.id
       }
-      const project = createProject(apiKey, nextLabel(projects))
+      const project = { ...createProject(apiKey, nextLabel(projects)), apiKeyType }
       await update([...projects, project], project.id)
       return project.id
     },

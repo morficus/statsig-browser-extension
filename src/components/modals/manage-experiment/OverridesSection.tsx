@@ -11,6 +11,7 @@ import { PageContextCard } from './PageContextCard'
 export function OverridesSection() {
   const {
     addOverride,
+    canWrite,
     deleteOverride,
     detectedUser,
     detectedUserId,
@@ -21,7 +22,7 @@ export function OverridesSection() {
     isDetectedUserOverridden,
     isPending,
     overridesData,
-    typeApiKey,
+    readOnlyReason,
     view,
     experiment,
   } = useOverridesSectionLogic()
@@ -40,21 +41,22 @@ export function OverridesSection() {
 
   return (
     <div className="mt-4 flex flex-col gap-6">
+      {readOnlyReason && <p className="text-xs text-muted-foreground">{readOnlyReason}</p>}
       <PageContextCard
         detectedUser={detectedUser ?? undefined}
         detectedUserId={detectedUserId ?? ''}
         isDetectedUserOverridden={isDetectedUserOverridden}
         detectedUserOverrides={detectedUserOverrides}
-        canEdit={typeApiKey === 'write-key'}
+        canEdit={canWrite}
         isPending={isPending}
         groups={groups}
         onAddOverride={handleAddOverride}
         experiment={experiment}
       />
 
-      {view === 'table' ? (
+      {view === 'table' || !canWrite ? (
         <OverridesList
-          canEdit={typeApiKey === 'write-key'}
+          canEdit={canWrite}
           onCreateOverrideClick={handleCreateOverrideClick}
           overridesData={overridesData}
           onDeleteOverride={deleteOverride}

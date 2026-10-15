@@ -42,19 +42,17 @@ export const OverrideRow = memo(function OverrideRow({ item, canEdit, isPending,
       <TableCell>
         <Badge variant={item.type === 'pass' ? 'default' : 'destructive'}>{item.type.toUpperCase()}</Badge>
       </TableCell>
-      {canEdit && (
-        <TableCell>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-            onClick={handleDelete}
-            disabled={isPending}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </TableCell>
-      )}
+      <TableCell>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+          onClick={handleDelete}
+          disabled={!canEdit || isPending}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </TableCell>
     </TableRow>
   )
 })

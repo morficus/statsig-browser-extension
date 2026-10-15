@@ -1,6 +1,6 @@
 import { storage } from 'wxt/utils/storage'
 
-import type { StatsigProject } from '@/src/lib/projects'
+import type { ApiKeyType, StatsigProject } from '@/src/lib/projects'
 
 /**
  * Console API key of the active project. Derived from {@link projectsStorage} plus
@@ -22,7 +22,7 @@ export const localStorageKeyStorage = storage.defineItem<string>('local:statsig-
   fallback: 'statsig_user',
 })
 
-export const apiKeyTypeStorage = storage.defineItem<'write-key' | 'read-key'>('local:api_key_type', {
+export const apiKeyTypeStorage = storage.defineItem<ApiKeyType>('local:api_key_type', {
   fallback: 'write-key',
 })
 

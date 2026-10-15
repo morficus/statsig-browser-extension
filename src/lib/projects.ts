@@ -1,10 +1,15 @@
 import { djb2 } from '@/src/lib/djb2'
 
+/** Whether a Console Key may change things in Statsig (`write-key`) or only read (`read-key`). */
+export type ApiKeyType = 'write-key' | 'read-key'
+
 /** A Statsig project managed by the extension, identified by its Console API key. */
 export interface StatsigProject {
   id: string
   label: string
   apiKey: string
+  /** Missing means `write-key` (projects saved before the key type was stored). */
+  apiKeyType?: ApiKeyType
   /** CLIENT SDK keys of the project (empty when the Console key lacks the `can_access_keys` scope). */
   clientKeys: string[]
   /** Hashes (djb2) of the project's gate names, used to fingerprint a page when `clientKeys` is empty. */
@@ -38,10 +43,10 @@ export interface ProjectMatch {
 const MIN_FINGERPRINT_MATCHES = 3
 const MIN_FINGERPRINT_RATIO = 0.5
 
-/** User-facing wording for the signal that resolved a match. */
 /** Shown under every Console Key input, so each change in Statsig is tied to a person. */
 export const PERSONAL_KEY_GUIDANCE = 'Use your own Personal Console Key, not a shared project key.'
 
+/** User-facing wording for the signal that resolved a match. */
 export const MATCH_REASON_LABELS: Record<ProjectMatchReason, string> = {
   'client-key': 'SDK key matches this project',
   fingerprint: 'Gates match this project',
@@ -49,6 +54,17 @@ export const MATCH_REASON_LABELS: Record<ProjectMatchReason, string> = {
   manual: 'Picked by hand for this popup',
   origin: 'Pinned to this site',
 }
+
+export const getProjectKeyType = (project: StatsigProject): ApiKeyType => project.apiKeyType ?? 'write-key'
+
+/** The key types a tester can pick, in display order; the first is the default. */
+export const KEY_TYPE_OPTIONS: { label: string; value: ApiKeyType }[] = [
+  { label: 'Read & write', value: 'write-key' },
+  { label: 'Read only', value: 'read-key' },
+]
+
+export const isApiKeyType = (value: string): value is ApiKeyType =>
+  KEY_TYPE_OPTIONS.some((option) => option.value === value)
 
 export const createProject = (apiKey: string, label: string): StatsigProject => ({
   apiKey,

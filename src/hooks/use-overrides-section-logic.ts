@@ -7,8 +7,7 @@ import { useExperimentMutations } from '@/src/hooks/use-experiment-mutations'
 import { useFeatureGates } from '@/src/hooks/use-feature-gates'
 import { useOverrides } from '@/src/hooks/use-overrides'
 import { useUserDetails } from '@/src/hooks/use-user-details'
-import { useWxtStorage } from '@/src/hooks/use-wxt-storage'
-import { apiKeyTypeStorage } from '@/src/lib/storage'
+import { useWriteAccess } from '@/src/hooks/use-write-access'
 import { getDetectedUserId } from '@/src/lib/user-utils'
 import { useUIStore } from '@/src/store/use-ui-store'
 
@@ -171,7 +170,7 @@ const useOverrideData = (currentItemId: string | undefined) => {
 }
 
 export const useOverridesSectionLogic = () => {
-  const [typeApiKey] = useWxtStorage(apiKeyTypeStorage)
+  const { canWrite, reason: readOnlyReason } = useWriteAccess()
   const [view, setView] = useState<View>('table')
   const { currentItemId } = useUIStore((state) => state)
 
@@ -204,6 +203,7 @@ export const useOverridesSectionLogic = () => {
 
   return {
     addOverride,
+    canWrite,
     currentItemId,
     deleteOverride,
     detectedUser,
@@ -217,7 +217,7 @@ export const useOverridesSectionLogic = () => {
     isDetectedUserOverridden,
     isPending,
     overridesData,
-    typeApiKey,
+    readOnlyReason,
     view,
   }
 }

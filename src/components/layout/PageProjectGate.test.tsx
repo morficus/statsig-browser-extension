@@ -110,7 +110,7 @@ describe('pageProjectGate component', () => {
     await user.click(screen.getByRole('button', { name: /^Add$/iu }))
 
     await waitFor(() => {
-      expect(addProjectMock).toHaveBeenCalledWith('console-new', true)
+      expect(addProjectMock).toHaveBeenCalledWith('console-new', true, 'write-key')
     })
   })
 
@@ -123,7 +123,7 @@ describe('pageProjectGate component', () => {
     await user.click(screen.getByRole('button', { name: /^Add$/iu }))
 
     await waitFor(() => {
-      expect(addProjectMock).toHaveBeenCalledWith('console-a', true)
+      expect(addProjectMock).toHaveBeenCalledWith('console-a', true, 'write-key')
     })
     expect(screen.queryByText('That project is already configured')).not.toBeInTheDocument()
   })

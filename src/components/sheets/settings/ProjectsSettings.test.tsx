@@ -77,6 +77,12 @@ describe('projectsSettings component', () => {
     expect(screen.getByRole('button', { name: 'Project 1 is active' })).toBeInTheDocument()
   })
 
+  it('shows only the start of the saved key', () => {
+    renderWithProviders(<ProjectsSettings />)
+
+    expect(screen.getByText('console-aaaa…')).toBeInTheDocument()
+  })
+
   it('shows how the active project was matched', () => {
     contextState.projectMatch = { projectId: 'p1', reason: 'hashed-key' }
 
@@ -141,8 +147,42 @@ describe('projectsSettings component', () => {
     await user.click(screen.getByRole('button', { name: /Add/iu }))
 
     await waitFor(() => {
-      expect(addProjectMock).toHaveBeenCalledWith('console-new', false)
+      expect(addProjectMock).toHaveBeenCalledWith('console-new', false, 'write-key')
     })
+  })
+
+  it('adds the project with the key type picked in the form', async () => {
+    vi.mocked(initialLogin).mockResolvedValue({ data: undefined, error: undefined, success: true })
+
+    const { user } = renderWithProviders(<ProjectsSettings />)
+
+    await user.type(screen.getByLabelText('Statsig Console API Key'), 'console-new')
+    await user.click(screen.getAllByRole('combobox', { name: 'Key type' }).at(-1)!)
+    await user.click(screen.getByRole('option', { name: 'Read only' }))
+    await user.click(screen.getByRole('button', { name: /Add/iu }))
+
+    await waitFor(() => {
+      expect(addProjectMock).toHaveBeenCalledWith('console-new', false, 'read-key')
+    })
+  })
+
+  it('shows each project with its key type, counting a missing type as read & write', () => {
+    settingsState.projects = [project(), project({ apiKeyType: 'read-key', id: 'p2', label: 'Project 2' })]
+
+    renderWithProviders(<ProjectsSettings />)
+
+    const [first, second] = screen.getAllByRole('combobox', { name: 'Key type' })
+    expect(first).toHaveTextContent('Read & write')
+    expect(second).toHaveTextContent('Read only')
+  })
+
+  it('changes the key type of a project', async () => {
+    const { user } = renderWithProviders(<ProjectsSettings />)
+
+    await user.click(screen.getAllByRole('combobox', { name: 'Key type' })[0])
+    await user.click(screen.getByRole('option', { name: 'Read only' }))
+
+    expect(updateProjectMock).toHaveBeenCalledWith('p1', { apiKeyType: 'read-key' })
   })
 
   it('surfaces the error returned by Statsig', async () => {

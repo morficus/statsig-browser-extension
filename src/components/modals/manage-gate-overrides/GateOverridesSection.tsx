@@ -53,6 +53,7 @@ function GateOverridesManager({
     detectedUserOverrides,
     canEdit,
     isPending,
+    readOnlyReason,
     allOverrides,
     handleAddOverride,
     handleDeleteOverride,
@@ -62,6 +63,7 @@ function GateOverridesManager({
 
   return (
     <div className="mt-4 flex flex-col gap-6">
+      {readOnlyReason && <p className="text-xs text-muted-foreground">{readOnlyReason}</p>}
       <PageContextCard
         detectedUser={detectedUser ?? undefined}
         detectedUserId={detectedUserId ?? ''}
@@ -73,7 +75,7 @@ function GateOverridesManager({
         featureGate={featureGate}
       />
 
-      {view === 'table' ? (
+      {view === 'table' || !canEdit ? (
         <OverridesList
           allOverrides={allOverrides}
           canEdit={canEdit}
