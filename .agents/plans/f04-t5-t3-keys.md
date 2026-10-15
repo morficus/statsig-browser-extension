@@ -1,7 +1,7 @@
 # Brief: F04-T5 + F04-T3 Key guidance, key type per project, and read-key write gating
 
 slug: f04-t5-t3-keys
-status: agreed
+status: done (b086d7a, 6370c8a)
 agent: f04-keys (Sonnet, isolated worktree)
 
 ## Decision

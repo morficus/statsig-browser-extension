@@ -1,7 +1,7 @@
 # Brief: F04-T4 Audit key handling, remote code, and telemetry
 
 slug: f04-t4-audit
-status: agreed
+status: done (fb187a4, cee1114)
 agent: f04-audit (Sonnet, isolated worktree)
 
 ## Decision

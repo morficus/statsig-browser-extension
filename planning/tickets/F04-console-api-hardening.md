@@ -49,29 +49,29 @@ The Console Key can only reach `statsigapi.net`, only the allowed write calls ca
 
 ### F04-T3: Make read-key mode work, and disable writes with a reason
 
-- **Status:** In progress
+- **Status:** Done (`6370c8a`). See WL-028
 - **Owner:** Claude
 - **Size:** M
 - **Depends on:** Q7 (resolved: the Tester picks the type per project, WL-026)
 - **Description:** WL-013: nothing sets `read-key`, and `use-settings-storage.ts` forces `write-key`. Let the key type be set (per Q7: chosen when the key is added, or detected), stored per project if possible. Add one shared helper (for example `useWriteAccess()` returning `{ canWrite, reason }`) that the gate and experiment UIs, and later F07 and F08, all use.
 - **Acceptance criteria:**
-  - [ ] With a read key, every write action is disabled and shows the reason (T-SEC-2)
-  - [ ] Gate override behavior with a write key is unchanged (REQ-GAT-001)
-  - [ ] Unit tests for the helper and for the removed forced reset
+  - [x] With a read key, every write action is disabled and shows the reason (T-SEC-2)
+  - [x] Gate override behavior with a write key is unchanged (REQ-GAT-001)
+  - [x] Unit tests for the helper and for the removed forced reset
 - **Verification:** `pnpm vitest run src/hooks src/components`; manual T-SEC-2
 - **Files likely touched:** `src/lib/storage.ts`, `src/hooks/use-settings-storage.ts`, `src/hooks/use-write-access.ts` (new), `src/components/modals/manage-experiment/OverridesSection.tsx`, `src/hooks/use-gate-overrides-logic.ts`
 
 ### F04-T4: Audit key handling, remote code, and telemetry
 
-- **Status:** In progress
+- **Status:** Done (`fb187a4`, `cee1114`; saved-key preview and form errors in `6370c8a`). See WL-027
 - **Owner:** Claude
 - **Size:** S
 - **Depends on:** None
 - **Description:** Check REQ-SEC-002, 003, 004, 006, and 009 and fix any gap. The key lives only in `browser.storage.local`. It never goes to page storage, cookies, the DOM, or `console.*`, including error messages that echo headers. Saved keys show only their first characters. There's no `eval` or `new Function` (enable the oxlint rules if they're off). There are no analytics calls, and fonts are bundled (`@fontsource`).
 - **Acceptance criteria:**
-  - [ ] The audit results, with grep evidence, are in a `WORKLOG.md` entry
-  - [ ] Any gap found is fixed and tested
-  - [ ] oxlint blocks `eval` and `new Function`
+  - [x] The audit results, with grep evidence, are in a `WORKLOG.md` entry
+  - [x] Any gap found is fixed and tested
+  - [x] oxlint blocks `eval` and `new Function`
 - **Verification:** `pnpm lint`; the greps in the WL entry
 - **Files likely touched:** `oxlint.config.ts`, `src/components/sheets/settings/StatsigKeysSettings.tsx`, maybe `src/lib/tabs.ts` (logs)
 

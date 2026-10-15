@@ -8,12 +8,12 @@ Planning of record lives in `planning/` (board, tickets, WORKLOG). This list tra
 
 ## Agreed
 
-- f04-t4-audit — F04-T4 key handling, remote code, telemetry audit — agent f04-audit
-- f04-t5-t3-keys — F04-T5 key guidance + F04-T3 key type per project and write gating — agent f04-keys
 
 
 ## Done
 
+- f04-t4-audit — F04-T4 audit — `fb187a4`, `cee1114`
+- f04-t5-t3-keys — F04-T5 guidance + F04-T3 key type and write gating — `b086d7a`, `6370c8a`
 - f04-t1-t2-api-module — F04-T1 + T2 API module, host and write allowlists — `6e255cf`, `5335e4d`
 - f01-t3-signing-key — F01-T3 new Chrome signing key — `90b8e7c`
 - f01-t1-rename — F01-T1 rename the product — `080bdbd`

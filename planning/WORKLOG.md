@@ -259,3 +259,39 @@ Maurice decided the following.
   - Reason shown when writes are disabled (REQ-SEC-008): "Read-only key. Add a key with write access to change overrides."
   - Key type options: "Read & write" and "Read only".
 - **Defense in depth.** The background script also refuses every non-GET request while the active key type is `read-key`. The UI gating comes first.
+
+### WL-027 · 2026-10-15 · Discovery · Key handling, remote code, and telemetry audit (F04-T4)
+
+**Tickets:** F04-T4, F04-T3 · REQ-SEC-002, REQ-SEC-003, REQ-SEC-004, REQ-SEC-006, REQ-SEC-009 · WL-017
+
+Audited at `e409c45`. The greps ran over `src`, `entrypoints`, `public`, `wxt.config.ts`, and the built `.output/chrome-mv3`.
+
+- **REQ-SEC-002: pass.** The key is stored only in `local:statsig-console-api-key` and `local:statsig-projects` (`src/lib/storage.ts:9,13`). The built content script and detector contain no storage code and no key strings (`grep -rn 'statsig-console-api-key\|statsig-projects' .output/chrome-mv3`).
+- **REQ-SEC-003: gaps found and fixed.**
+  - Gap: wretch 3 uses the raw response body as `error.message`. `handleApiError` (`src/lib/utils.ts`) returned the body or `error.message` for any status other than 401, 403, 404, and 5xx, and for native errors. `initialLogin` showed that on screen and logged the raw error. A `401` that echoes `Key: console-...` (WL-017) could reach the screen or the console.
+  - Fix: `handleApiError` now redacts every `console-[\w-]+` token to `console-…`, and every `console.*` call that logged a raw caught error now logs `handleApiError(error)` instead: `initial-login.ts`, `get-unit-id-types.ts`, `use-detected-user.ts`, `use-wxt-storage.ts`, `tabs.ts` (`fb187a4`, `cee1114`).
+  - We chose redaction over fixed messages, so the API's useful 400, 409, 422, and 429 messages still show.
+  - Page storage, cookies, the page DOM, and content-script messages carry no key. The only page `localStorage` access reads the page's own user object (`src/lib/get-user-details-injector.ts`).
+  - Not fixed, low risk: three logs in `src/store/use-settings-store.ts` (persist, read external, initialize) log raw `browser.storage` errors. Those errors don't echo stored values.
+  - Residual: hooks throw `new Error(handleApiError(error), { cause: error })`, so `cause` keeps the raw error. Nothing logs it today. React Query doesn't use `throwOnError`, so `ErrorBoundary` never receives a query error. Enabling `throwOnError` would change that.
+- **REQ-SEC-004: gap, fixed in F04-T3.** `ProjectRow.tsx` showed the first 14 characters of a saved key (6 past `console-`). It now shows 12. The login and add-project forms also map mutation errors through `handleApiError`.
+- **REQ-SEC-006: pass.** The source has no `eval`, `new Function`, string timers, remote `import()`, remote `<script src>`, or remote `@import`. The manifest has no `content_security_policy`, so the MV3 default applies. The only built hit is `Function('')` inside zod's eval-support probe (a dependency, in a try/catch). oxlint now errors on `no-eval`, `no-implied-eval`, and `no-new-func`. A probe file proved all three fire. Before this, only `no-eval` was on.
+- **REQ-SEC-009: pass.** No analytics or telemetry names appear in the source, `pnpm-lock.yaml`, or the build (`gtag`, `segment`, `sentry`, `posthog`, `mixpanel`, `amplitude`, `datadog`, `hotjar`, `sendBeacon`, and others). The only `fetch(` is in `entrypoints/background.ts`. Fonts are bundled from `@fontsource/inter` (`entrypoints/popup/main.tsx`), and the build has no CDN or Google Fonts URLs.
+- **Not in scope, noted.** The key inputs are plain text, not `type="password"`.
+
+Grep scripts and raw output: the agent scratch folder `.agents/scratch/f04-t4-audit/` (`greps.sh`, `greps2.sh`, `audit.md`), which is gitignored.
+
+### WL-028 · 2026-10-15 · Decision · How read-key mode looks and behaves (F04-T3)
+
+**Tickets:** F04-T3, F07, F08 · REQ-SEC-008, REQ-GAT-001, REQ-GAT-002 · WL-013, WL-026
+
+- **Storage.** `StatsigProject.apiKeyType` is optional (`src/lib/projects.ts`). Missing means `write-key`, so projects saved before F04-T3 keep the base behavior. The settings store writes the active project's type to `local:api_key_type` whenever it writes the active key (`src/store/use-settings-store.ts`). With no active project, it writes `write-key`. The background script reads that item to refuse writes (F04-T2). The forced reset in `use-settings-storage.ts` is gone.
+- **Picking the type.** The login form, the add-project form, and each project row have a `Key type` select ("Read & write" first, the default; then "Read only"). Adding a key that already belongs to a project activates that project and keeps its stored type, as before.
+- **Gating.** `useWriteAccess()` (`src/hooks/use-write-access.ts`) returns `{ canWrite, reason }`. While storage loads, it returns `canWrite: false` with no reason, so the reason doesn't flash. F07 and F08 must use it.
+  - With a read key, the gate and experiment override sections show the reason once at the top.
+  - Every write control is rendered but disabled: Add Manual, PASS and FAIL, the group select and Override, and every delete button, including the gate and segment rows.
+  - The add forms can't be opened.
+  - The environment select stays enabled, because it's a local choice, not a write.
+  - `BaseOverrideContextCard` no longer takes `canEdit`.
+- **Tests.** Unit tests cover the hook, the sync, the forms, the project row, and both sections. `e2e/key-type.e2e.ts` covers T-SEC-2: a read-only project disables the gate override controls, and switching to read and write enables them. `e2e/settings.e2e.ts` now finds the theme select by its section, because the new selects broke its `first()` pick.
+- **Copy conflict, open.** The login form's intro still says to log in with a "**Read Only** Statsig Console API Key". That contradicts Job 2, which needs a key with write access. The copy wasn't changed in F04 and needs a decision (Q8).

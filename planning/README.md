@@ -41,7 +41,7 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 | 1: Setup & hardening             | [F01: Rebrand and Chrome-only](tickets/F01-rebrand-chrome-only.md)             | Done        | 3/3   |
 |                                  | [F02: Intake Site scoping](tickets/F02-intake-site-scoping.md)                 | Todo        | 0/4   |
 |                                  | [F03: Repository hygiene](tickets/F03-repo-hygiene.md)                         | Todo        | 0/3   |
-|                                  | [F04: Console API hardening](tickets/F04-console-api-hardening.md)             | In progress | 3/5   |
+|                                  | [F04: Console API hardening](tickets/F04-console-api-hardening.md)             | In progress | 5/5   |
 | 2: Job 2 (force me into a group) | [F05: Stable ID and environment detection](tickets/F05-stable-id-detection.md) | Todo        | 0/2   |
 |                                  | [F06: Override engine](tickets/F06-override-engine.md)                         | Todo        | 0/5   |
 |                                  | [F07: "Force me into this group" UI](tickets/F07-force-me-ui.md)               | Todo        | 0/4   |
@@ -64,7 +64,7 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 
 1. **Maurice:** move the new private signing key to a password manager before the machine restarts (WL-021).
 2. **F00-T2 to F00-T5** (Maurice): the manual checks against Statsig and the Intake Site. F00-T1 is done (WL-016), so the exact calls to test are known. Claude can prepare the curl commands (T3, T5) and the DevTools snippet (T4).
-3. **F04** (Claude): in progress. T1, T2, and T5 are done. T3 and T4 are with agents. Started before phase 0 by decision (WL-026).
+3. **F04** (Claude): all 5 tasks are built and committed. The Opus code review is pending, and then manual T-SEC-1 and T-SEC-2 in a real browser (Maurice). Started before phase 0 by decision (WL-026).
 4. Then F02 and F03, once Q2 is answered for them. F01 is done (WL-019 to WL-022).
 5. Known flaky e2e test (WL-023) and local tooling notes (WL-024): pick these up with F03.
 
@@ -80,3 +80,4 @@ Each resolved question becomes a `Decision` entry in `WORKLOG.md`. Then remove i
 | Q4  | **Existing experiment override modal and REQ-OVR-009.** The base modal can delete any override row, and a delete removes every ID in that row. Should it be limited to the Tester's own ID, made read-only, or removed? See WL-004. | F06-T3, F07 |
 | Q5  | **Project gate.** The popup hides everything unless the page's SDK key matches a configured project. Do the Intake flows keep this gate (each Tester adds their key and pins it to the site), or bypass it? See WL-010.             | F07, F10    |
 | Q6  | **CI and the `web/` landing page.** `submit.yml` publishes to the stores, `pages.yml` deploys the Statsig-branded `web/` site. Keep, adapt, or remove?                                                                              | F03-T3      |
+| Q8  | **Login form intro copy.** It tells the Tester to use a "Read Only" Console API Key, but Job 2 needs write access. What should it say? See WL-028.                                                                                  | F07, F12-T1 |
