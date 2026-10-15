@@ -8,12 +8,13 @@ Planning of record lives in `planning/` (board, tickets, WORKLOG). This list tra
 
 ## Agreed
 
-- f03-t1-t3-ci — F03-T1 + F03-T3 no automatic updates, CI keeps only the checks (WL-034, WL-035)
-- f03-t2-claude-md — F03-T2 replace `CLAUDE.md` (phase 1 draft, phase 2 after the others land)
-- f03-t4-flaky-e2e — F03-T4 fix the flaky e2e test (WL-023), own worktree `f03-t4-e2e`
-- f03-t5-worktree-ignore — F03-T5 ignore `.claude/worktrees/` in git, lint, format, tests (WL-024)
 
 ## Done
+
+- f03-t5-worktree-ignore — F03-T5 ignore `.claude/worktrees/` in git and vitest — `36f073f`
+- f03-t1-t3-ci — F03-T1 no automatic updates — `fbb53c7`; F03-T3 CI keeps only the checks — `acce7ba` (pushed CI run still to confirm)
+- f03-t4-flaky-e2e — F03-T4 e2e tests wait for storage writes — `8e279bf`
+- f03-t2-claude-md — F03-T2 replace `CLAUDE.md`, fix `pnpm dev:chrome` on a fresh checkout — `1fa97af`
 
 - f01-t3-signing-key — F01-T3 new Chrome signing key — `90b8e7c`
 - f01-t1-rename — F01-T1 rename the product — `080bdbd`
