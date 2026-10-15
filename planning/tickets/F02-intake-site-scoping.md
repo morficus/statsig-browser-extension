@@ -42,7 +42,7 @@ The extension can reach only `statsigapi.net` and the two Intake Site patterns. 
 
 ### F02-T3: Refuse to read SDK state outside the Intake Site
 
-- **Status:** Todo
+- **Status:** In progress
 - **Owner:** Claude
 - **Size:** M
 - **Depends on:** F02-T1

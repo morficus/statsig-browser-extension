@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react'
 import { browser } from 'wxt/browser'
 
-import { getActiveTab } from '@/src/lib/tabs'
+import { getActiveIntakeTab } from '@/src/lib/tabs'
 import { useContextStore } from '@/src/store/use-context-store'
 
 interface DetectedResponse {
@@ -71,9 +71,8 @@ export function useDetectedUser() {
   )
 
   const retryDetection = useCallback(async () => {
-    const tab = await getActiveTab()
+    const tab = await getActiveIntakeTab()
     if (!tab?.id) {
-      console.error('[Intake Experiment Testing] No active tab found')
       return
     }
 
@@ -93,7 +92,7 @@ export function useDetectedUser() {
 
   const fetchUser = useCallback(
     async (retries = 3, delay = 100) => {
-      const tab = await getActiveTab()
+      const tab = await getActiveIntakeTab()
       const activeTabId = tab?.id
 
       if (activeTabId) {

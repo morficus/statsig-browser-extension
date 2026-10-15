@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 
 import { getUserDetails } from '@/src/handlers/get-user-details'
-import { getActiveTab } from '@/src/lib/tabs'
+import { getActiveIntakeTab } from '@/src/lib/tabs'
 import { useContextStore } from '@/src/store/use-context-store'
 
 /**
@@ -13,11 +13,11 @@ export const useDetectedStatsigKeys = () => {
 
   useEffect(() => {
     const read = async () => {
-      const tab = await getActiveTab()
-      if (!tab?.id) {
+      const tab = await getActiveIntakeTab()
+      if (!tab) {
         return
       }
-      const details = await getUserDetails(tab.id)
+      const details = await getUserDetails(tab)
       setDetectedKeys(details?.keys ?? null)
     }
 

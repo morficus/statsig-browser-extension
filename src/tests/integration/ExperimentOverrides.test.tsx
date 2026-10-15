@@ -49,6 +49,11 @@ vi.mock('@/src/lib/fetcher', async (importOriginal) => {
   }
 })
 
+vi.mock(import('@/src/lib/tabs'), async (importOriginal) => ({
+  ...(await importOriginal()),
+  getActiveIntakeTab: () => Promise.resolve({ id: 1, url: 'https://app.staging.talkiatry.com/assessment' } as never),
+}))
+
 // Mock API key and mock detected user
 vi.mock(import('@/src/hooks/use-wxt-storage'), async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/src/hooks/use-wxt-storage')>()

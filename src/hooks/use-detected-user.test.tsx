@@ -5,42 +5,48 @@ import { useDetectedUser } from './use-detected-user'
 
 type MessageListener = (message: unknown) => void
 
-const { browserMock, getActiveTabMock, setDetectedContextMock, setDetectedUserMock, setDetectionErrorMock, listeners } =
-  vi.hoisted(() => {
-    const listenersArray: MessageListener[] = []
-    return {
-      browserMock: {
-        runtime: {
-          onMessage: {
-            addListener: vi.fn((cb: MessageListener) => {
-              listenersArray.push(cb)
-            }),
-            removeListener: vi.fn((cb: MessageListener) => {
-              const i = listenersArray.indexOf(cb)
-              if (i !== -1) {
-                listenersArray.splice(i, 1)
-              }
-            }),
-          },
-        },
-        tabs: {
-          sendMessage: vi.fn(),
+const {
+  browserMock,
+  getActiveIntakeTabMock,
+  setDetectedContextMock,
+  setDetectedUserMock,
+  setDetectionErrorMock,
+  listeners,
+} = vi.hoisted(() => {
+  const listenersArray: MessageListener[] = []
+  return {
+    browserMock: {
+      runtime: {
+        onMessage: {
+          addListener: vi.fn((cb: MessageListener) => {
+            listenersArray.push(cb)
+          }),
+          removeListener: vi.fn((cb: MessageListener) => {
+            const i = listenersArray.indexOf(cb)
+            if (i !== -1) {
+              listenersArray.splice(i, 1)
+            }
+          }),
         },
       },
-      getActiveTabMock: vi.fn(),
-      listeners: listenersArray,
-      setDetectedContextMock: vi.fn(),
-      setDetectedUserMock: vi.fn(),
-      setDetectionErrorMock: vi.fn(),
-    }
-  })
+      tabs: {
+        sendMessage: vi.fn(),
+      },
+    },
+    getActiveIntakeTabMock: vi.fn(),
+    listeners: listenersArray,
+    setDetectedContextMock: vi.fn(),
+    setDetectedUserMock: vi.fn(),
+    setDetectionErrorMock: vi.fn(),
+  }
+})
 
 vi.mock('wxt/browser', () => ({
   browser: browserMock,
 }))
 
 vi.mock('@/src/lib/tabs', () => ({
-  getActiveTab: getActiveTabMock,
+  getActiveIntakeTab: getActiveIntakeTabMock,
 }))
 
 vi.mock('@/src/store/use-context-store', () => ({
@@ -52,6 +58,8 @@ vi.mock('@/src/store/use-context-store', () => ({
     }),
 }))
 
+const INTAKE_URL = 'https://app.staging.talkiatry.com/assessment'
+
 describe('useDetectedUser', () => {
   beforeEach(() => {
     vi.useFakeTimers()
@@ -59,7 +67,7 @@ describe('useDetectedUser', () => {
     setDetectedUserMock.mockReset()
     setDetectedContextMock.mockReset()
     setDetectionErrorMock.mockReset()
-    getActiveTabMock.mockReset()
+    getActiveIntakeTabMock.mockReset()
     browserMock.tabs.sendMessage.mockReset()
     browserMock.runtime.onMessage.addListener.mockClear()
     browserMock.runtime.onMessage.removeListener.mockClear()
@@ -73,7 +81,7 @@ describe('useDetectedUser', () => {
   })
 
   it('writes user and context to the store after fetching from the active tab', async () => {
-    getActiveTabMock.mockResolvedValue({ id: 5 })
+    getActiveIntakeTabMock.mockResolvedValue({ id: 5, url: INTAKE_URL })
     browserMock.tabs.sendMessage.mockResolvedValue({ context: { app: 'web' }, user: { userID: 'u1' } })
 
     renderHook(() => useDetectedUser())
@@ -85,19 +93,19 @@ describe('useDetectedUser', () => {
     expect(setDetectionErrorMock).toHaveBeenCalledWith(null)
   })
 
-  it('does not call setDetectedUser when there is no active tab', async () => {
-    getActiveTabMock.mockResolvedValue(null)
+  it('does not call setDetectedUser when there is no Intake Site tab', async () => {
+    getActiveIntakeTabMock.mockResolvedValue(null)
     renderHook(() => useDetectedUser())
 
     await vi.waitFor(() => {
-      expect(getActiveTabMock).toHaveBeenCalledWith()
+      expect(getActiveIntakeTabMock).toHaveBeenCalledWith()
     })
     expect(browserMock.tabs.sendMessage).not.toHaveBeenCalled()
     expect(setDetectedUserMock).not.toHaveBeenCalled()
   })
 
   it('handles STATSIG_USER_FOUND runtime messages', async () => {
-    getActiveTabMock.mockResolvedValue({ id: 1 })
+    getActiveIntakeTabMock.mockResolvedValue({ id: 1, url: INTAKE_URL })
     browserMock.tabs.sendMessage.mockResolvedValue({})
 
     renderHook(() => useDetectedUser())
@@ -120,7 +128,7 @@ describe('useDetectedUser', () => {
   })
 
   it('handles STATSIG_DETECTED_BUT_ERROR runtime messages', async () => {
-    getActiveTabMock.mockResolvedValue({ id: 1 })
+    getActiveIntakeTabMock.mockResolvedValue({ id: 1, url: INTAKE_URL })
     browserMock.tabs.sendMessage.mockResolvedValue({})
 
     renderHook(() => useDetectedUser())
@@ -138,7 +146,7 @@ describe('useDetectedUser', () => {
   })
 
   it('ignores malformed runtime messages', async () => {
-    getActiveTabMock.mockResolvedValue({ id: 1 })
+    getActiveIntakeTabMock.mockResolvedValue({ id: 1, url: INTAKE_URL })
     browserMock.tabs.sendMessage.mockResolvedValue({})
 
     renderHook(() => useDetectedUser())
@@ -157,7 +165,7 @@ describe('useDetectedUser', () => {
   })
 
   it('removes the message listener on unmount', async () => {
-    getActiveTabMock.mockResolvedValue({ id: 1 })
+    getActiveIntakeTabMock.mockResolvedValue({ id: 1, url: INTAKE_URL })
     browserMock.tabs.sendMessage.mockResolvedValue({})
 
     const { unmount } = renderHook(() => useDetectedUser())
@@ -171,13 +179,13 @@ describe('useDetectedUser', () => {
   })
 
   it('retryDetection sends a message and writes detected user on success', async () => {
-    getActiveTabMock.mockResolvedValue({ id: 3 })
+    getActiveIntakeTabMock.mockResolvedValue({ id: 3, url: INTAKE_URL })
     browserMock.tabs.sendMessage.mockResolvedValueOnce({}).mockResolvedValueOnce({ user: { userID: 'retry_u' } })
 
     const { result } = renderHook(() => useDetectedUser())
 
     await vi.waitFor(() => {
-      expect(getActiveTabMock).toHaveBeenCalledWith()
+      expect(getActiveIntakeTabMock).toHaveBeenCalledWith()
     })
 
     await act(async () => {
@@ -189,7 +197,7 @@ describe('useDetectedUser', () => {
   })
 
   it('retryDetection keeps the current error until the page answers', async () => {
-    getActiveTabMock.mockResolvedValue({ id: 3 })
+    getActiveIntakeTabMock.mockResolvedValue({ id: 3, url: INTAKE_URL })
     browserMock.tabs.sendMessage.mockResolvedValueOnce({}).mockResolvedValueOnce({ error: 'still broken' })
 
     const { result } = renderHook(() => useDetectedUser())
@@ -208,7 +216,9 @@ describe('useDetectedUser', () => {
   })
 
   it('retryDetection writes a detection error if sending the message fails', async () => {
-    getActiveTabMock.mockResolvedValueOnce({ id: 3 }).mockResolvedValueOnce({ id: 3 })
+    getActiveIntakeTabMock
+      .mockResolvedValueOnce({ id: 3, url: INTAKE_URL })
+      .mockResolvedValueOnce({ id: 3, url: INTAKE_URL })
     browserMock.tabs.sendMessage.mockResolvedValueOnce({}).mockRejectedValueOnce(new Error('disconnected'))
 
     const { result } = renderHook(() => useDetectedUser())
@@ -218,5 +228,21 @@ describe('useDetectedUser', () => {
     })
 
     expect(setDetectionErrorMock).toHaveBeenCalledWith('Connection failed. Please refresh the page.')
+  })
+
+  it('sends nothing, retries nothing and logs nothing on a non-Intake tab', async () => {
+    getActiveIntakeTabMock.mockResolvedValue(null)
+    const { result } = renderHook(() => useDetectedUser())
+
+    await act(async () => {
+      await result.current.retryDetection()
+      await vi.advanceTimersByTimeAsync(5000)
+    })
+
+    expect(browserMock.tabs.sendMessage).not.toHaveBeenCalled()
+    expect(setDetectedUserMock).not.toHaveBeenCalled()
+    expect(setDetectionErrorMock).not.toHaveBeenCalled()
+    expect(console.error).not.toHaveBeenCalled()
+    expect(vi.getTimerCount()).toBe(0)
   })
 })

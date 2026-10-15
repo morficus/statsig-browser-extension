@@ -12,7 +12,7 @@ Planning of record lives in `planning/` (board, tickets, WORKLOG). This list tra
 
 ## Done
 
-- f02-review-fixes — guard hardening, bypass regression tests, built-manifest e2e test — (this commit)
+- f02-review-fixes — guard hardening, bypass regression tests, built-manifest e2e test — `9cc6786`
 - f02-t1-intake-site-module — F02-T1 Intake Site URL config module — `51db627`
 - f02-t2-t4-manifest-and-doc — F02-T2 narrow manifest and matches, F02-T4 permissions doc — `4b642cd`, `394a379`
 - f01-t3-signing-key — F01-T3 new Chrome signing key — `90b8e7c`

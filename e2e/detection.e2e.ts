@@ -7,7 +7,7 @@ import { expect, test } from './fixtures'
 import { defaultRoutes, makeFeatureGate, paginated } from './mock-data'
 import { mockApi } from './mocks'
 
-const PAGE_URL = 'https://statsig-fake.test/'
+const PAGE_URL = 'https://app.staging.talkiatry.com/assessment'
 const PAGE_SDK_KEY = 'client-e2e-page-key'
 
 /** A page running the Statsig JS SDK the way `@statsig/js-client` exposes it. */
@@ -210,13 +210,13 @@ test.describe('page to project detection', () => {
     })
 
     const blank = await context.newPage()
-    await blank.route('https://blank-page.test/**', async (route) => {
+    await blank.route('https://app.talkiatry.com/assessment**', async (route) => {
       await route.fulfill({
         body: '<!doctype html><html><body><h1>Nothing here</h1></body></html>',
         contentType: 'text/html',
       })
     })
-    await blank.goto('https://blank-page.test/')
+    await blank.goto('https://app.talkiatry.com/assessment')
 
     const popup = await openPopupForPage(context, extensionId, { statsig: blank })
 

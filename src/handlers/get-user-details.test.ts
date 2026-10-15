@@ -14,6 +14,8 @@ vi.mock('wxt/browser', () => ({
   },
 }))
 
+const INTAKE_URL = 'https://app.staging.talkiatry.com/assessment'
+
 describe('user details handler', () => {
   beforeEach(() => {
     executeScriptMock.mockReset()
@@ -28,7 +30,7 @@ describe('user details handler', () => {
 
     executeScriptMock.mockResolvedValue([{ result: payload }])
 
-    await expect(getUserDetails(42)).resolves.toStrictEqual(payload)
+    await expect(getUserDetails({ id: 42, url: INTAKE_URL })).resolves.toStrictEqual(payload)
 
     expect(executeScriptMock).toHaveBeenCalledWith({
       func: expect.any(Function),
@@ -40,7 +42,7 @@ describe('user details handler', () => {
   it('returns undefined when the injected script has no result', async () => {
     executeScriptMock.mockResolvedValue([{ result: undefined }])
 
-    await expect(getUserDetails(7)).resolves.toBeUndefined()
+    await expect(getUserDetails({ id: 7, url: INTAKE_URL })).resolves.toBeUndefined()
   })
 
   it('returns undefined for restricted about:blank tabs', async () => {
@@ -50,7 +52,7 @@ describe('user details handler', () => {
       ),
     )
 
-    await expect(getUserDetails(9)).resolves.toBeUndefined()
+    await expect(getUserDetails({ id: 9, url: INTAKE_URL })).resolves.toBeUndefined()
   })
 
   it('logs and returns undefined for unexpected errors', async () => {
@@ -58,8 +60,18 @@ describe('user details handler', () => {
 
     executeScriptMock.mockRejectedValue(new Error('Boom'))
 
-    await expect(getUserDetails(10)).resolves.toBeUndefined()
+    await expect(getUserDetails({ id: 10, url: INTAKE_URL })).resolves.toBeUndefined()
 
     expect(errorSpy).toHaveBeenCalledWith('Failed to get user details from page', 'Boom')
+  })
+
+  it.each([
+    ['a non-Intake URL', { id: 1, url: 'https://example.com/' }],
+    ['a missing URL', { id: 1 }],
+    ['a missing id', { url: INTAKE_URL }],
+  ])('does not read the page for %s', async (_name, tab) => {
+    await expect(getUserDetails(tab)).resolves.toBeUndefined()
+
+    expect(executeScriptMock).not.toHaveBeenCalled()
   })
 })
