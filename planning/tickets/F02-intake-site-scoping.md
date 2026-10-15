@@ -2,7 +2,7 @@
 
 | Field      | Value                                                                                  |
 | ---------- | -------------------------------------------------------------------------------------- |
-| Status     | Todo                                                                                   |
+| Status     | In progress                                                                            |
 | Phase      | 1: Setup & hardening                                                                   |
 | Spec       | REQ-SET-007, REQ-SET-008, REQ-SET-009, REQ-SET-010, REQ-SET-013, REQ-SET-014 · T-SET-1 |
 | Depends on | None                                                                                   |
@@ -16,14 +16,14 @@ The extension can reach only `statsigapi.net` and the two Intake Site patterns. 
 
 ### F02-T1: Intake Site URL config module
 
-- **Status:** Todo
+- **Status:** Done (See WL-027)
 - **Owner:** Claude
 - **Size:** S
 - **Depends on:** None
 - **Description:** Add one module (for example `src/lib/intake-site.ts`) that exports the match patterns (`https://app.talkiatry.com/assessment*`, `https://app.staging.talkiatry.com/assessment*`) and an `isIntakeSiteUrl(url)` helper. `wxt.config.ts` imports it too, so the module must have no runtime dependencies.
 - **Acceptance criteria:**
-  - [ ] The patterns are defined once and used everywhere else (REQ-SET-008)
-  - [ ] Unit tests cover production, staging, subpaths, query strings, other hosts, `http:`, and invalid URLs
+  - [x] The patterns are defined once and used everywhere else (REQ-SET-008)
+  - [x] Unit tests cover production, staging, subpaths, query strings, other hosts, `http:`, and invalid URLs
 - **Verification:** `pnpm vitest run src/lib/intake-site.test.ts`
 - **Files likely touched:** `src/lib/intake-site.ts` (new), `src/lib/intake-site.test.ts` (new)
 

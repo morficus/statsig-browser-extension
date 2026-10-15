@@ -244,3 +244,19 @@ Left for F03-T3, because these aren't about Firefox:
 **Tickets:** F03-T2 · corrects WL-024 item 1
 
 Maurice installed pnpm 12. `pnpm` now resolves through proto (`~/.proto/shims/pnpm`) to 12.11.2 and runs without a shim, and `pnpm type-check` passes. Item 1 of WL-024 no longer applies. Item 2 (agent worktrees leaking into lint and tests) still stands.
+
+### WL-026 · 2026-10-15 · Decision · F02 starts before the phase 0 checkpoint
+
+**Tickets:** F02, Q2
+
+Maurice asked to start F02 while F00-T2 to F00-T5 wait for the manual checks. F02 uses no phase 0 result: REQ-SET-007 fixes the Intake Site URLs, and OPEN-003 is closed. Like WL-019, this is a deliberate exception to spec §11, for F02 only. Q2 stays open for F03 and F04.
+
+### WL-027 · 2026-10-15 · Decision · F02 design: one pattern constant, a derived matcher, one tab guard
+
+**Tickets:** F02-T1, F02-T2, F02-T3, F05, F09, F11 · REQ-SET-007 to REQ-SET-009, REQ-SET-014
+
+- **One constant.** `INTAKE_SITE_MATCHES` in `src/lib/intake-site.ts` holds the two patterns. `wxt.config.ts` (`host_permissions`) and both content scripts (`matches`) import it. The module has no imports, because WXT loads `wxt.config.ts` in Node.
+- **Derived runtime check.** `isIntakeSiteUrl(url)` doesn't hard-code hostnames. It runs the pattern strings through a small Chrome match-pattern matcher (`matchesUrlPattern`): `http`/`https` scheme, an exact or `*.` host, and `*` path globs matched against `pathname + search`. If the product owner widens the constant, the manifest and the runtime check widen together. Two choices are deliberate. A URL with an explicit non-default port never matches, which is stricter than Chrome, because the check is a security guard. `/assessments` does match, the same as Chrome's glob. The matcher uses `URL.parse` (Chrome 126+, Node 22+; the repo needs Node 24 or later).
+- **One tab guard.** Page reads get their tab from a new `getActiveIntakeTab()` in `src/lib/tabs.ts`, which returns the active tab only if its URL is an Intake Site URL. `getUserDetails` checks again just before `scripting.executeScript`. F05 and F09 add more page readers and must use the same guard.
+- **Popup off-site.** The popup shows its own "Not an Intake Site page" panel before the project gate. It doesn't reuse a `PageProjectGate` state, because that panel offers to pin the current site to a project. The panel lists the pages it accepts, derived from `INTAKE_SITE_MATCHES`, so the copy follows the constant.
+- **E2E.** The fake active tab becomes `https://app.staging.talkiatry.com/assessment` (was `https://e2e-app.test/`, WL-011).
