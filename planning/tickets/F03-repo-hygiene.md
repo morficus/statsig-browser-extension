@@ -43,7 +43,7 @@ The fork doesn't take automatic updates, and future sessions have a `CLAUDE.md` 
 
 ### F03-T3: Review CI workflows and the `web/` site for the fork
 
-- **Status:** In progress. The changes are committed (WL-035, WL-037). A CI run on a pushed branch must still confirm the second criterion, and the push needs Maurice's approval.
+- **Status:** In progress. The changes are merged into `main` (WL-035, WL-037). A CI run on a push must still confirm the second criterion, and the push needs Maurice's approval.
 - **Owner:** Claude proposes, Maurice decides
 - **Size:** S
 - **Depends on:** Q6, resolved (WL-035)

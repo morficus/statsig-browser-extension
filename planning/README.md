@@ -65,7 +65,7 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 1. **Maurice:** move the new private signing key to a password manager before the machine restarts (WL-021).
 2. **F00-T2 to F00-T5** (Maurice): the manual checks against Statsig and the Intake Site. F00-T1 is done (WL-016), so the exact calls to test are known. Claude can prepare the curl commands (T3, T5) and the DevTools snippet (T4).
 3. **F02 is done** (WL-026 to WL-031). T-SET-1 passes. Merged into `main`. F05-T1 and F05-T2 carry two guard follow-ups (WL-031). Then F04, once Q2 is answered for it. F01 is done (WL-019 to WL-022).
-4. **F03-T3** (Maurice): approve a push of the `f03-repo-hygiene` branch, so that a CI run on the fork confirms that no upstream secret is missing. Then F03 is done. T1, T2, T4, and T5 are done (WL-034 to WL-039). F03 picked up the flaky e2e test (WL-023) and the worktree leak (WL-024).
+4. **F03-T3** (Maurice): approve a push of `main`, so that a CI run on the fork confirms that no upstream secret is missing. F03 is merged into `main`, and the pushed commit has no release workflow. Then F03 is done. T1, T2, T4, and T5 are done (WL-034 to WL-039). F03 picked up the flaky e2e test (WL-023) and the worktree leak (WL-024).
 
 ## Open questions
 
