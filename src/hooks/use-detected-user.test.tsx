@@ -219,4 +219,36 @@ describe('useDetectedUser', () => {
 
     expect(setDetectionErrorMock).toHaveBeenCalledWith('Connection failed. Please refresh the page.')
   })
+
+  it('retryDetection never logs a Console Key echoed by a messaging error (REQ-SEC-003)', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    getActiveTabMock.mockResolvedValue({ id: 3 })
+    browserMock.tabs.sendMessage
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(new Error('disconnected. Key: console-AbC123xyz456'))
+
+    const { result } = renderHook(() => useDetectedUser())
+
+    await act(async () => {
+      await result.current.retryDetection()
+    })
+
+    expect(errorSpy).toHaveBeenCalledWith('Statsig detection error:', expect.any(String))
+    expect(errorSpy.mock.calls.flat().map(String).join(' ')).not.toContain('console-AbC123xyz456')
+  })
+
+  it('fetchUser never logs a Console Key echoed by the final messaging error (REQ-SEC-003)', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    getActiveTabMock.mockResolvedValue({ id: 3 })
+    browserMock.tabs.sendMessage.mockRejectedValue(new Error('disconnected. Key: console-AbC123xyz456'))
+
+    renderHook(() => useDetectedUser())
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000)
+    })
+
+    expect(errorSpy).toHaveBeenCalledWith('Statsig detection error:', expect.any(String))
+    expect(errorSpy.mock.calls.flat().map(String).join(' ')).not.toContain('console-AbC123xyz456')
+  })
 })

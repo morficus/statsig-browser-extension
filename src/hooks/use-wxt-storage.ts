@@ -2,6 +2,8 @@ import type { WxtStorageItem } from 'wxt/utils/storage'
 
 import { useEffect, useRef, useState } from 'react'
 
+import { handleApiError } from '@/src/lib/utils'
+
 export function useWxtStorage<T>(item: WxtStorageItem<T, Record<string, unknown>>): [T, (value: T) => void, boolean] {
   const [value, setValue] = useState(item.fallback)
   const [isLoading, setIsLoading] = useState(true)
@@ -24,7 +26,7 @@ export function useWxtStorage<T>(item: WxtStorageItem<T, Record<string, unknown>
           setIsLoading(false)
         }
       } catch (error) {
-        console.error('Failed to get storage value:', error)
+        console.error('Failed to get storage value:', handleApiError(error))
         if (mounted) {
           setIsLoading(false)
         }
@@ -55,7 +57,7 @@ export function useWxtStorage<T>(item: WxtStorageItem<T, Record<string, unknown>
     revision.current += 1
     setValue(newValue)
     item.setValue(newValue).catch((error) => {
-      console.error('Failed to set storage value:', error)
+      console.error('Failed to set storage value:', handleApiError(error))
       // Revert on failure? Or just log?
     })
   }

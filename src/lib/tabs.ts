@@ -1,5 +1,7 @@
 import { browser } from 'wxt/browser'
 
+import { handleApiError } from '@/src/lib/utils'
+
 /**
  * Retrieves the active tab in a robust way, handling potential issues with popup window focus.
  * First tries to find the active tab in the current window.
@@ -20,7 +22,7 @@ export async function getActiveTab() {
       return fallbackTabs[0]
     }
   } catch (error) {
-    console.error('[Intake Experiment Testing] Failed to get active tab:', error)
+    console.error('[Intake Experiment Testing] Failed to get active tab:', handleApiError(error))
   }
   return null
 }

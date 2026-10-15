@@ -118,7 +118,22 @@ describe('useWxtStorage', () => {
 
     expect(result.current[0]).toBe('fallback')
     // oxlint-disable-next-line typescript/no-unsafe-call
-    expect(console.error).toHaveBeenCalledWith('Failed to get storage value:', expect.any(Error))
+    expect(console.error).toHaveBeenCalledWith('Failed to get storage value:', 'boom')
+  })
+
+  it('never logs a Console Key echoed by a failed getValue (REQ-SEC-003)', async () => {
+    const { item } = createStorageItem('fallback', () => {
+      throw new Error('boom. Key: console-AbC123xyz456')
+    })
+
+    const { result } = renderHook(() => useWxtStorage(item))
+
+    await waitFor(() => {
+      expect(result.current[2]).toBeFalsy()
+    })
+
+    // oxlint-disable-next-line typescript/no-unsafe-member-access
+    expect((console.error as Mock).mock.calls.flat().map(String).join(' ')).not.toContain('console-AbC123xyz456')
   })
 
   it('persists new values via setValue', async () => {
@@ -169,8 +184,31 @@ describe('useWxtStorage', () => {
 
     await waitFor(() => {
       // oxlint-disable-next-line typescript/no-unsafe-call
-      expect(console.error).toHaveBeenCalledWith('Failed to set storage value:', expect.any(Error))
+      expect(console.error).toHaveBeenCalledWith('Failed to set storage value:', 'store-failed')
     })
+  })
+
+  it('never logs a Console Key echoed by a failed setValue (REQ-SEC-003)', async () => {
+    const { item } = createStorageItem('a')
+    // oxlint-disable-next-line typescript/no-explicit-any, typescript/no-unsafe-member-access
+    ;(item.setValue as any).mockRejectedValue(new Error('failed. Key: console-AbC123xyz456'))
+
+    const { result } = renderHook(() => useWxtStorage(item))
+
+    await waitFor(() => {
+      expect(result.current[2]).toBeFalsy()
+    })
+
+    act(() => {
+      result.current[1]('b')
+    })
+
+    await waitFor(() => {
+      // oxlint-disable-next-line typescript/no-unsafe-call
+      expect(console.error).toHaveBeenCalledWith('Failed to set storage value:', expect.any(String))
+    })
+    // oxlint-disable-next-line typescript/no-unsafe-member-access
+    expect((console.error as Mock).mock.calls.flat().map(String).join(' ')).not.toContain('console-AbC123xyz456')
   })
 
   it('ignores a persisted value that arrives after unmount', async () => {

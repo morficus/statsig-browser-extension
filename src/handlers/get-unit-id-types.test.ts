@@ -49,6 +49,19 @@ describe('unit ID types handler', () => {
     vi.mocked(fetcher).mockRejectedValue(new Error('Network failed'))
 
     await expect(getUnitIDTypes()).resolves.toStrictEqual(['userID', 'stableID'])
-    expect(errorSpy).toHaveBeenCalledWith('Failed to fetch unit ID types:', expect.any(Error))
+    expect(errorSpy).toHaveBeenCalledWith('Failed to fetch unit ID types:', 'Network failed')
+  })
+
+  it('never logs the Console Key when the API error body echoes it (REQ-SEC-003)', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const body =
+      'This endpoint only accepts an active CONSOLE key, but an invalid key was sent. Key: console-AbC123xyz456'
+    const wretchError = Object.assign(new Error(body), { response: { _data: body }, status: 429, text: body })
+
+    vi.mocked(fetcher).mockRejectedValue(wretchError)
+
+    await expect(getUnitIDTypes()).resolves.toStrictEqual(['userID', 'stableID'])
+    expect(errorSpy.mock.calls.flat().map(String).join(' ')).not.toContain('console-AbC123xyz456')
+    expect(errorSpy).toHaveBeenCalledWith('Failed to fetch unit ID types:', expect.any(String))
   })
 })

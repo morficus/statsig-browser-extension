@@ -68,7 +68,7 @@ describe('initialLogin handler', () => {
 
     expect(result.success).toBeFalsy()
     expect(JSON.stringify(result)).not.toContain(key)
-    expect(JSON.stringify(errorSpy.mock.calls)).not.toContain(key)
+    expect(errorSpy.mock.calls.flat().map(String).join(' ')).not.toContain(key)
     expect(errorSpy).toHaveBeenCalledWith('Failed to login:', expect.any(String))
   })
 

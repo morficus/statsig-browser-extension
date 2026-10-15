@@ -1,4 +1,5 @@
 import { fetcher } from '@/src/lib/fetcher'
+import { handleApiError } from '@/src/lib/utils'
 
 interface UnitIDType {
   name: string
@@ -32,7 +33,7 @@ export const getUnitIDTypes = async (): Promise<string[]> => {
     }
     return defaultUnitIDTypes // Fallback
   } catch (error) {
-    console.error('Failed to fetch unit ID types:', error)
+    console.error('Failed to fetch unit ID types:', handleApiError(error))
     // Return default types on error to ensure UI still works
     return defaultUnitIDTypes
   }

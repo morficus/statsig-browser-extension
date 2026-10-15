@@ -53,7 +53,17 @@ describe('active tab lookup', () => {
     queryMock.mockRejectedValue(error)
 
     await expect(getActiveTab()).resolves.toBeNull()
-    expect(errorSpy).toHaveBeenCalledWith('[Intake Experiment Testing] Failed to get active tab:', error)
+    expect(errorSpy).toHaveBeenCalledWith('[Intake Experiment Testing] Failed to get active tab:', 'tabs.query failed')
+  })
+
+  it('never logs a Console Key echoed by a tabs error (REQ-SEC-003)', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    queryMock.mockRejectedValue(new Error('failed. Key: console-AbC123xyz456'))
+
+    await expect(getActiveTab()).resolves.toBeNull()
+    expect(errorSpy.mock.calls.flat().map(String).join(' ')).not.toContain('console-AbC123xyz456')
+    expect(errorSpy).toHaveBeenCalledWith('[Intake Experiment Testing] Failed to get active tab:', expect.any(String))
   })
 
   it('handles multiple tabs in query result and returns first', async () => {

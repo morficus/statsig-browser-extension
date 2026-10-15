@@ -2,6 +2,7 @@ import { useEffect, useCallback } from 'react'
 import { browser } from 'wxt/browser'
 
 import { getActiveTab } from '@/src/lib/tabs'
+import { handleApiError } from '@/src/lib/utils'
 import { useContextStore } from '@/src/store/use-context-store'
 
 interface DetectedResponse {
@@ -86,7 +87,7 @@ export function useDetectedUser() {
         setDetectionError(parsed?.error ?? null)
       })
       .catch((error) => {
-        console.error('Statsig detection error:', error)
+        console.error('Statsig detection error:', handleApiError(error))
         setDetectionError('Connection failed. Please refresh the page.')
       })
   }, [setDetectionError, handleResponse])
@@ -108,7 +109,7 @@ export function useDetectedUser() {
               void fetchUser(retries - 1, delay * 2)
             }, delay)
           } else {
-            console.error('Statsig detection error:', error)
+            console.error('Statsig detection error:', handleApiError(error))
             setDetectionError('Connection failed. Please refresh the page.')
           }
         }
