@@ -48,7 +48,28 @@ describe('initialLogin handler', () => {
     expect(result.success).toBeFalsy()
     expect(result.error).toBe('Unauthorized')
     expect(result.data).toBeUndefined()
-    expect(errorSpy).toHaveBeenCalledWith('Failed to login:', error)
+    expect(errorSpy).toHaveBeenCalledWith('Failed to login:', 'Unauthorized')
+  })
+
+  it('should never put the Console Key in the returned error or in console output (REQ-SEC-003)', async () => {
+    const key = 'console-AbC123xyz456'
+    const body = `This endpoint only accepts an active CONSOLE key, but an invalid key was sent. Key: ${key}`
+    const wretchError = Object.assign(new Error(body), {
+      response: { _data: body },
+      status: 429,
+      text: body,
+      url: 'https://statsigapi.net/console/v1/gates?limit=1',
+    })
+    apiMock.json.mockRejectedValue(wretchError)
+
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const result = await initialLogin(key)
+
+    expect(result.success).toBeFalsy()
+    expect(JSON.stringify(result)).not.toContain(key)
+    expect(JSON.stringify(errorSpy.mock.calls)).not.toContain(key)
+    expect(errorSpy).toHaveBeenCalledWith('Failed to login:', expect.any(String))
   })
 
   it('should handle network errors gracefully', async () => {

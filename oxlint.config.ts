@@ -173,6 +173,8 @@ export default defineConfig({
         allowSeparateTypeImports: true,
       },
     ],
+    'no-eval': 'error',
+    'no-implied-eval': 'error',
     'no-inline-comments': 'off',
     'no-magic-numbers': [
       'warn',
@@ -187,6 +189,7 @@ export default defineConfig({
     ],
     'no-named-export': 'allow',
     'no-nested-ternary': 'off',
+    'no-new-func': 'error',
     'no-restricted-globals': [
       'error',
       {

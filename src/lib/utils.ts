@@ -18,6 +18,13 @@ const ERROR_MESSAGES: Record<number, string> = {
   [HTTP_NOT_FOUND]: 'The requested resource was not found.',
 }
 
+// Statsig's 401 body echoes the key ("... Key: console-xxx"), and wretch uses the raw body as `error.message`.
+const CONSOLE_KEY_PATTERN = /console-[\w-]+/gu
+
+function redactConsoleKeys(message: string): string {
+  return message.replaceAll(CONSOLE_KEY_PATTERN, 'console-…')
+}
+
 function getErrorMessageFromResponse(response: { status: number; data?: unknown }): string | undefined {
   const { status } = response
 
@@ -31,7 +38,8 @@ function getErrorMessageFromResponse(response: { status: number; data?: unknown 
 
   if (response.data && typeof response.data === 'object') {
     const data = response.data as { message?: string; error?: string }
-    return data.message ?? data.error
+    const payloadMessage = data.message ?? data.error
+    return typeof payloadMessage === 'string' ? redactConsoleKeys(payloadMessage) : payloadMessage
   }
   return undefined
 }
@@ -57,11 +65,11 @@ export function handleApiError(error: unknown): string {
         return msg
       }
     }
-    return error.message
+    return redactConsoleKeys(error.message)
   }
 
   if (error instanceof Error) {
-    return error.message
+    return redactConsoleKeys(error.message)
   }
 
   return 'An unknown error occurred'

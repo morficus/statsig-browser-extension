@@ -23,10 +23,12 @@ export const initialLogin = async (apiKey: string): Promise<InitialLoginResponse
       success: true,
     }
   } catch (error) {
-    console.error('Failed to login:', error)
+    const message = handleApiError(error)
+    // Log only the sanitized message: the raw error carries the response body, which can echo the key.
+    console.error('Failed to login:', message)
     return {
       data: undefined,
-      error: handleApiError(error),
+      error: message,
       success: false,
     }
   }

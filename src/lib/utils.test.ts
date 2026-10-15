@@ -76,3 +76,59 @@ describe('shared library helpers', () => {
     expect(handleApiError(null)).toBe('An unknown error occurred')
   })
 })
+
+describe('handleApiError key redaction (REQ-SEC-003)', () => {
+  const LEAKY_BODY =
+    'This endpoint only accepts an active CONSOLE key, but an invalid key was sent. Key: console-AbC123xyz_456-DEF'
+
+  it('does not echo a console key found in a payload message', () => {
+    const message = handleApiError({
+      message: 'Bad Request',
+      response: { _data: { message: LEAKY_BODY } },
+      status: 400,
+    })
+
+    expect(message).not.toContain('console-AbC123xyz_456-DEF')
+    expect(message).toContain('Key: console-…')
+  })
+
+  it('does not echo a console key found in a payload error field', () => {
+    const message = handleApiError({
+      message: 'Bad Request',
+      response: { _data: { error: LEAKY_BODY } },
+      status: 422,
+    })
+
+    expect(message).not.toContain('console-AbC123xyz_456-DEF')
+  })
+
+  it('does not echo a console key found in the raw wretch message (the response body text)', () => {
+    const message = handleApiError({
+      message: LEAKY_BODY,
+      response: { _data: 'not-an-object' },
+      status: 429,
+    })
+
+    expect(message).not.toContain('console-AbC123xyz_456-DEF')
+  })
+
+  it('does not echo a console key when a 401 comes with an empty parsed body', () => {
+    const message = handleApiError({
+      message: LEAKY_BODY,
+      response: { _data: undefined },
+      status: 401,
+    })
+
+    expect(message).not.toContain('console-AbC123xyz_456-DEF')
+  })
+
+  it('does not echo a console key found in a native error message', () => {
+    expect(handleApiError(new Error(LEAKY_BODY))).not.toContain('console-AbC123xyz_456-DEF')
+  })
+
+  it('leaves messages without a key unchanged', () => {
+    expect(handleApiError(new Error('API key should start with "console-"'))).toBe(
+      'API key should start with "console-"',
+    )
+  })
+})
