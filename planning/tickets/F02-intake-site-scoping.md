@@ -29,14 +29,14 @@ The extension can reach only `statsigapi.net` and the two Intake Site patterns. 
 
 ### F02-T2: Narrow the manifest and the content-script matches
 
-- **Status:** Todo
+- **Status:** Done (See WL-029)
 - **Owner:** Claude
 - **Size:** S
 - **Depends on:** F02-T1
 - **Description:** Set `host_permissions` to `https://statsigapi.net/*` plus the Intake patterns. Set `matches` in **both** `entrypoints/content.ts` and `entrypoints/statsig-detector.ts` to the Intake patterns (WL-006). Keep `permissions` as `storage`, `scripting`, `activeTab`.
 - **Acceptance criteria:**
-  - [ ] The built manifest has no `<all_urls>` anywhere
-  - [ ] `host_permissions` has exactly 3 entries
+  - [x] The built manifest has no `<all_urls>` anywhere
+  - [x] `host_permissions` has exactly 3 entries
 - **Verification:** `pnpm build:chrome` and read the manifest. Update `src/tests/unit/content.test.ts` and `statsig-detector.test.ts` if they assert `matches`.
 - **Files likely touched:** `wxt.config.ts`, `entrypoints/content.ts`, `entrypoints/statsig-detector.ts`
 
@@ -56,12 +56,12 @@ The extension can reach only `statsigapi.net` and the two Intake Site patterns. 
 
 ### F02-T4: Update the permissions doc
 
-- **Status:** Todo
+- **Status:** Done (See WL-029)
 - **Owner:** Claude
 - **Size:** XS
 - **Depends on:** F02-T2
 - **Description:** Rewrite `docs/permissions-justification.md` to match the new manifest. Remove the `<all_urls>` reasoning and the stale `storage-helper.js` references. The doc gets a final pass in F12-T2, after `debugger` is added.
 - **Acceptance criteria:**
-  - [ ] Each manifest permission and host pattern has exactly one justification, and nothing else is listed
+  - [x] Each manifest permission and host pattern has exactly one justification, and nothing else is listed
 - **Verification:** Compare the doc line by line with the built manifest.
 - **Files likely touched:** `docs/permissions-justification.md`

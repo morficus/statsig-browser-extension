@@ -3,6 +3,8 @@ import type { Runtime } from 'webextension-polyfill'
 import { browser } from 'wxt/browser'
 import { defineContentScript } from 'wxt/utils/define-content-script'
 
+import { INTAKE_SITE_MATCHES } from '@/src/lib/intake-site'
+
 interface StatsigUserMessage {
   type: string
   user?: unknown
@@ -205,6 +207,6 @@ export default defineContentScript({
       handleRuntimeMessage(message, _sender, sendResponse),
     )
   },
-  matches: ['<all_urls>'],
+  matches: [...INTAKE_SITE_MATCHES],
   runAt: 'document_start',
 })

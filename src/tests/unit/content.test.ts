@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { INTAKE_SITE_MATCHES } from '@/src/lib/intake-site'
+
 const addRuntimeListener = vi.fn()
 const sendMessage = vi.fn().mockResolvedValue(null)
 
@@ -185,5 +187,13 @@ describe('content script statsig detection', () => {
     expect(() => {
       globalThis.window.dispatchEvent(windowMessage({ type: 'STATSIG_USER_DETECTED', user: { userID: 'u_1' } }))
     }).not.toThrow()
+  })
+
+  it('matches only the Intake Site pages', async () => {
+    vi.resetModules()
+    const mod = await import('@/entrypoints/content')
+    const definition = mod.default as { matches: string[] }
+    expect(definition.matches).toStrictEqual([...INTAKE_SITE_MATCHES])
+    expect(definition.matches).not.toContain('<all_urls>')
   })
 })
