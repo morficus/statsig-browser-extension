@@ -245,7 +245,124 @@ Left for F03-T3, because these aren't about Firefox:
 
 Maurice installed pnpm 12. `pnpm` now resolves through proto (`~/.proto/shims/pnpm`) to 12.11.2 and runs without a shim, and `pnpm type-check` passes. Item 1 of WL-024 no longer applies. Item 2 (agent worktrees leaking into lint and tests) still stands.
 
-### WL-026 · 2026-10-15 · Decision · F04 starts before phase 0; interim Q4 allowlist; Q7 key type per project
+### WL-026 · 2026-10-15 · Decision · F02 starts before the phase 0 checkpoint
+
+**Tickets:** F02, Q2
+
+Maurice asked to start F02 while F00-T2 to F00-T5 wait for the manual checks. F02 uses no phase 0 result: REQ-SET-007 fixes the Intake Site URLs, and OPEN-003 is closed. Like WL-019, this is a deliberate exception to spec §11, for F02 only. Q2 stays open for F03 and F04.
+
+### WL-027 · 2026-10-15 · Decision · F02 design: one pattern constant, a derived matcher, one tab guard
+
+**Tickets:** F02-T1, F02-T2, F02-T3, F05, F09, F11 · REQ-SET-007 to REQ-SET-009, REQ-SET-014
+
+- **One constant.** `INTAKE_SITE_MATCHES` in `src/lib/intake-site.ts` holds the two patterns. `wxt.config.ts` (`host_permissions`) and both content scripts (`matches`) import it. The module has no imports, because WXT loads `wxt.config.ts` in Node.
+- **Derived runtime check.** `isIntakeSiteUrl(url)` doesn't hard-code hostnames. It runs the pattern strings through a small Chrome match-pattern matcher (`matchesUrlPattern`): `http`/`https` scheme, an exact or `*.` host, and `*` path globs matched against `pathname + search`. If the product owner widens the constant, the manifest and the runtime check widen together. Two choices are deliberate. A URL with an explicit non-default port never matches, which is stricter than Chrome, because the check is a security guard. `/assessments` does match, the same as Chrome's glob. The matcher uses `URL.parse` (Chrome 126+, Node 22+; the repo needs Node 24 or later).
+- **One tab guard.** Page reads get their tab from a new `getActiveIntakeTab()` in `src/lib/tabs.ts`, which returns the active tab only if its URL is an Intake Site URL. `getUserDetails` checks again just before `scripting.executeScript`. F05 and F09 add more page readers and must use the same guard.
+- **Popup off-site.** The popup shows its own "Not an Intake Site page" panel before the project gate. It doesn't reuse a `PageProjectGate` state, because that panel offers to pin the current site to a project. The panel lists the pages it accepts, derived from `INTAKE_SITE_MATCHES`, so the copy follows the constant.
+- **E2E.** The fake active tab becomes `https://app.staging.talkiatry.com/assessment` (was `https://e2e-app.test/`, WL-011).
+
+### WL-028 · 2026-10-15 · Risk · Content scripts don't load on client-side navigation into `/assessment`
+
+**Tickets:** F02-T2, F00-T4, F05, F09 · REQ-SET-009
+
+Chrome injects declared content scripts only when a document loads at a matching URL. Suppose the Intake Site is a single-page app that reaches `/assessment` from another path on the same origin through the History API, for example from `/login`. Then `entrypoints/content.ts` is not in the page until it reloads. Today this costs nothing. `entrypoints/statsig-detector.ts` isn't registered in the manifest (WL-029), so the `postMessage` path in `content.ts` never gets a user anyway. `scripting.executeScript` is the only detection that works, and it still works after client-side navigation, because the guard checks the tab's current URL (WL-027). The risk becomes real if F05 or F09 bring back the content-script path. Check in F00-T4 on the real Intake Site whether `/assessment` loads as a full document. If it doesn't, F05 and F09 read only through `executeScript`, or the product owner widens the patterns (REQ-SET-008).
+
+### WL-029 · 2026-10-15 · Discovery · Manifest narrowed; `statsig-detector` isn't a registered content script; `activeTab` looks redundant for now (F02-T2, F02-T4)
+
+**Tickets:** F02-T2, F02-T4, F05, F09, F11, F12-T2 · REQ-SET-007, REQ-SET-009, REQ-SET-010, REQ-SET-013
+
+- **Built manifest.** `host_permissions` is exactly `https://statsigapi.net/*`, `https://app.talkiatry.com/assessment*`, and `https://app.staging.talkiatry.com/assessment*`. `permissions` is `storage`, `scripting`, `activeTab`. The only `content_scripts` entry (`content.js`) matches the two Intake patterns. No key holds `<all_urls>`, and there is no `web_accessible_resources` or `externally_connectable`. `src/tests/unit/manifest.test.ts` guards the config, and the two content-script tests guard `matches`.
+- **`statsig-detector` isn't registered.** WXT registers only `entrypoints/content.ts` and `*.content.ts` as content scripts. `entrypoints/statsig-detector.ts` builds as an unlisted script (`statsig-detector.js`) that nothing injects, so its `matches` has no effect. `docs/project-key-detection.md:132` already notes this. Its `matches` now holds the Intake patterns anyway, so it stays correct if F05 or F09 register it.
+- **`activeTab` looks redundant until F11.** The Intake host permissions already let the popup read the tab URL and run `executeScript` on Intake tabs. On other tabs, `activeTab` only exposes the URL, and the guard treats a missing URL as "not Intake" anyway. It stays, because the ticket keeps it, REQ-SET-010 allows it, and F11's `tabs.captureVisibleTab` will need it. F11 or F12-T2 should recheck the justification.
+- **Permissions doc.** `docs/permissions-justification.md` now has one justification per permission and per host pattern. It no longer mentions `<all_urls>` or `storage-helper.js`. The Storage section lists what `src/lib/storage.ts` really stores. The doc gets its final pass in F12-T2.
+
+### WL-030 · 2026-10-15 · Discovery · Review of F02-T1, F02-T2, F02-T4: no guard bypass; Storage list corrected
+
+**Tickets:** F02-T1, F02-T2, F02-T4 · corrects WL-029 (Permissions doc)
+
+An Opus review probed `isIntakeSiteUrl` with userinfo tricks, IDN and punycode look-alikes, full-width and ideographic dots, percent-encoding, `..` segments, backslashes, whitespace, `blob:`, `filesystem:`, and `view-source:`. It found no URL that passes the guard without being an Intake Site assessment URL. Every trick either normalizes to the real Intake URL or is rejected. The path check is a policy, not a security boundary: every page on `app.talkiatry.com` shares the origin of `/assessment`. Scheme, host, and port are the real boundary, and they match exactly.
+
+- **Trailing dot.** `https://app.talkiatry.com./assessment` is rejected, which is stricter than Chrome. Like the port rule in WL-027, it fails closed.
+- **Doc fix.** WL-029 said the Storage section lists what `src/lib/storage.ts` stores. But `storage.ts` isn't the only store: `src/store/use-ui-preferences-store.ts` persists the UI preferences, and each project holds its own Console API key, client SDK keys, and gate hashes (`src/lib/projects.ts:4-14`). The doc now lists both.
+- **Follow-ups (brief `f02-review-fixes`).** Replace `URL.parse` with `new URL()` inside `try`, because `URL.parse` throws on Chrome before 126. Add the bypass probes as regression tests. Add `e2e/manifest.e2e.ts`, which checks the **built** manifest against an allow-list. The unit tests check only the WXT config and the two named entrypoints, so a new `*.content.ts` with `<all_urls>` would pass them.
+- **Merge gate.** The doc's claim that the extension reads only Intake pages becomes true with F02-T3. Don't merge the branch without it.
+
+### WL-031 · 2026-10-15 · Discovery · F02-T3 results, and two guard follow-ups for F05
+
+**Tickets:** F02-T3, F05-T1, F05-T2, F09-T1 · REQ-SET-014 · T-SET-1
+
+- **Guard coverage.** Every `scripting.executeScript` call (`src/handlers/get-user-details.ts`) and every `tabs.sendMessage` call (`fetchUser` and `retryDetection` in `src/hooks/use-detected-user.ts`) gets its tab from `getActiveIntakeTab()`. `getUserDetails` checks the URL again before it injects. An Opus review traced every page-access call site and found every one covered except the listener in item 2 below.
+- **Popup off-site.** The body shows `NotIntakeSitePanel`. The header hides `ProjectStatus` and the "User Details" item unless the tab is an Intake page. The review found that the header contradicted the body: on a non-assessment page of a pinned origin (for example `/login`), origin pinning showed "Project 1 · this page". The login modal still opens off-site when no key is stored, because `src/hooks/use-app-initialization.ts:17-19` depends only on the stored key.
+- **Tests.** The e2e fake tab is `https://app.staging.talkiatry.com/assessment`, and `mockApi(page, routes, { activeTabUrl })` can override it. The detection specs use Intake URLs. `e2e/intake-site.e2e.ts` covers the off-site panel, including the same-origin `/login` case. Final run: 734 unit tests and 69 e2e tests pass, with no `act()` warnings.
+- **T-SET-1 passes.** The built manifest has only `statsigapi.net` and the Intake patterns in `host_permissions` (WL-029), the new key, and no `statsig.com` ID (WL-021). `e2e/manifest.e2e.ts` guards it.
+
+Two review findings are deferred to F05, which touches the same code first:
+
+1. **The second check doesn't catch a stale URL (F05-T1).** `getUserDetails` re-checks the same `tabs.query` snapshot. If the tab moves to another path on the same origin between that check and `executeScript`, the script runs in the new document. The origin is the same, the window is milliseconds, and the path check is policy, not the security boundary (WL-030). Fix it in the injector: have `getUserDetailsFromPage` also return `location.href`, and drop the result unless `isIntakeSiteUrl(href)`.
+2. **The `runtime.onMessage` listener in `use-detected-user.ts` doesn't check the sender (F05-T2).** It accepts `STATSIG_USER_FOUND` and `STATSIG_DETECTED_BUT_ERROR` from any sender. This is dormant while `statsig-detector` isn't registered (WL-029). If F05 revives that path, accept messages only when `sender.tab.id` is the active Intake tab and `isIntakeSiteUrl(sender.tab.url)`.
+
+### WL-033 · 2026-10-15 · Decision · F03 starts before the phase 0 checkpoint
+
+**Tickets:** F03, Q2
+
+Maurice asked to start F03 while F00-T2 to F00-T5 wait for the manual checks. F03 (no automatic updates, `CLAUDE.md`, CI, the flaky e2e test, and the worktree leak) uses no phase 0 result, so starting it early puts nothing at risk. As with F01 (WL-019), this exception covers F03 only. Q2 stays open for F02 and F04.
+
+### WL-034 · 2026-10-15 · Decision · Q3: remove Dependabot
+
+**Tickets:** F03-T1 · Q3 · REQ-SET-011 · resolves WL-012
+
+Remove `.github/dependabot.yml` along with `renovate.json`. Spec §9 says the fork takes no automatic updates, and Dependabot does the same job as Renovate. Dependabot security alerts are a repository setting, not this file, so this change doesn't affect them.
+
+### WL-035 · 2026-10-15 · Decision · Q6: CI keeps only the checks; publishing and the `web/` site go
+
+**Tickets:** F03-T3 · Q6 · spec §2.1, §2.2
+
+The fork (`morficus/statsig-browser-extension`) is public, and Actions are enabled on it. Testers load the extension unpacked (§2.1), and there is no store listing (§2.2). Maurice agreed to these changes:
+
+- **`build.yml`: keep and adapt.** It runs on pull requests, on pushes to `main`, and on manual dispatch. It adds `pnpm type-check` and `pnpm format:check`, so CI runs the same checks as the definition of done. It drops the Codecov upload and the coverage flag. It keeps the Chrome zip artifact and the e2e job. Its token gets `contents: read` only.
+- **`release.yml`, `.releaserc.json`, and the semantic-release dev dependencies: remove.** On every push to `main`, semantic-release pushed a version commit and a tag, and published a public GitHub release. Version bumps are now manual edits to `package.json`.
+- **`submit.yml`: remove.** It publishes to the Chrome Web Store, which is out of scope. It ran on every `v*` tag and needed the `SUBMIT_KEYS` secret, which the fork doesn't have.
+- **`pages.yml` and `web/`: remove.** The site is the Statsig-branded landing page and privacy policy for the store listing. GitHub Pages is off on the fork.
+- **Codecov, SonarCloud (`sonar-project.properties`, `.sonarcloud.properties`), and `.github/release-drafter.yml`: remove.** Codecov and SonarCloud point at the upstream owner's accounts. No workflow uses release-drafter.
+- **Docs:** delete `docs/publishing.md`, and remove the badges and links for the removed services from `README.md`, `CONTRIBUTING.md`, and `docs/architecture.md`. F12-T1 still owns the README rewrite, including its install steps.
+- **`new-feature-spec.md`:** `oxfmt` pads its tables. That is whitespace only, and it lets the new `format:check` step pass.
+
+### WL-036 · 2026-10-15 · Resolved · Only vitest picked up the agent worktrees (F03-T5)
+
+**Tickets:** F03-T5 · corrects WL-024 item 2
+
+A test file planted in `.claude/worktrees/zz-plant/` held a failing test, a lint error, a type error, and bad formatting. Only `pnpm vitest run` reported it. `oxlint.config.ts` already ignores `.claude`, and oxfmt, knip, and tsc skipped the plant. So WL-024 item 2 was right about vitest and wrong about lint. F03-T5 adds `.claude/worktrees/` to `.gitignore`, and adds `.claude/**` to the vitest `test.exclude` and `coverage.exclude` lists. With the plant in place, all five commands pass. `.claude/skills` is a symlink, and it stays tracked.
+
+### WL-037 · 2026-10-15 · Discovery · What else changed when semantic-release and Codecov went (F03-T3)
+
+**Tickets:** F03-T3 · WL-035
+
+The code review of F03-T3 found these consequences, and F03-T3 fixes them:
+
+- **`braces` is no longer installed.** Removing the 4 semantic-release dev dependencies removed 214 packages from `pnpm-lock.yaml`, `braces` 3.0.3 among them. No other package was added or changed. `CONTRIBUTING.md` listed `braces` as a security exception that "comes through release tooling". That bullet is deleted, and `node-forge` 1.4.0 is now the only exception.
+- **The commit types no longer trigger releases.** `CONTRIBUTING.md` no longer says that `feat`, `fix`, and breaking changes make MINOR, PATCH, and MAJOR releases.
+- **Runs on `main` are never cancelled.** `build.yml` cancels a superseded run only on pull requests (`cancel-in-progress: ${{ github.event_name == 'pull_request' }}`). So each commit on `main` keeps its own check status and zip artifact.
+- **Coverage is opt-in.** `vitest.config.ts` turned coverage on when `CI` was set, only for the Codecov upload. That switch is gone. `pnpm vitest run --coverage` still works, and CI runs about 20% faster. `actionlint` passes on `build.yml`.
+
+### WL-038 · 2026-10-15 · Resolved · The e2e tests wait for storage instead of reading it once (F03-T4)
+
+**Tickets:** F03-T4 · resolves WL-023
+
+Before the fix, "adds a second project, activates it and keeps its client keys" failed 1 of 20 runs. A new helper, `pollExtensionLocalValue` in `e2e/extension-runtime.ts`, wraps `expect.poll` around the storage read. All 8 storage reads that follow a UI write now use it, in `projects.e2e.ts`, `logout.e2e.ts`, and `settings.e2e.ts`. Each assertion keeps its matcher and its value. After the fix, the test passed 20 of 20 runs, and the full suite passed 62 of 62.
+
+The code review found one more gap. In "switching back to another project" and "removes a project", the final value is the same as the value from before the add, so a poll could pass on stale data. Each test now first waits until the add is in storage.
+
+**Risk, not fixed:** `e2e/error-handling.e2e.ts:105` and `e2e/login-flow.e2e.ts:42` read the mock's list of requests once, right after a click. No check shows the request has gone out by then. They have not been seen to fail. If they flake, use the same `expect.poll` pattern.
+
+### WL-039 · 2026-10-15 · Discovery · `pnpm dev:chrome` failed on a fresh checkout (F03-T2)
+
+**Tickets:** F03-T2
+
+The F03-T2 check "every command runs as written" found that `pnpm dev:chrome` stopped with `ENOENT: open '.dev-profile/chrome-out.log'`. chrome-launcher 1.2.0 opens its log file in the profile folder before it creates the folder (`dist/chrome-launcher.js:151` and `:167`). `web-ext.config.ts` sets `chromiumProfile: '.dev-profile'`, which is gitignored, so only machines that already had the folder could run dev. `web-ext.config.ts` now creates the folder when it loads. The dev browser also opened `https://cloud.qdrant.io`, which the upstream author left in. It now opens the staging Intake Site (`https://app.staging.talkiatry.com/assessment`, spec §3). After `rm -rf .dev-profile`, `pnpm dev:chrome` opens Chrome.
+
+The new `CLAUDE.md` gives the commands, the definition of done, the CI summary, and 10 hard rules with REQ IDs. Each rule was checked against the spec text. Each command in it was run once: all pass, including `pnpm test:e2e` (62 passed).
+
+### WL-040 · 2026-10-15 · Decision · F04 starts before phase 0; interim Q4 allowlist; Q7 key type per project
 
 **Tickets:** F04-T1 to F04-T5, F06-T3, F07 · Q2, Q4, Q7 · REQ-SEC-007, REQ-SEC-008, REQ-SEC-010
 
@@ -258,9 +375,10 @@ Maurice decided the following.
   - Every key entry form (REQ-SEC-010): "Use your own Personal Console Key, not a shared project key."
   - Reason shown when writes are disabled (REQ-SEC-008): "Read-only key. Add a key with write access to change overrides."
   - Key type options: "Read & write" and "Read only".
+- **Renumbered.** This entry and WL-041 and WL-042 were first written as WL-026 to WL-028 on the F04 branch, which collided with F02's entries on `main`. F04 commit messages from before the merge cite the old numbers: WL-026 means WL-040, WL-027 means WL-041, WL-028 means WL-042.
 - **Defense in depth.** The background script also refuses every non-GET request while the active key type is `read-key`. The UI gating comes first.
 
-### WL-027 · 2026-10-15 · Discovery · Key handling, remote code, and telemetry audit (F04-T4)
+### WL-041 · 2026-10-15 · Discovery · Key handling, remote code, and telemetry audit (F04-T4)
 
 **Tickets:** F04-T4, F04-T3 · REQ-SEC-002, REQ-SEC-003, REQ-SEC-004, REQ-SEC-006, REQ-SEC-009 · WL-017
 
@@ -281,9 +399,9 @@ Audited at `e409c45`. The greps ran over `src`, `entrypoints`, `public`, `wxt.co
 
 Grep scripts and raw output: the agent scratch folder `.agents/scratch/f04-t4-audit/` (`greps.sh`, `greps2.sh`, `audit.md`), which is gitignored.
 
-### WL-028 · 2026-10-15 · Decision · How read-key mode looks and behaves (F04-T3)
+### WL-042 · 2026-10-15 · Decision · How read-key mode looks and behaves (F04-T3)
 
-**Tickets:** F04-T3, F07, F08 · REQ-SEC-008, REQ-GAT-001, REQ-GAT-002 · WL-013, WL-026
+**Tickets:** F04-T3, F07, F08 · REQ-SEC-008, REQ-GAT-001, REQ-GAT-002 · WL-013, WL-040
 
 - **Storage.** `StatsigProject.apiKeyType` is optional (`src/lib/projects.ts`). Missing means `write-key`, so projects saved before F04-T3 keep the base behavior. The settings store writes the active project's type to `local:api_key_type` whenever it writes the active key (`src/store/use-settings-store.ts`). With no active project, it writes `write-key`. The background script reads that item to refuse writes (F04-T2). The forced reset in `use-settings-storage.ts` is gone.
 - **Picking the type.** The login form, the add-project form, and each project row have a `Key type` select ("Read & write" first, the default; then "Read only"). Adding a key that already belongs to a project activates that project and keeps its stored type, as before.
@@ -295,3 +413,23 @@ Grep scripts and raw output: the agent scratch folder `.agents/scratch/f04-t4-au
   - `BaseOverrideContextCard` no longer takes `canEdit`.
 - **Tests.** Unit tests cover the hook, the sync, the forms, the project row, and both sections. `e2e/key-type.e2e.ts` covers T-SEC-2: a read-only project disables the gate override controls, and switching to read and write enables them. `e2e/settings.e2e.ts` now finds the theme select by its section, because the new selects broke its `first()` pick.
 - **Copy conflict, open.** The login form's intro still says to log in with a "**Read Only** Statsig Console API Key". That contradicts Job 2, which needs a key with write access. The copy wasn't changed in F04 and needs a decision (Q8).
+
+### WL-043 · 2026-10-15 · Discovery · Opus review of F04: no serious bugs; five fixes, three items left
+
+**Tickets:** F04-T1 to F04-T5, F06, F07 · REQ-SEC-001, REQ-SEC-003, REQ-SEC-007, REQ-SEC-008
+
+The review of `e409c45..6370c8a` found no way for the key to reach another host or leave from a content script. It found no non-allowlisted write and no write control reachable with a read key.
+
+Fixed in `06231a1`:
+
+- The background script forwards only `Accept`, `Content-Type`, `STATSIG-API-KEY`, and `STATSIG-API-VERSION` from the caller. A header like `X-HTTP-Method-Override` can no longer change what an allowlisted call does.
+- It sends the upper-cased method that the allowlist checked. Before, `patch` went on the wire in lowercase, because Fetch doesn't normalize `PATCH`.
+- Re-adding a key that already belongs to a project now applies the chosen key type. Without a type argument, the stored type is kept.
+- `ErrorBoundary` logs `handleApiError(error)` and the component stack, so an error `cause` that holds a raw API body can't reach the console.
+- The gate delete button has the accessible name "Delete override", and the tests use it.
+
+Left as is, on purpose:
+
+- **Key and type are two storage writes.** `persist` writes the key and then the type, and the popup also attaches the key itself (`src/lib/fetcher.ts`). A write sent in the instant between switching to a read-only project and the type write would pass the client check. Statsig rejects writes from a read-only key anyway, so the client check is UX plus defense in depth. A fix (one storage item, or `setItems`/`getItems`, and dropping the popup-side attach) touches the project-transition logic. Revisit with F06 if needed.
+- **ID path segments aren't restricted.** `{id}` and `{userID}` match any non-empty segment, including `%2F`. Restricting them to `[\w.-]+` could reject real user IDs. Only extension pages can send requests, so abusing this needs XSS in the popup.
+- **Disabled flash.** While storage loads, `useWriteAccess` returns `canWrite: false`. Write-key users can see controls disabled for a moment when the popup opens. This only affects looks.

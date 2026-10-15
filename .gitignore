@@ -48,5 +48,8 @@ coverage
 # Agent scratch space (see .agents/skills/orchestrate)
 .agents/scratch/
 
+# Claude Code agent worktrees. Each is a full copy of the repository.
+.claude/worktrees/
+
 # Extension signing keys. The private key stays out of the repository (REQ-SET-006).
 *.pem

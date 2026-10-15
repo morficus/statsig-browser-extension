@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 
 import { useAppInitialization } from '@/src/hooks/use-app-initialization'
+import { useIsIntakeSite } from '@/src/hooks/use-is-intake-site'
 import { useLogout } from '@/src/hooks/use-logout'
 import { usePageDetection } from '@/src/hooks/use-page-detection'
 import { usePageProject } from '@/src/hooks/use-page-project'
@@ -13,6 +14,7 @@ export const useAppLogic = () => {
   usePageDetection()
   const { status: pageProjectStatus } = usePageProject()
   const handleLogout = useLogout()
+  const isIntakeSite = useIsIntakeSite()
 
   const { setCurrentItemId, setItemSheetOpen } = useUIStore(
     useShallow((state) => ({
@@ -41,6 +43,7 @@ export const useAppLogic = () => {
     activeTab,
     handleLogout,
     handleTabChange,
+    isIntakeSite,
     // Project data is only fetched once the page is known to belong to a configured project.
     isPageMatched: pageProjectStatus === 'matched',
   }

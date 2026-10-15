@@ -49,6 +49,10 @@ vi.mock('@/src/lib/fetcher', async (importOriginal) => {
   }
 })
 
+vi.mock('@/src/hooks/use-is-intake-site', () => ({
+  useIsIntakeSite: () => true,
+}))
+
 // Mock API key and mock detected user
 vi.mock(import('@/src/hooks/use-wxt-storage'), async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/src/hooks/use-wxt-storage')>()

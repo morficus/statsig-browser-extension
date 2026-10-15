@@ -44,7 +44,7 @@ vi.mock('wxt/browser', () => ({
         })
       },
     },
-    tabs: { query: () => Promise.resolve([{ id: 1, url: 'https://example.com' }]) },
+    tabs: { query: () => Promise.resolve([{ id: 1, url: 'https://app.staging.talkiatry.com/assessment' }]) },
   },
 }))
 vi.mock('@/src/lib/storage', () => ({

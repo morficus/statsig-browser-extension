@@ -7,8 +7,8 @@ agent: f04-fixes (Sonnet, lead worktree, no other agent running)
 ## Decision
 
 The Opus review of F04 (`e409c45..6370c8a`) found no serious bugs, but five cheap hardening and test gaps. Fix exactly
-these. The other review findings are logged and deliberately not fixed. Context: `planning/WORKLOG.md` WL-026 to
-WL-028.
+these. The other review findings are logged and deliberately not fixed. Context: `planning/WORKLOG.md` WL-040 to
+WL-042.
 
 ## Owns
 

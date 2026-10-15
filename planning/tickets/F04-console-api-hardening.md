@@ -2,7 +2,7 @@
 
 | Field      | Value                                                                         |
 | ---------- | ----------------------------------------------------------------------------- |
-| Status     | In progress                                                                   |
+| Status     | Done                                                                          |
 | Phase      | 1: Setup & hardening                                                          |
 | Spec       | REQ-SEC-001 to REQ-SEC-010 · REQ-GAT-002 · T-SEC-1, T-SEC-2, T-SEC-3, T-GAT-1 |
 | Depends on | None                                                                          |
@@ -29,7 +29,7 @@ The Console Key can only reach `statsigapi.net`, only the allowed write calls ca
 
 ### F04-T2: Allowlist the write calls
 
-- **Status:** Done (`5335e4d`). Also refuses requests from content scripts and writes with a read key (WL-026)
+- **Status:** Done (`5335e4d`). Also refuses requests from content scripts and writes with a read key (WL-040)
 - **Owner:** Claude
 - **Size:** S
 - **Depends on:** F04-T1, F00-T1 (the layer override paths)
@@ -49,10 +49,10 @@ The Console Key can only reach `statsigapi.net`, only the allowed write calls ca
 
 ### F04-T3: Make read-key mode work, and disable writes with a reason
 
-- **Status:** Done (`6370c8a`). See WL-028
+- **Status:** Done (`6370c8a`). See WL-042
 - **Owner:** Claude
 - **Size:** M
-- **Depends on:** Q7 (resolved: the Tester picks the type per project, WL-026)
+- **Depends on:** Q7 (resolved: the Tester picks the type per project, WL-040)
 - **Description:** WL-013: nothing sets `read-key`, and `use-settings-storage.ts` forces `write-key`. Let the key type be set (per Q7: chosen when the key is added, or detected), stored per project if possible. Add one shared helper (for example `useWriteAccess()` returning `{ canWrite, reason }`) that the gate and experiment UIs, and later F07 and F08, all use.
 - **Acceptance criteria:**
   - [x] With a read key, every write action is disabled and shows the reason (T-SEC-2)
@@ -63,7 +63,7 @@ The Console Key can only reach `statsigapi.net`, only the allowed write calls ca
 
 ### F04-T4: Audit key handling, remote code, and telemetry
 
-- **Status:** Done (`fb187a4`, `cee1114`; saved-key preview and form errors in `6370c8a`). See WL-027
+- **Status:** Done (`fb187a4`, `cee1114`; saved-key preview and form errors in `6370c8a`). See WL-041
 - **Owner:** Claude
 - **Size:** S
 - **Depends on:** None

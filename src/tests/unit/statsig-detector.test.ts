@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { INTAKE_SITE_MATCHES } from '@/src/lib/intake-site'
+
 const getUserDetailsFromPage = vi.fn()
 
 vi.mock('wxt/utils/define-content-script', () => ({
@@ -116,5 +118,13 @@ describe('statsig detector content script', () => {
     )
 
     expect(getUserDetailsFromPage).toHaveBeenCalledTimes(callsBefore)
+  })
+
+  it('matches only the Intake Site pages', async () => {
+    vi.resetModules()
+    const mod = await import('@/entrypoints/statsig-detector')
+    const definition = mod.default as { matches: string[] }
+    expect(definition.matches).toStrictEqual([...INTAKE_SITE_MATCHES])
+    expect(definition.matches).not.toContain('<all_urls>')
   })
 })

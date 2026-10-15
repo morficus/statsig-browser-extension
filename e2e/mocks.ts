@@ -35,9 +35,10 @@ const STORAGE_KEY = 'statsig-console-api-key'
  * `chrome-extension://` tabs the e2e popups run in (`<all_urls>` does not cover them), so the popup
  * would see no site at all and refuse to load a project. `mockApi` fills that URL in and
  * {@link seedApiKey} pins the seeded project to it, which is the state of a real popup opened on a
- * site belonging to the project.
+ * site belonging to the project. The URL must also be an Intake Site URL, because the popup reads
+ * only Intake Site tabs (REQ-SET-014).
  */
-export const ACTIVE_TAB_ORIGIN = 'https://e2e-app.test'
+export const ACTIVE_TAB_ORIGIN = 'https://app.staging.talkiatry.com'
 const HTTP_OK_MIN = 200
 const HTTP_OK_MAX = 300
 const RECORD_GLOBAL = '__e2eMockApiCalls'
@@ -65,11 +66,17 @@ export const seedLegacyApiKey = async (serviceWorker: Worker, apiKey = 'console-
  * Patches `browser.runtime.sendMessage` (WXT polyfill). On Chromium the native
  * global is aliased onto `browser` first.
  *
+ * `options.activeTabUrl` overrides the URL reported for the inspected tab (an Intake Site URL by default).
+ *
  * Must be called before `page.goto(...)`.
  *
  * Returns a handle that lets tests assert which API endpoints were called.
  */
-export const mockApi = async (page: Page, routes: MockRoute[]): Promise<MockApi> => {
+export const mockApi = async (
+  page: Page,
+  routes: MockRoute[],
+  { activeTabUrl: tabUrl = `${ACTIVE_TAB_ORIGIN}/assessment` }: { activeTabUrl?: string } = {},
+): Promise<MockApi> => {
   await page.addInitScript(
     ({
       serializedRoutes,
@@ -201,7 +208,7 @@ export const mockApi = async (page: Page, routes: MockRoute[]): Promise<MockApi>
       }
     },
     {
-      activeTabUrl: `${ACTIVE_TAB_ORIGIN}/`,
+      activeTabUrl: tabUrl,
       httpOkMax: HTTP_OK_MAX,
       httpOkMin: HTTP_OK_MIN,
       recordGlobal: RECORD_GLOBAL,

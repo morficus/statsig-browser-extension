@@ -13,6 +13,14 @@ import { useUIStore } from '@/src/store/use-ui-store'
 
 import { useAppLogic } from './use-app-logic'
 
+const { useIsIntakeSiteMock } = vi.hoisted(() => ({
+  useIsIntakeSiteMock: vi.fn(),
+}))
+
+vi.mock('./use-is-intake-site', () => ({
+  useIsIntakeSite: useIsIntakeSiteMock,
+}))
+
 vi.mock('./use-app-initialization', () => ({
   useAppInitialization: vi.fn(),
 }))
@@ -27,6 +35,7 @@ vi.mock('./use-logout', () => ({
 
 describe('useAppLogic', () => {
   beforeEach(async () => {
+    useIsIntakeSiteMock.mockReturnValue(true)
     useUiPreferencesStore.setState({
       activeTab: DEFAULT_UI_PREFERENCES.activeTab,
       auditLogs: structuredClone(DEFAULT_UI_PREFERENCES.auditLogs),
@@ -69,6 +78,14 @@ describe('useAppLogic', () => {
     const { result } = renderHook(() => useAppLogic())
 
     expect(result.current.isPageMatched).toBeFalsy()
+  })
+
+  it.each([true, false, undefined])('passes the Intake Site check through (%s)', (value) => {
+    useIsIntakeSiteMock.mockReturnValue(value)
+
+    const { result } = renderHook(() => useAppLogic())
+
+    expect(result.current.isIntakeSite).toStrictEqual(value)
   })
 
   it('ignores unknown tab ids', () => {

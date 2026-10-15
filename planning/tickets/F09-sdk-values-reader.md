@@ -24,7 +24,7 @@ A pure, tested pipeline: SDK values (live or cached), then matched experiment na
 - **Owner:** Claude
 - **Size:** M
 - **Depends on:** F00-T4, F05-T1
-- **Description:** WL-009. Extend the page reader to return the evaluation values from the live SDK instance, or, if there's no live SDK, the newest `statsig.cached.evaluations.*` entry, along with `source: 'live' | 'cached'` and the cache time if it has one (REQ-ASG-001, REQ-ASG-002). Keep it self-contained. Validate the shape in the popup (zod is already a dependency), and any parse failure gives "Not available".
+- **Description:** WL-009. Extend the page reader to return the evaluation values from the live SDK instance, or, if there's no live SDK, the newest `statsig.cached.evaluations.*` entry, along with `source: 'live' | 'cached'` and the cache time if it has one (REQ-ASG-001, REQ-ASG-002). Keep it self-contained, and keep the `location.href` check from F05-T1 (WL-031). Validate the shape in the popup (zod is already a dependency), and any parse failure gives "Not available".
 - **Acceptance criteria:**
   - [ ] Unit tests with the F00-T4 fixture for live, cached, both, neither, and malformed input
   - [ ] Source and cache age are returned correctly

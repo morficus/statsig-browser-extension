@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 
-import { readExtensionLocalValue } from './extension-runtime'
+import { pollExtensionLocalValue } from './extension-runtime'
 import { expect, test } from './fixtures'
 import { defaultRoutes } from './mock-data'
 import { mockApi, seedApiKey } from './mocks'
@@ -64,9 +64,7 @@ test.describe('settings sheet', () => {
 
     await expect(page.getByRole('heading', { name: /Extension Settings/iu })).toBeHidden()
 
-    const stored = await serviceWorker.evaluate(readExtensionLocalValue, STORAGE_KEY_LOCAL)
-
-    expect(stored).toBe('custom_user_key')
+    await pollExtensionLocalValue(serviceWorker, STORAGE_KEY_LOCAL).toBe('custom_user_key')
   })
 
   test('theme select stays open so a value can be chosen', async ({ context, extensionId }) => {

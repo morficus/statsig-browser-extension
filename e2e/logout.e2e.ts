@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 
-import { readExtensionLocalValue } from './extension-runtime'
+import { pollExtensionLocalValue } from './extension-runtime'
 import { expect, test } from './fixtures'
 import { defaultRoutes } from './mock-data'
 import { mockApi, seedApiKey } from './mocks'
@@ -41,10 +41,10 @@ test.describe('logout flow', () => {
     await page.getByRole('menuitem', { name: /Logout/iu }).click()
     await expect(page.getByText('Login to Statsig')).toBeVisible()
 
-    const stored = await serviceWorker.evaluate(readExtensionLocalValue, STORAGE_KEY)
-
     // UseLogout clears every project, which mirrors an empty active key — no entry counts as cleared too.
-    expect(stored === '' || stored === undefined).toBe(true)
+    await pollExtensionLocalValue(serviceWorker, STORAGE_KEY, (stored) => stored === '' || stored === undefined).toBe(
+      true,
+    )
   })
 
   test('login modal exposes the api key input after logout', async ({ context, extensionId }) => {

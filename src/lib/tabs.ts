@@ -2,6 +2,8 @@ import { browser } from 'wxt/browser'
 
 import { handleApiError } from '@/src/lib/utils'
 
+import { isIntakeSiteUrl } from './intake-site'
+
 /**
  * Retrieves the active tab in a robust way, handling potential issues with popup window focus.
  * First tries to find the active tab in the current window.
@@ -40,4 +42,10 @@ export async function getActiveTabOrigin() {
   } catch {
     return ''
   }
+}
+
+/** The active tab, only if it is an Intake Site page (REQ-SET-014); otherwise null. */
+export async function getActiveIntakeTab() {
+  const tab = await getActiveTab()
+  return tab && tab.id !== undefined && isIntakeSiteUrl(tab.url) ? tab : null
 }

@@ -18,7 +18,7 @@ extension runs no remote code and sends no telemetry. Then we fix any gap. Requi
 - **REQ-SEC-006**: no `eval`, no `new Function`, no string `setTimeout`/`setInterval`, no remotely loaded script.
 - **REQ-SEC-009**: no analytics or telemetry calls; fonts are bundled (`@fontsource`), not loaded from a CDN.
 
-Ticket: `planning/tickets/F04-console-api-hardening.md` (F04-T4). Context: `planning/WORKLOG.md` WL-017, WL-026.
+Ticket: `planning/tickets/F04-console-api-hardening.md` (F04-T4). Context: `planning/WORKLOG.md` WL-017, WL-040.
 
 ## Owns
 

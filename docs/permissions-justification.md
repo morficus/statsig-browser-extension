@@ -3,22 +3,18 @@
 ## activeTab
 
 **Justification:**
-This permission is required to allow the extension to interact with the current tab when the user clicks the extension icon. It is used to:
-
-1.  Detect if the Statsig SDK is initialized on the current page.
-2.  Inject scripts (`browser.scripting.executeScript` via WXT) to retrieve the current Statsig user object (`statsig.getCurrentUser()`) and SDK state.
-3.  Read and write local storage associated with Statsig configurations (e.g., overrides) specifically on the active page.
-    The extension only accesses the tab's content when the user explicitly invokes it, ensuring privacy and minimal permission scope.
+When the Tester opens the popup, the extension checks the active tab's URL. It reads the page only if the URL is an Intake Site page. On any other page the popup shows a message, and the extension doesn't run scripts in the page or send it messages.
 
 ## Host Permissions
 
 **Justification:**
 
-1.  `<all_urls>`: The extension is designed to work on _any_ web application that uses the Statsig SDK. Since Statsig is a general-purpose feature flagging platform, our users (developers) implement it on their own domains. We cannot predict which domains will use it, so we need access to all URLs to inject the content scripts that detect the SDK and facilitate debugging features (like overrides and experiment forcing) on the developer's application.
-2.  `https://statsigapi.net/*`: This specific host permission is required to communicate with the Statsig API for:
+1.  `https://statsigapi.net/*`: This specific host permission is required to communicate with the Statsig API for:
     - Fetching current project configurations (gates, experiments, dynamic configs).
     - Applying overrides via the Statsig Console API (using the user's provided API key).
     - Validating API keys.
+2.  `https://app.talkiatry.com/assessment*`: The production Intake Site assessment pages. The content scripts run only on these pages, and the extension reads the Statsig SDK state (the current user and the SDK keys) only from them.
+3.  `https://app.staging.talkiatry.com/assessment*`: The staging Intake Site assessment pages. Same use as the production pages.
 
 ## Remote Code
 
@@ -26,33 +22,29 @@ This permission is required to allow the extension to interact with the current 
 **No.**
 
 **Justification/Clarification:**
-The extension does **NOT** load, execute, or interpret any code hosted remotely (e.g., via CDN, external servers, or eval() of fetched strings).
-All scripts executed by the extension (including those injected via `browser.scripting.executeScript`) are fully bundled within the extension package itself (`storage-helper.js` and content scripts).
-The use of `browser.scripting` is strictly limited to injecting these _local_, _bundled_ resources into the page context to interact with the page's DOM and `window` object (specifically to access `window.statsig`). No external JavaScript is ever retrieved or executed.
+All code ships in the extension package: the popup, the background script, the content scripts, and the function the popup injects with `scripting.executeScript`.
 
 ## Scripting
 
 **Justification:**
-The `scripting` permission is essential for the core functionality of the extension. It is used to:
-
-1.  Inject the `storage-helper.js` script into the active tab's context. This allows the extension to read and write the local storage that the Statsig SDK uses to store override values.
-2.  Inject functions to retrieve the current Statsig user details (`getUserDetailsFromPage`) from the page's global scope.
-    Without this permission, the extension cannot interact with the Statsig SDK running on the user's page to provide debugging capabilities.
+The popup injects one bundled function into the Intake Site page with `scripting.executeScript`. The function reads the Statsig SDK state from the page: the user object, the evaluation context, and the SDK keys. It runs only on Intake Site pages.
 
 ## Storage
 
 **Justification:**
 The `storage` permission (`browser.storage.local` via WXT) is used to persist:
 
-1.  **User Settings**: The Statsig Console API Key provided by the user.
-2.  **Extension State**: Caching fetched configurations (gates/experiments) to improve performance and reduce API calls.
-3.  **Preferences**: UI preferences like the last active tab in the extension popup.
+1.  **Console API key**: The Statsig Console API key the Tester enters, and its key type.
+2.  **Projects**: The Statsig projects the Tester has added, the active project, and the Intake Site origins pinned to a project. Each project keeps its Console API key, plus its client SDK keys and gate-name hashes, which the extension uses to recognize the project on a page.
+3.  **Settings**: The name of the page's localStorage key that holds the Statsig user, and the theme.
+4.  **Overrides**: The extension's record of the overrides it applied.
+5.  **UI preferences**: The popup's last active tab, and each table's filters, sorting, page, rows per page, and visible columns, including the audit log filters.
     This data is stored locally on the user's device and is never shared externally except when making authenticated requests to the Statsig API (using the stored API key).
 
 ## Single Purpose Description
 
 **Description:**
-A developer tool that allows Statsig users to debug feature gates, force experiment variations, and inspect dynamic configurations directly within their web applications by interacting with the Statsig SDK and API.
+A developer tool that allows Statsig users to debug feature gates, force experiment variations, and inspect dynamic configurations directly on the Intake Site by interacting with the Statsig SDK and API.
 
 ## Data Usage Policy Certification
 

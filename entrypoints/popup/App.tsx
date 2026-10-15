@@ -5,6 +5,7 @@ import { ErrorBoundary } from '@/src/components/ErrorBoundary'
 import { GlobalModals } from '@/src/components/layout/GlobalModals'
 import { Header } from '@/src/components/layout/Header'
 import { MainTabs } from '@/src/components/layout/MainTabs'
+import { NotIntakeSitePanel } from '@/src/components/layout/NotIntakeSitePanel'
 import { PageProjectGate } from '@/src/components/layout/PageProjectGate'
 import { useAppLogic } from '@/src/hooks/use-app-logic'
 import { useTheme } from '@/src/hooks/use-theme'
@@ -14,7 +15,7 @@ import { queryClient } from '@/src/lib/query-client'
 import '../../src/styles/globals.css'
 
 export function AppContent() {
-  const { activeTab, handleTabChange, handleLogout, isPageMatched } = useAppLogic()
+  const { activeTab, handleTabChange, handleLogout, isIntakeSite, isPageMatched } = useAppLogic()
   useTheme()
 
   const handleLogoutClick = useCallback(() => {
@@ -23,10 +24,12 @@ export function AppContent() {
 
   return (
     <div className="flex h-[600px] w-[800px] flex-col overflow-hidden bg-background text-foreground">
-      <Header onLogout={handleLogoutClick} />
+      <Header isIntakeSite={isIntakeSite} onLogout={handleLogoutClick} />
 
       <main className="flex min-h-0 flex-1 flex-col">
-        {isPageMatched ? <MainTabs activeTab={activeTab} onTabChange={handleTabChange} /> : <PageProjectGate />}
+        {isIntakeSite === false && <NotIntakeSitePanel />}
+        {isIntakeSite === true &&
+          (isPageMatched ? <MainTabs activeTab={activeTab} onTabChange={handleTabChange} /> : <PageProjectGate />)}
       </main>
 
       <GlobalModals />

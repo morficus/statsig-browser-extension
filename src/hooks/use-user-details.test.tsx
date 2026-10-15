@@ -5,13 +5,13 @@ import { renderHookWithProviders } from '@/src/tests/utils/TestUtils'
 
 import { useUserDetails } from './use-user-details'
 
-const { getActiveTabMock, getUserDetailsMock } = vi.hoisted(() => ({
-  getActiveTabMock: vi.fn(),
+const { getActiveIntakeTabMock, getUserDetailsMock } = vi.hoisted(() => ({
+  getActiveIntakeTabMock: vi.fn(),
   getUserDetailsMock: vi.fn(),
 }))
 
 vi.mock('@/src/lib/tabs', () => ({
-  getActiveTab: getActiveTabMock,
+  getActiveIntakeTab: getActiveIntakeTabMock,
 }))
 
 vi.mock('../handlers/get-user-details', () => ({
@@ -22,13 +22,13 @@ const renderUseUserDetails = () => renderHookWithProviders(() => useUserDetails(
 
 describe('useUserDetails', () => {
   beforeEach(() => {
-    getActiveTabMock.mockReset()
+    getActiveIntakeTabMock.mockReset()
     getUserDetailsMock.mockReset()
   })
 
   it('returns the user from the active tab', async () => {
     const user = { userID: 'user-1' }
-    getActiveTabMock.mockResolvedValue({ id: 42 })
+    getActiveIntakeTabMock.mockResolvedValue({ id: 42, url: 'https://app.staging.talkiatry.com/assessment' })
     getUserDetailsMock.mockResolvedValue({ user })
 
     const { result } = renderUseUserDetails()
@@ -38,11 +38,11 @@ describe('useUserDetails', () => {
     })
 
     expect(result.current.data).toStrictEqual(user)
-    expect(getUserDetailsMock).toHaveBeenCalledWith(42)
+    expect(getUserDetailsMock).toHaveBeenCalledWith({ id: 42, url: 'https://app.staging.talkiatry.com/assessment' })
   })
 
   it('returns an empty object when handler returns undefined', async () => {
-    getActiveTabMock.mockResolvedValue({ id: 7 })
+    getActiveIntakeTabMock.mockResolvedValue({ id: 7, url: 'https://app.staging.talkiatry.com/assessment' })
     // oxlint-disable-next-line unicorn/no-useless-undefined
     getUserDetailsMock.mockResolvedValue(undefined)
 
@@ -56,7 +56,7 @@ describe('useUserDetails', () => {
   })
 
   it('returns an empty object when handler returns no user', async () => {
-    getActiveTabMock.mockResolvedValue({ id: 9 })
+    getActiveIntakeTabMock.mockResolvedValue({ id: 9, url: 'https://app.staging.talkiatry.com/assessment' })
     getUserDetailsMock.mockResolvedValue({})
 
     const { result } = renderUseUserDetails()
@@ -68,8 +68,8 @@ describe('useUserDetails', () => {
     expect(result.current.data).toStrictEqual({})
   })
 
-  it('fails when no active tab is found', async () => {
-    getActiveTabMock.mockResolvedValue(null)
+  it('fails when no Intake Site tab is found', async () => {
+    getActiveIntakeTabMock.mockResolvedValue(null)
 
     const { result } = renderUseUserDetails()
 
@@ -78,19 +78,7 @@ describe('useUserDetails', () => {
     })
 
     expect(result.current.error).toBeInstanceOf(Error)
-    expect((result.current.error as Error).message).toBe('No active tab found')
+    expect((result.current.error as Error).message).toBe('No Intake Site tab found')
     expect(getUserDetailsMock).not.toHaveBeenCalled()
-  })
-
-  it('fails when active tab has no id', async () => {
-    getActiveTabMock.mockResolvedValue({})
-
-    const { result } = renderUseUserDetails()
-
-    await waitFor(() => {
-      expect(result.current.isError).toBeTruthy()
-    })
-
-    expect((result.current.error as Error).message).toBe('No active tab found')
   })
 })

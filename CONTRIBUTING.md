@@ -37,7 +37,7 @@ Thank you for your interest in contributing to the Statsig Browser Extension! Th
 
 ## Commit Message Guidelines
 
-We use [Conventional Commits](https://www.conventionalcommits.org/) to automate versioning and changelog generation via `semantic-release`. It is **crucial** to follow these guidelines.
+We use [Conventional Commits](https://www.conventionalcommits.org/) for all commit messages. It is **crucial** to follow these guidelines.
 
 ### Format
 
@@ -47,8 +47,8 @@ We use [Conventional Commits](https://www.conventionalcommits.org/) to automate 
 
 ### Types
 
-- **feat**: A new feature (triggers a MINOR release, e.g., v1.1.0).
-- **fix**: A bug fix (triggers a PATCH release, e.g., v1.0.1).
+- **feat**: A new feature.
+- **fix**: A bug fix.
 - **docs**: Documentation only changes.
 - **style**: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc).
 - **refactor**: A code change that neither fixes a bug nor adds a feature.
@@ -61,7 +61,7 @@ We use [Conventional Commits](https://www.conventionalcommits.org/) to automate 
 
 ### Breaking Changes
 
-If your commit introduces a breaking change, add `BREAKING CHANGE:` in the footer or append `!` after the type/scope. This triggers a MAJOR release (e.g., v2.0.0).
+If your commit introduces a breaking change, add `BREAKING CHANGE:` in the footer or append `!` after the type/scope.
 
 **Example**:
 
@@ -71,8 +71,7 @@ feat(auth)!: remove support for basic authentication
 
 ## Release Process
 
-The release process is fully automated using GitHub Actions and `semantic-release`.
-For detailed instructions on how the release process works and how to configure environment variables for publishing to the Chrome Web Store, please refer to [docs/publishing.md](docs/publishing.md).
+There is no automated release. CI (`.github/workflows/build.yml`) runs lint, type check, format check, unit tests, and e2e tests on every pull request and on every push to `main`. It uploads the Chrome zip as a build artifact. To release a new version, change `version` in `package.json` in a pull request.
 
 ## Pull Request Process
 
@@ -89,17 +88,11 @@ Run `pnpm audit` after dependency changes. The lockfile contains compatible secu
 updates; the scoped `fx-runner>shell-quote` override replaces its vulnerable exact
 pin. Keep install-script restrictions in `pnpm-workspace.yaml` enabled.
 
-As of 2026-10-13, two development dependencies have no published fix. Keep their
-advisories visible and review them again by **2026-11-13**:
+As of 2026-10-13, one development dependency has no published fix. Keep its
+advisory visible and review it again by **2026-11-13**:
 
 - `node-forge` 1.4.0: [GHSA-86w9-cpqp-85rv](https://github.com/advisories/GHSA-86w9-cpqp-85rv).
   It comes through `web-ext > @devicefarmer/adbkit`. The affected RSA verification
   belongs to adbkit's TCP USB server. The reviewed web-ext workflows use its ADB
   client, not that server, and target Chrome. Reassess before
   adding TCP USB server functionality or another node-forge caller.
-- `braces` 3.0.3: [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm).
-  It comes through release tooling and micromatch. The reviewed release callers
-  use `micromatch()` and `.isMatch()`, which call picomatch directly; the vulnerable
-  brace expansion paths are `.parse()`, `.braces()` and `.braceExpand()`. Patterns
-  are maintained in repository configuration. Reassess before using those paths
-  or accepting patterns from external input.
