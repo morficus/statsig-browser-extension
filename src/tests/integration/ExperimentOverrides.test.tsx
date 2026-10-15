@@ -49,9 +49,8 @@ vi.mock('@/src/lib/fetcher', async (importOriginal) => {
   }
 })
 
-vi.mock(import('@/src/lib/tabs'), async (importOriginal) => ({
-  ...(await importOriginal()),
-  getActiveIntakeTab: () => Promise.resolve({ id: 1, url: 'https://app.staging.talkiatry.com/assessment' } as never),
+vi.mock('@/src/hooks/use-is-intake-site', () => ({
+  useIsIntakeSite: () => true,
 }))
 
 // Mock API key and mock detected user

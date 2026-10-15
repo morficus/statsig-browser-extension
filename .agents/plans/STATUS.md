@@ -8,10 +8,10 @@ Planning of record lives in `planning/` (board, tickets, WORKLOG). This list tra
 
 ## Agreed
 
-- f02-t3-tab-guard — F02-T3 refuse to read SDK state outside the Intake Site
 
 ## Done
 
+- f02-t3-tab-guard — F02-T3 refuse to read SDK state outside the Intake Site, plus review fixes — `9a7d001`, (this commit)
 - f02-review-fixes — guard hardening, bypass regression tests, built-manifest e2e test — `9cc6786`
 - f02-t1-intake-site-module — F02-T1 Intake Site URL config module — `51db627`
 - f02-t2-t4-manifest-and-doc — F02-T2 narrow manifest and matches, F02-T4 permissions doc — `4b642cd`, `394a379`

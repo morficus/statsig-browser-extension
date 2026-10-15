@@ -20,7 +20,7 @@ The extension reliably knows the Tester's Stable ID and the SDK's environment ti
 - **Owner:** Claude
 - **Size:** M
 - **Depends on:** None
-- **Description:** WL-009. In `getUserDetailsFromPage`, keep the SDK-instance lookups first (`getStableID()`, `getContext().stableID`, plus the existing instance fallbacks). Then fall back to the first `localStorage` key that **starts with** `statsig.stable_id.`, since the number at the end changes. Never use the cookie. Also return `getContext().options.environment.tier` when it exists. Keep the function self-contained: no imports or module-level values, because Chrome serializes it.
+- **Description:** WL-009. In `getUserDetailsFromPage`, keep the SDK-instance lookups first (`getStableID()`, `getContext().stableID`, plus the existing instance fallbacks). Then fall back to the first `localStorage` key that **starts with** `statsig.stable_id.`, since the number at the end changes. Never use the cookie. Also return `getContext().options.environment.tier` when it exists. Keep the function self-contained: no imports or module-level values, because Chrome serializes it. Page reads get their tab from `getActiveIntakeTab()` (WL-027). Also return `location.href`, and drop the result unless `isIntakeSiteUrl(href)` (WL-031, item 1).
 - **Acceptance criteria:**
   - [ ] Unit tests for each step of the lookup order, including a localStorage key with a different number at the end
   - [ ] The result has the Stable ID source (`sdk` or `localStorage`) and the tier (or none)
@@ -34,7 +34,7 @@ The extension reliably knows the Tester's Stable ID and the SDK's environment ti
 - **Owner:** Claude
 - **Size:** S
 - **Depends on:** F05-T1, Q1 (where it shows)
-- **Description:** REQ-OVR-005. If no Stable ID is found, show an error and an input for entering it by hand. Decide whether a typed-in ID lasts for the popup session or is stored per tab or site, and log the decision.
+- **Description:** REQ-OVR-005. If no Stable ID is found, show an error and an input for entering it by hand. Decide whether a typed-in ID lasts for the popup session or is stored per tab or site, and log the decision. If the content-script path comes back, make the `runtime.onMessage` listener in `use-detected-user.ts` accept messages only from the active Intake tab (WL-031, item 2).
 - **Acceptance criteria:**
   - [ ] T-OVR-6: with the read blocked, the error and the input show, and a typed-in ID is used for forcing
   - [ ] Basic format validation (not empty, trimmed)

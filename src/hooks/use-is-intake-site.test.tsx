@@ -33,6 +33,7 @@ describe('useIsIntakeSite', () => {
     const { result } = renderHook(() => useIsIntakeSite())
 
     await waitFor(() => {
+      expect(result.current).toBeDefined()
       expect(result.current).toBeFalsy()
     })
   })

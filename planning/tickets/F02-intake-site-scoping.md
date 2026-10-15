@@ -2,7 +2,7 @@
 
 | Field      | Value                                                                                  |
 | ---------- | -------------------------------------------------------------------------------------- |
-| Status     | In progress                                                                            |
+| Status     | Done                                                                                   |
 | Phase      | 1: Setup & hardening                                                                   |
 | Spec       | REQ-SET-007, REQ-SET-008, REQ-SET-009, REQ-SET-010, REQ-SET-013, REQ-SET-014 · T-SET-1 |
 | Depends on | None                                                                                   |
@@ -42,15 +42,15 @@ The extension can reach only `statsigapi.net` and the two Intake Site patterns. 
 
 ### F02-T3: Refuse to read SDK state outside the Intake Site
 
-- **Status:** In progress
+- **Status:** Done (See WL-031)
 - **Owner:** Claude
 - **Size:** M
 - **Depends on:** F02-T1
 - **Description:** REQ-SET-014. `activeTab` grants access to any tab the user clicks on, so check the tab URL before every `scripting.executeScript` call and message to the page. On other sites, return a clear "not an Intake Site" state. Change the e2e helpers to fake an Intake URL instead of `https://e2e-app.test` (WL-011).
 - **Acceptance criteria:**
-  - [ ] No `executeScript` call runs when the active tab isn't an Intake URL (unit tested)
-  - [ ] The popup shows one clear message on other sites
-  - [ ] The existing e2e tests pass with the new fake origin
+  - [x] No `executeScript` call runs when the active tab isn't an Intake URL (unit tested)
+  - [x] The popup shows one clear message on other sites
+  - [x] The existing e2e tests pass with the new fake origin
 - **Verification:** `pnpm vitest run src/handlers src/hooks`; `pnpm test:e2e`
 - **Files likely touched:** `src/handlers/get-user-details.ts`, `src/hooks/use-detected-statsig-keys.ts`, `src/lib/tabs.ts`, `e2e/mocks.ts`, tests
 

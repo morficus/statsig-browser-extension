@@ -81,16 +81,4 @@ describe('useUserDetails', () => {
     expect((result.current.error as Error).message).toBe('No Intake Site tab found')
     expect(getUserDetailsMock).not.toHaveBeenCalled()
   })
-
-  it('fails when active tab has no id', async () => {
-    getActiveIntakeTabMock.mockResolvedValue(null)
-
-    const { result } = renderUseUserDetails()
-
-    await waitFor(() => {
-      expect(result.current.isError).toBeTruthy()
-    })
-
-    expect((result.current.error as Error).message).toBe('No Intake Site tab found')
-  })
 })

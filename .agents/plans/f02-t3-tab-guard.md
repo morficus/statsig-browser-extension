@@ -1,7 +1,7 @@
 # Brief: F02-T3 Refuse to read SDK state outside the Intake Site
 
 slug: f02-t3-tab-guard
-status: agreed
+status: done
 agent: f02-t3-tab-guard (Sonnet, isolated git worktree)
 
 ## Decision

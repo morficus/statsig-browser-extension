@@ -1,8 +1,7 @@
-import { act, renderHook, waitFor } from '@testing-library/react'
+import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { storage } from 'wxt/utils/storage'
 
-import { getActiveIntakeTab } from '@/src/lib/tabs'
 import { useContextStore } from '@/src/store/use-context-store'
 import { useSettingsStore } from '@/src/store/use-settings-store'
 import {
@@ -14,9 +13,12 @@ import { useUIStore } from '@/src/store/use-ui-store'
 
 import { useAppLogic } from './use-app-logic'
 
-vi.mock('@/src/lib/tabs', () => ({
-  getActiveIntakeTab: vi.fn(),
-  getActiveTab: vi.fn(),
+const { useIsIntakeSiteMock } = vi.hoisted(() => ({
+  useIsIntakeSiteMock: vi.fn(),
+}))
+
+vi.mock('./use-is-intake-site', () => ({
+  useIsIntakeSite: useIsIntakeSiteMock,
 }))
 
 vi.mock('./use-app-initialization', () => ({
@@ -33,7 +35,7 @@ vi.mock('./use-logout', () => ({
 
 describe('useAppLogic', () => {
   beforeEach(async () => {
-    vi.mocked(getActiveIntakeTab).mockResolvedValue(null)
+    useIsIntakeSiteMock.mockReturnValue(true)
     useUiPreferencesStore.setState({
       activeTab: DEFAULT_UI_PREFERENCES.activeTab,
       auditLogs: structuredClone(DEFAULT_UI_PREFERENCES.auditLogs),
@@ -78,15 +80,12 @@ describe('useAppLogic', () => {
     expect(result.current.isPageMatched).toBeFalsy()
   })
 
-  it('reports whether the inspected tab is an Intake Site page', async () => {
-    vi.mocked(getActiveIntakeTab).mockResolvedValue(null)
+  it.each([true, false, undefined])('passes the Intake Site check through (%s)', (value) => {
+    useIsIntakeSiteMock.mockReturnValue(value)
 
     const { result } = renderHook(() => useAppLogic())
-    expect(result.current.isIntakeSite).toBeUndefined()
 
-    await waitFor(() => {
-      expect(result.current.isIntakeSite).toBeFalsy()
-    })
+    expect(result.current.isIntakeSite).toStrictEqual(value)
   })
 
   it('ignores unknown tab ids', () => {

@@ -286,3 +286,17 @@ An Opus review probed `isIntakeSiteUrl` with userinfo tricks, IDN and punycode l
 - **Doc fix.** WL-029 said the Storage section lists what `src/lib/storage.ts` stores. But `storage.ts` isn't the only store: `src/store/use-ui-preferences-store.ts` persists the UI preferences, and each project holds its own Console API key, client SDK keys, and gate hashes (`src/lib/projects.ts:4-14`). The doc now lists both.
 - **Follow-ups (brief `f02-review-fixes`).** Replace `URL.parse` with `new URL()` inside `try`, because `URL.parse` throws on Chrome before 126. Add the bypass probes as regression tests. Add `e2e/manifest.e2e.ts`, which checks the **built** manifest against an allow-list. The unit tests check only the WXT config and the two named entrypoints, so a new `*.content.ts` with `<all_urls>` would pass them.
 - **Merge gate.** The doc's claim that the extension reads only Intake pages becomes true with F02-T3. Don't merge the branch without it.
+
+### WL-031 · 2026-10-15 · Discovery · F02-T3 results, and two guard follow-ups for F05
+
+**Tickets:** F02-T3, F05-T1, F05-T2, F09-T1 · REQ-SET-014 · T-SET-1
+
+- **Guard coverage.** Every `scripting.executeScript` call (`src/handlers/get-user-details.ts`) and every `tabs.sendMessage` call (`fetchUser` and `retryDetection` in `src/hooks/use-detected-user.ts`) gets its tab from `getActiveIntakeTab()`. `getUserDetails` checks the URL again before it injects. An Opus review traced every page-access call site and found every one covered except the listener in item 2 below.
+- **Popup off-site.** The body shows `NotIntakeSitePanel`. The header hides `ProjectStatus` and the "User Details" item unless the tab is an Intake page. The review found that the header contradicted the body: on a non-assessment page of a pinned origin (for example `/login`), origin pinning showed "Project 1 · this page". The login modal still opens off-site when no key is stored, because `src/hooks/use-app-initialization.ts:17-19` depends only on the stored key.
+- **Tests.** The e2e fake tab is `https://app.staging.talkiatry.com/assessment`, and `mockApi(page, routes, { activeTabUrl })` can override it. The detection specs use Intake URLs. `e2e/intake-site.e2e.ts` covers the off-site panel, including the same-origin `/login` case. Final run: 734 unit tests and 69 e2e tests pass, with no `act()` warnings.
+- **T-SET-1 passes.** The built manifest has only `statsigapi.net` and the Intake patterns in `host_permissions` (WL-029), the new key, and no `statsig.com` ID (WL-021). `e2e/manifest.e2e.ts` guards it.
+
+Two review findings are deferred to F05, which touches the same code first:
+
+1. **The second check doesn't catch a stale URL (F05-T1).** `getUserDetails` re-checks the same `tabs.query` snapshot. If the tab moves to another path on the same origin between that check and `executeScript`, the script runs in the new document. The origin is the same, the window is milliseconds, and the path check is policy, not the security boundary (WL-030). Fix it in the injector: have `getUserDetailsFromPage` also return `location.href`, and drop the result unless `isIntakeSiteUrl(href)`.
+2. **The `runtime.onMessage` listener in `use-detected-user.ts` doesn't check the sender (F05-T2).** It accepts `STATSIG_USER_FOUND` and `STATSIG_DETECTED_BUT_ERROR` from any sender. This is dormant while `statsig-detector` isn't registered (WL-029). If F05 revives that path, accept messages only when `sender.tab.id` is the active Intake tab and `isIntakeSiteUrl(sender.tab.url)`.

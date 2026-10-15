@@ -24,7 +24,7 @@ export function AppContent() {
 
   return (
     <div className="flex h-[600px] w-[800px] flex-col overflow-hidden bg-background text-foreground">
-      <Header onLogout={handleLogoutClick} />
+      <Header isIntakeSite={isIntakeSite} onLogout={handleLogoutClick} />
 
       <main className="flex min-h-0 flex-1 flex-col">
         {isIntakeSite === false && <NotIntakeSitePanel />}
