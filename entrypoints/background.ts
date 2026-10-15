@@ -1,8 +1,8 @@
 import { browser } from 'wxt/browser'
 import { defineBackground } from 'wxt/utils/define-background'
 
-import { STATSIG_API_VERSION, isAllowedApiUrl } from '@/src/lib/api-config'
-import { apiKeyStorage } from '@/src/lib/storage'
+import { STATSIG_API_VERSION, isAllowedApiRequest } from '@/src/lib/api-config'
+import { apiKeyStorage, apiKeyTypeStorage } from '@/src/lib/storage'
 
 interface ApiRequestMessage {
   type: string
@@ -14,29 +14,39 @@ interface ApiRequestMessage {
   }
 }
 
+const REFUSED_RESPONSE = {
+  error: "This request isn't allowed by Intake Experiment Testing.",
+  success: false,
+}
+
+const READ_ONLY_KEY_RESPONSE = {
+  error: 'Read-only key. Add a key with write access to change overrides.',
+  success: false,
+}
+
 const isApiRequestMessage = (msg: unknown): msg is ApiRequestMessage =>
   typeof msg === 'object' && msg !== null && 'type' in msg
 
 export default defineBackground(() => {
   // Listen for API requests from the popup/options pages
-  browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!isApiRequestMessage(message) || message.type !== 'API_REQUEST' || !message.config) {
       return false
     }
 
     const { url, method, body, headers } = message.config
 
-    // Refuse before touching the key: the Console Key may only ever reach the Console API.
-    if (!isAllowedApiUrl(url)) {
-      sendResponse({
-        error: "This request isn't allowed by Intake Experiment Testing.",
-        success: false,
-      })
+    // Only the extension's own pages may use the key. Content scripts run with a web page's URL.
+    // Refuse before touching the key: it may only ever reach the Console API, and only for allowed calls.
+    if (!sender.url?.startsWith(browser.runtime.getURL('/')) || !isAllowedApiRequest(method, url)) {
+      sendResponse(REFUSED_RESPONSE)
       return false
     }
 
-    // Perform the fetch request
-    void apiKeyStorage.getValue().then((apiKey: string | null) => {
+    const isWrite = (method ?? 'GET').toUpperCase() !== 'GET'
+
+    const performFetch = async () => {
+      const apiKey = await apiKeyStorage.getValue()
       const finalHeaders = { ...headers }
       if (apiKey && !new Headers(finalHeaders).has('STATSIG-API-KEY')) {
         // Remove quotes if present (legacy support)
@@ -86,7 +96,16 @@ export default defineBackground(() => {
             success: false,
           })
         })
-    })
+    }
+
+    void (async () => {
+      // Writes need a key with write access; reads never wait on the key type.
+      if (isWrite && (await apiKeyTypeStorage.getValue()) === 'read-key') {
+        sendResponse(READ_ONLY_KEY_RESPONSE)
+        return
+      }
+      await performFetch()
+    })()
 
     // Keep the message channel open until the async sendResponse above fires.
     return true

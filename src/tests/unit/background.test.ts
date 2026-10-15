@@ -4,6 +4,9 @@ import { API_BASE_URL } from '@/src/lib/api-config'
 
 const addListener = vi.fn()
 const getValue = vi.fn()
+const getKeyType = vi.fn()
+const EXTENSION_URL = 'chrome-extension://test-extension-id/'
+const extensionSender = { url: `${EXTENSION_URL}popup.html` }
 
 vi.mock('wxt/utils/define-background', () => ({
   defineBackground: (fn: () => void) => {
@@ -15,6 +18,7 @@ vi.mock('wxt/utils/define-background', () => ({
 vi.mock('wxt/browser', () => ({
   browser: {
     runtime: {
+      getURL: () => EXTENSION_URL,
       onMessage: {
         addListener,
       },
@@ -25,6 +29,9 @@ vi.mock('wxt/browser', () => ({
 vi.mock('@/src/lib/storage', () => ({
   apiKeyStorage: {
     getValue,
+  },
+  apiKeyTypeStorage: {
+    getValue: getKeyType,
   },
 }))
 
@@ -58,6 +65,8 @@ const jsonResponse = (body: unknown, init: Partial<Response> = {}) =>
 describe('background API proxy', () => {
   beforeEach(() => {
     getValue.mockReset()
+    getKeyType.mockReset()
+    getKeyType.mockResolvedValue('write-key')
     vi.unstubAllGlobals()
   })
 
@@ -65,9 +74,9 @@ describe('background API proxy', () => {
     const listener = await loadListener()
     const sendResponse = vi.fn()
 
-    expect(listener('ping', {}, sendResponse)).toBeFalsy()
-    expect(listener({ type: 'PING' }, {}, sendResponse)).toBeFalsy()
-    expect(listener({ type: 'API_REQUEST' }, {}, sendResponse)).toBeFalsy()
+    expect(listener('ping', extensionSender, sendResponse)).toBeFalsy()
+    expect(listener({ type: 'PING' }, extensionSender, sendResponse)).toBeFalsy()
+    expect(listener({ type: 'API_REQUEST' }, extensionSender, sendResponse)).toBeFalsy()
     expect(sendResponse).not.toHaveBeenCalled()
   })
 
@@ -87,7 +96,7 @@ describe('background API proxy', () => {
         },
         type: 'API_REQUEST',
       },
-      {},
+      extensionSender,
       sendResponse,
     )
 
@@ -131,11 +140,11 @@ describe('background API proxy', () => {
           body: '{"name":"gate"}',
           headers: { [headerName]: 'console-explicit' },
           method: 'POST',
-          url: `${API_BASE_URL}/gates`,
+          url: `${API_BASE_URL}/gates/my_gate/overrides`,
         },
         type: 'API_REQUEST',
       },
-      {},
+      extensionSender,
       sendResponse,
     )
 
@@ -143,7 +152,7 @@ describe('background API proxy', () => {
       expect(sendResponse).toHaveBeenCalled()
     })
 
-    expect(fetchMock).toHaveBeenCalledWith(`${API_BASE_URL}/gates`, {
+    expect(fetchMock).toHaveBeenCalledWith(`${API_BASE_URL}/gates/my_gate/overrides`, {
       body: '{"name":"gate"}',
       headers: { [headerName]: 'console-explicit', 'STATSIG-API-VERSION': '20240601' },
       method: 'POST',
@@ -163,7 +172,7 @@ describe('background API proxy', () => {
 
     const listener = await loadListener()
     const sendResponse = vi.fn()
-    listener({ config: { url: `${API_BASE_URL}/gates` }, type: 'API_REQUEST' }, {}, sendResponse)
+    listener({ config: { url: `${API_BASE_URL}/gates` }, type: 'API_REQUEST' }, extensionSender, sendResponse)
 
     await vi.waitFor(() => {
       expect(sendResponse).toHaveBeenCalledWith({ error: 'offline', success: false })
@@ -176,7 +185,7 @@ describe('background API proxy', () => {
 
     const listener = await loadListener()
     const sendResponse = vi.fn()
-    listener({ config: { url: `${API_BASE_URL}/gates` }, type: 'API_REQUEST' }, {}, sendResponse)
+    listener({ config: { url: `${API_BASE_URL}/gates` }, type: 'API_REQUEST' }, extensionSender, sendResponse)
 
     await vi.waitFor(() => {
       expect(sendResponse).toHaveBeenCalledWith({ error: 'Network error', success: false })
@@ -192,7 +201,7 @@ describe('background API proxy', () => {
     const sendResponse = vi.fn()
     listener(
       { config: { headers: { 'statsig-api-version': '19990101' }, url: `${API_BASE_URL}/gates` }, type: 'API_REQUEST' },
-      {},
+      extensionSender,
       sendResponse,
     )
 
@@ -221,7 +230,11 @@ describe('background API proxy', () => {
 
     const listener = await loadListener()
     const sendResponse = vi.fn()
-    listener({ config: { headers: { 'STATSIG-API-KEY': 'k' }, url }, type: 'API_REQUEST' }, {}, sendResponse)
+    listener(
+      { config: { headers: { 'STATSIG-API-KEY': 'k' }, url }, type: 'API_REQUEST' },
+      extensionSender,
+      sendResponse,
+    )
 
     await vi.waitFor(() => {
       expect(sendResponse).toHaveBeenCalledWith({
@@ -231,5 +244,151 @@ describe('background API proxy', () => {
     })
     expect(fetchMock).not.toHaveBeenCalled()
     expect(getValue).not.toHaveBeenCalled()
+  })
+
+  it('refuses a sender with a web page URL without reading the key or calling fetch', async () => {
+    getValue.mockResolvedValue('console-stored')
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    const listener = await loadListener()
+    const sendResponse = vi.fn()
+    listener(
+      { config: { url: `${API_BASE_URL}/gates` }, type: 'API_REQUEST' },
+      { url: 'https://example.com/page' },
+      sendResponse,
+    )
+
+    expect(sendResponse).toHaveBeenCalledWith({
+      error: "This request isn't allowed by Intake Experiment Testing.",
+      success: false,
+    })
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(getValue).not.toHaveBeenCalled()
+  })
+
+  it.each([{}, { url: undefined }, { url: 'chrome-extension://other-extension-id/popup.html' }])(
+    'refuses a sender without an extension URL: %j',
+    async (sender) => {
+      const fetchMock = vi.fn()
+      vi.stubGlobal('fetch', fetchMock)
+
+      const listener = await loadListener()
+      const sendResponse = vi.fn()
+      listener({ config: { url: `${API_BASE_URL}/gates` }, type: 'API_REQUEST' }, sender, sendResponse)
+
+      expect(sendResponse).toHaveBeenCalledWith({
+        error: "This request isn't allowed by Intake Experiment Testing.",
+        success: false,
+      })
+      expect(fetchMock).not.toHaveBeenCalled()
+      expect(getValue).not.toHaveBeenCalled()
+    },
+  )
+
+  it('accepts a sender with the extension URL', async () => {
+    getValue.mockResolvedValue('console-stored')
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const listener = await loadListener()
+    const sendResponse = vi.fn()
+    listener(
+      { config: { url: `${API_BASE_URL}/gates` }, type: 'API_REQUEST' },
+      { url: `${EXTENSION_URL}popup.html` },
+      sendResponse,
+    )
+
+    await vi.waitFor(() => {
+      expect(sendResponse).toHaveBeenCalledWith(expect.objectContaining({ success: true }))
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    ['POST', `${API_BASE_URL}/gates`],
+    ['PUT', `${API_BASE_URL}/gates/my_gate/overrides`],
+    ['DELETE', `${API_BASE_URL}/layers/my_layer`],
+    ['POST', `${API_BASE_URL}/audit_logs`],
+  ])('refuses the write %s %s without reading the key or calling fetch', async (method, url) => {
+    getValue.mockResolvedValue('console-stored')
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    const listener = await loadListener()
+    const sendResponse = vi.fn()
+    listener({ config: { method, url }, type: 'API_REQUEST' }, extensionSender, sendResponse)
+
+    expect(sendResponse).toHaveBeenCalledWith({
+      error: "This request isn't allowed by Intake Experiment Testing.",
+      success: false,
+    })
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(getValue).not.toHaveBeenCalled()
+  })
+
+  it('refuses an allowed write with a read-only key without calling fetch', async () => {
+    getKeyType.mockResolvedValue('read-key')
+    getValue.mockResolvedValue('console-stored')
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    const listener = await loadListener()
+    const sendResponse = vi.fn()
+    const keepChannel = listener(
+      { config: { method: 'POST', url: `${API_BASE_URL}/gates/my_gate/overrides` }, type: 'API_REQUEST' },
+      extensionSender,
+      sendResponse,
+    )
+
+    expect(keepChannel).toBeTruthy()
+    await vi.waitFor(() => {
+      expect(sendResponse).toHaveBeenCalledWith({
+        error: 'Read-only key. Add a key with write access to change overrides.',
+        success: false,
+      })
+    })
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('calls fetch for an allowed write with a write key', async () => {
+    getKeyType.mockResolvedValue('write-key')
+    getValue.mockResolvedValue('console-stored')
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ data: {} }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const listener = await loadListener()
+    const sendResponse = vi.fn()
+    listener(
+      { config: { method: 'patch', url: `${API_BASE_URL}/experiments/exp/overrides` }, type: 'API_REQUEST' },
+      extensionSender,
+      sendResponse,
+    )
+
+    await vi.waitFor(() => {
+      expect(sendResponse).toHaveBeenCalledWith(expect.objectContaining({ success: true }))
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('still calls fetch for a GET with a read-only key without consulting the key type', async () => {
+    getKeyType.mockResolvedValue('read-key')
+    getValue.mockResolvedValue('console-stored')
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ data: [] }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const listener = await loadListener()
+    const sendResponse = vi.fn()
+    listener(
+      { config: { method: 'GET', url: `${API_BASE_URL}/gates` }, type: 'API_REQUEST' },
+      extensionSender,
+      sendResponse,
+    )
+
+    await vi.waitFor(() => {
+      expect(sendResponse).toHaveBeenCalledWith(expect.objectContaining({ success: true }))
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(getKeyType).not.toHaveBeenCalled()
   })
 })

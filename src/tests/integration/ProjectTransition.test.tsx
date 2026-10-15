@@ -31,6 +31,7 @@ vi.mock('wxt/utils/define-background', () => ({
 vi.mock('wxt/browser', () => ({
   browser: {
     runtime: {
+      getURL: () => 'chrome-extension://test-extension-id/',
       onMessage: {
         addListener: (listener: typeof state.listener) => {
           state.listener = listener
@@ -39,7 +40,7 @@ vi.mock('wxt/browser', () => ({
       sendMessage: async (message: unknown) => {
         await state.messageGate
         return new Promise((resolve) => {
-          state.listener!(message, {}, resolve)
+          state.listener!(message, { url: 'chrome-extension://test-extension-id/popup.html' }, resolve)
         })
       },
     },
@@ -55,6 +56,7 @@ vi.mock('@/src/lib/storage', () => ({
       return Promise.resolve()
     },
   },
+  apiKeyTypeStorage: { getValue: () => Promise.resolve('write-key') },
   projectsStorage: { setValue: projectsWrite },
 }))
 vi.mock('@/src/hooks/use-settings-storage', () => ({
