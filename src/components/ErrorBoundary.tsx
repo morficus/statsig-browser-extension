@@ -3,6 +3,7 @@ import type { ErrorInfo, ReactNode } from 'react'
 import React, { Component } from 'react'
 
 import { Button } from '@/src/components/ui/button'
+import { handleApiError } from '@/src/lib/utils'
 
 interface Props {
   children?: ReactNode
@@ -25,7 +26,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo)
+    console.error('Uncaught error:', handleApiError(error), errorInfo.componentStack)
   }
 
   private readonly handleReload = () => {

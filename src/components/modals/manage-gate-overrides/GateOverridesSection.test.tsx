@@ -47,6 +47,11 @@ describe('gateOverridesSection write access', () => {
     expect(screen.getByRole('button', { name: /Add Manual/iu })).toBeEnabled()
     expect(screen.getByRole('button', { name: 'PASS' })).toBeEnabled()
     expect(screen.getByRole('button', { name: 'FAIL' })).toBeEnabled()
+    const deleteButtons = screen.getAllByRole('button', { name: 'Delete override' })
+    expect(deleteButtons.length).toBeGreaterThan(0)
+    for (const button of deleteButtons) {
+      expect(button).toBeEnabled()
+    }
   })
 
   it('shows the reason once and disables every write control with a read key', () => {
@@ -62,7 +67,7 @@ describe('gateOverridesSection write access', () => {
     expect(screen.getByRole('button', { name: 'PASS' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'FAIL' })).toBeDisabled()
     // One delete button per override row, rendered but disabled
-    const deleteButtons = screen.getAllByRole('button').filter((button) => button.querySelector('svg.lucide-trash-2'))
+    const deleteButtons = screen.getAllByRole('button', { name: 'Delete override' })
     expect(deleteButtons.length).toBeGreaterThan(0)
     for (const button of deleteButtons) {
       expect(button).toBeDisabled()

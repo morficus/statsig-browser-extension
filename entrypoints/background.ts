@@ -24,6 +24,23 @@ const READ_ONLY_KEY_RESPONSE = {
   success: false,
 }
 
+// The only caller headers that reach the Console API. The key and version are handled below.
+const FORWARDED_HEADERS = new Set(['accept', 'content-type', 'statsig-api-key', 'statsig-api-version'])
+
+const buildOutgoingHeaders = (headers: Record<string, string> | undefined, apiKey: string | null) => {
+  const outgoing = Object.fromEntries(
+    Object.entries(headers ?? {}).filter(([name]) => FORWARDED_HEADERS.has(name.toLowerCase())),
+  )
+  if (apiKey && !new Headers(outgoing).has('STATSIG-API-KEY')) {
+    // Remove quotes if present (legacy support)
+    outgoing['STATSIG-API-KEY'] = apiKey.replaceAll('"', '')
+  }
+  if (!new Headers(outgoing).has('STATSIG-API-VERSION')) {
+    outgoing['STATSIG-API-VERSION'] = STATSIG_API_VERSION
+  }
+  return outgoing
+}
+
 const isApiRequestMessage = (msg: unknown): msg is ApiRequestMessage =>
   typeof msg === 'object' && msg !== null && 'type' in msg
 
@@ -43,23 +60,15 @@ export default defineBackground(() => {
       return false
     }
 
-    const isWrite = (method ?? 'GET').toUpperCase() !== 'GET'
+    const httpMethod = (method ?? 'GET').toUpperCase()
 
     const performFetch = async () => {
       const apiKey = await apiKeyStorage.getValue()
-      const finalHeaders = { ...headers }
-      if (apiKey && !new Headers(finalHeaders).has('STATSIG-API-KEY')) {
-        // Remove quotes if present (legacy support)
-        finalHeaders['STATSIG-API-KEY'] = apiKey.replaceAll('"', '')
-      }
-      if (!new Headers(finalHeaders).has('STATSIG-API-VERSION')) {
-        finalHeaders['STATSIG-API-VERSION'] = STATSIG_API_VERSION
-      }
 
       fetch(url, {
         body,
-        headers: finalHeaders,
-        method,
+        headers: buildOutgoingHeaders(headers, apiKey),
+        method: httpMethod,
         // A redirect must never carry the key to another host.
         redirect: 'error',
       })
@@ -100,7 +109,7 @@ export default defineBackground(() => {
 
     void (async () => {
       // Writes need a key with write access; reads never wait on the key type.
-      if (isWrite && (await apiKeyTypeStorage.getValue()) === 'read-key') {
+      if (httpMethod !== 'GET' && (await apiKeyTypeStorage.getValue()) === 'read-key') {
         sendResponse(READ_ONLY_KEY_RESPONSE)
         return
       }

@@ -127,6 +127,49 @@ describe('background API proxy', () => {
     })
   })
 
+  it('forwards only Accept, Content-Type, the key and the version header', async () => {
+    getValue.mockResolvedValue('console-stored')
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const listener = await loadListener()
+    const sendResponse = vi.fn()
+    listener(
+      {
+        config: {
+          body: '{}',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-Foo': 'bar',
+            'X-HTTP-Method-Override': 'DELETE',
+          },
+          method: 'POST',
+          url: `${API_BASE_URL}/gates/my_gate/overrides`,
+        },
+        type: 'API_REQUEST',
+      },
+      extensionSender,
+      sendResponse,
+    )
+
+    await vi.waitFor(() => {
+      expect(sendResponse).toHaveBeenCalled()
+    })
+
+    expect(fetchMock).toHaveBeenCalledWith(`${API_BASE_URL}/gates/my_gate/overrides`, {
+      body: '{}',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'STATSIG-API-KEY': 'console-stored',
+        'STATSIG-API-VERSION': '20240601',
+      },
+      method: 'POST',
+      redirect: 'error',
+    })
+  })
+
   it.each(['STATSIG-API-KEY', 'statsig-api-key'])('preserves an explicit %s header', async (headerName) => {
     getValue.mockResolvedValue('console-stored')
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse('not-json'))
@@ -212,7 +255,7 @@ describe('background API proxy', () => {
     expect(fetchMock).toHaveBeenCalledWith(`${API_BASE_URL}/gates`, {
       body: undefined,
       headers: { 'STATSIG-API-KEY': 'console-stored', 'statsig-api-version': '19990101' },
-      method: undefined,
+      method: 'GET',
       redirect: 'error',
     })
   })
@@ -369,6 +412,10 @@ describe('background API proxy', () => {
       expect(sendResponse).toHaveBeenCalledWith(expect.objectContaining({ success: true }))
     })
     expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${API_BASE_URL}/experiments/exp/overrides`,
+      expect.objectContaining({ method: 'PATCH' }),
+    )
   })
 
   it('still calls fetch for a GET with a read-only key without consulting the key type', async () => {

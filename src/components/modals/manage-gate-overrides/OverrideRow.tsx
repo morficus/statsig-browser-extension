@@ -44,6 +44,7 @@ export const OverrideRow = memo(function OverrideRow({ item, canEdit, isPending,
       </TableCell>
       <TableCell>
         <Button
+          aria-label="Delete override"
           variant="ghost"
           size="icon"
           className="h-8 w-8 text-muted-foreground hover:text-destructive"

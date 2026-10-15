@@ -197,14 +197,17 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
   const { initialize, update } = createProjectPersistence(set, get)
   return {
     activeProjectId: '',
-    addProject: async (apiKey: string, apiKeyType: ApiKeyType = 'write-key') => {
+    addProject: async (apiKey: string, apiKeyType?: ApiKeyType) => {
       const { projects } = get()
       const existing = projects.find((project) => project.apiKey === apiKey)
       if (existing) {
         await get().setActiveProject(existing.id)
+        if (apiKeyType) {
+          await get().updateProject(existing.id, { apiKeyType })
+        }
         return existing.id
       }
-      const project = { ...createProject(apiKey, nextLabel(projects)), apiKeyType }
+      const project = { ...createProject(apiKey, nextLabel(projects)), apiKeyType: apiKeyType ?? 'write-key' }
       await update([...projects, project], project.id)
       return project.id
     },

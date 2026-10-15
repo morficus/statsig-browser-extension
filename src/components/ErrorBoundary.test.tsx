@@ -8,6 +8,10 @@ const Boom = ({ message = 'kaboom' }: { message?: string }) => {
   throw new Error(message)
 }
 
+const Leaky = () => {
+  throw new Error('request failed', { cause: new Error('bad key console-abc123') })
+}
+
 describe('errorBoundary', () => {
   beforeEach(() => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -35,6 +39,19 @@ describe('errorBoundary', () => {
     expect(screen.getByText('Something went wrong')).toBeInTheDocument()
     expect(screen.getByText('upstream failed')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /reload extension/iu })).toBeInTheDocument()
+  })
+
+  it('logs only redacted text, never the raw error with its cause chain', () => {
+    const consoleError = vi.mocked(console.error)
+
+    render(
+      <ErrorBoundary>
+        <Leaky />
+      </ErrorBoundary>,
+    )
+
+    expect(consoleError).toHaveBeenCalledWith('Uncaught error:', expect.any(String), expect.any(String))
+    expect(consoleError.mock.calls.flat().join(' ')).not.toContain('abc123')
   })
 
   it('calls location.reload when the user clicks Reload Extension', async () => {

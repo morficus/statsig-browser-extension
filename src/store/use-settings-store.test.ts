@@ -254,6 +254,26 @@ describe('useSettingsStore', () => {
     expect(useSettingsStore.getState().activeProjectId).toBe('p1')
   })
 
+  it('should apply the chosen key type when the key is already configured', async () => {
+    useSettingsStore.setState({ activeProjectId: '', projects: [project({ apiKeyType: 'write-key' })] })
+
+    await useSettingsStore.getState().addProject('console-a', 'read-key')
+
+    expect(useSettingsStore.getState().projects).toHaveLength(1)
+    expect(useSettingsStore.getState().projects[0].apiKeyType).toBe('read-key')
+    expect(useSettingsStore.getState().activeProjectId).toBe('p1')
+    expect(apiKeyTypeStorage.setValue).toHaveBeenLastCalledWith('read-key')
+  })
+
+  it('should keep the stored key type when the key is re-added without one', async () => {
+    useSettingsStore.setState({ activeProjectId: '', projects: [project({ apiKeyType: 'read-key' })] })
+
+    await useSettingsStore.getState().addProject('console-a')
+
+    expect(useSettingsStore.getState().projects[0].apiKeyType).toBe('read-key')
+    expect(apiKeyTypeStorage.setValue).toHaveBeenLastCalledWith('read-key')
+  })
+
   it('should pin an origin to the activated project and unpin it elsewhere', async () => {
     useSettingsStore.setState({
       activeProjectId: 'p1',
