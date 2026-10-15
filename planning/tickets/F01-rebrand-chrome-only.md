@@ -16,15 +16,15 @@ The extension becomes "Intake Experiment Testing", built for Chrome only, with i
 
 ### F01-T1: Rename the product
 
-- **Status:** In progress
+- **Status:** Done (`080bdbd`). The header shows a text wordmark, and the unused `assets/statsig_full.png` is gone (WL-020).
 - **Owner:** Claude
 - **Size:** M
 - **Depends on:** None
 - **Description:** Replace "Statsig Browser Extension" as the product name in the manifest (`name`, `default_title`, `description`), in `package.json` (`name`, `description`, `keywords`), in the popup HTML title, and in the UI header. "Statsig" can stay where it names the service (for example "Statsig Console API key"). Keep `LICENSE` and the original copyright notice (REQ-SET-002).
 - **Acceptance criteria:**
-  - [ ] The built manifest has `name: "Intake Experiment Testing"`
-  - [ ] A grep for "Statsig Browser Extension" in `src/`, `entrypoints/`, and `wxt.config.ts` finds nothing
-  - [ ] `LICENSE` hasn't changed
+  - [x] The built manifest has `name: "Intake Experiment Testing"`
+  - [x] A grep for "Statsig Browser Extension" in `src/`, `entrypoints/`, and `wxt.config.ts` finds nothing
+  - [x] `LICENSE` hasn't changed
 - **Verification:** `pnpm build:chrome`, then read `.output/chrome-mv3/manifest.json`. Fix the UI tests that assert the old name.
 - **Files likely touched:** `wxt.config.ts`, `package.json`, `entrypoints/popup/index.html`, `src/components/layout/Header.tsx`, `src/components/layout/Header.test.tsx`
 

@@ -1,7 +1,7 @@
 # Brief: F01-T1 Rename the product
 
 slug: f01-t1-rename
-status: agreed
+status: done (080bdbd)
 agent: f01-t1-rename (Sonnet, isolated worktree)
 
 ## Decision

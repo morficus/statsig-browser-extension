@@ -1,7 +1,7 @@
 # Brief: F01-T3 Generate a new Chrome signing key
 
 slug: f01-t3-signing-key
-status: agreed
+status: done (90b8e7c)
 agent: f01-t3-signing-key (Sonnet, main working tree)
 
 ## Decision
