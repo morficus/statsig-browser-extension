@@ -64,7 +64,7 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 
 1. **Maurice:** move the new private signing key to a password manager before the machine restarts (WL-021).
 2. **F00-T2 to F00-T5** (Maurice): the manual checks against Statsig and the Intake Site. F00-T1 is done (WL-016), so the exact calls to test are known. Claude can prepare the curl commands (T3, T5) and the DevTools snippet (T4).
-3. **F02 is done** (WL-026 to WL-031). T-SET-1 passes. Branch `f02-intake-site-scoping`, not merged yet. F05-T1 and F05-T2 carry two guard follow-ups (WL-031). Then F03 and F04, once Q2 is answered for them. F01 is done (WL-019 to WL-022).
+3. **F02 is done** (WL-026 to WL-031). T-SET-1 passes. Merged into `main`. F05-T1 and F05-T2 carry two guard follow-ups (WL-031). Then F03 and F04, once Q2 is answered for them. F01 is done (WL-019 to WL-022).
 4. Known flaky e2e test (WL-023) and local tooling notes (WL-024): pick these up with F03.
 
 ## Open questions
