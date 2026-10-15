@@ -1,3 +1,7 @@
+import type { Worker } from '@playwright/test'
+
+import { expect } from '@playwright/test'
+
 /**
  * Playwright `evaluate` callbacks are serialized in isolation (no module
  * closures). Each function below is self-contained on purpose.
@@ -86,3 +90,14 @@ export const readExtensionLocalValue = async (key: string): Promise<unknown> => 
   const items = await local.get(key)
   return items[key]
 }
+
+/**
+ * Storage writes land asynchronously after the UI updates, so assert on a polled read
+ * (`await pollExtensionLocalValue(worker, key).toBe(...)`) instead of reading once.
+ * `select` narrows the stored value before it is compared.
+ */
+export const pollExtensionLocalValue = <T = unknown>(
+  worker: Worker,
+  key: string,
+  select: (value: unknown) => T = (value) => value as T,
+) => expect.poll(async () => select(await worker.evaluate(readExtensionLocalValue, key)))

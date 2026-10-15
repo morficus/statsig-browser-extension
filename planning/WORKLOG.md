@@ -287,3 +287,13 @@ The code review of F03-T3 found these consequences, and F03-T3 fixes them:
 - **The commit types no longer trigger releases.** `CONTRIBUTING.md` no longer says that `feat`, `fix`, and breaking changes make MINOR, PATCH, and MAJOR releases.
 - **Runs on `main` are never cancelled.** `build.yml` cancels a superseded run only on pull requests (`cancel-in-progress: ${{ github.event_name == 'pull_request' }}`). So each commit on `main` keeps its own check status and zip artifact.
 - **Coverage is opt-in.** `vitest.config.ts` turned coverage on when `CI` was set, only for the Codecov upload. That switch is gone. `pnpm vitest run --coverage` still works, and CI runs about 20% faster. `actionlint` passes on `build.yml`.
+
+### WL-038 · 2026-10-15 · Resolved · The e2e tests wait for storage instead of reading it once (F03-T4)
+
+**Tickets:** F03-T4 · resolves WL-023
+
+Before the fix, "adds a second project, activates it and keeps its client keys" failed 1 of 20 runs. A new helper, `pollExtensionLocalValue` in `e2e/extension-runtime.ts`, wraps `expect.poll` around the storage read. All 8 storage reads that follow a UI write now use it, in `projects.e2e.ts`, `logout.e2e.ts`, and `settings.e2e.ts`. Each assertion keeps its matcher and its value. After the fix, the test passed 20 of 20 runs, and the full suite passed 62 of 62.
+
+The code review found one more gap. In "switching back to another project" and "removes a project", the final value is the same as the value from before the add, so a poll could pass on stale data. Each test now first waits until the add is in storage.
+
+**Risk, not fixed:** `e2e/error-handling.e2e.ts:105` and `e2e/login-flow.e2e.ts:42` read the mock's list of requests once, right after a click. No check shows the request has gone out by then. They have not been seen to fail. If they flake, use the same `expect.poll` pattern.

@@ -56,14 +56,14 @@ The fork doesn't take automatic updates, and future sessions have a `CLAUDE.md` 
 
 ### F03-T4: Fix the flaky e2e test "adds a second project, activates it and keeps its client keys"
 
-- **Status:** In progress
+- **Status:** Done (WL-038)
 - **Owner:** Claude
 - **Size:** XS
 - **Depends on:** None
 - **Description:** The test reads `chrome.storage.local` once, right after the UI write, and sometimes gets the old value (WL-023). Wait for the stored value instead. Fix the same way any other e2e test that reads storage once, right after a UI write.
 - **Acceptance criteria:**
-  - [ ] The test passes 20 of 20 runs with `--repeat-each=20`
-  - [ ] The full e2e suite passes
+  - [x] The test passes 20 of 20 runs with `--repeat-each=20`
+  - [x] The full e2e suite passes
 - **Verification:** `pnpm build:chrome && pnpm exec playwright test e2e/projects.e2e.ts --repeat-each=20`; `pnpm exec playwright test`
 - **Files likely touched:** `e2e/projects.e2e.ts`
 
