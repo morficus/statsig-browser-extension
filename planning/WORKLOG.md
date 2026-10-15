@@ -361,3 +361,15 @@ The code review found one more gap. In "switching back to another project" and "
 The F03-T2 check "every command runs as written" found that `pnpm dev:chrome` stopped with `ENOENT: open '.dev-profile/chrome-out.log'`. chrome-launcher 1.2.0 opens its log file in the profile folder before it creates the folder (`dist/chrome-launcher.js:151` and `:167`). `web-ext.config.ts` sets `chromiumProfile: '.dev-profile'`, which is gitignored, so only machines that already had the folder could run dev. `web-ext.config.ts` now creates the folder when it loads. The dev browser also opened `https://cloud.qdrant.io`, which the upstream author left in. It now opens the staging Intake Site (`https://app.staging.talkiatry.com/assessment`, spec §3). After `rm -rf .dev-profile`, `pnpm dev:chrome` opens Chrome.
 
 The new `CLAUDE.md` gives the commands, the definition of done, the CI summary, and 10 hard rules with REQ IDs. Each rule was checked against the spec text. Each command in it was run once: all pass, including `pnpm test:e2e` (62 passed).
+
+### WL-040 · 2026-10-15 · Resolved · CI passes on the fork without upstream secrets (F03-T3)
+
+**Tickets:** F03-T3
+
+`main` was pushed to the fork at `44e2829`. The push did not start a CI run. GitHub listed `build.yml` as active, but the fork had no runs after 3 minutes. A manual dispatch (`gh workflow run build.yml --ref main`) started run 38769230604. Both jobs passed: `build` in 1m11s, and `e2e` in 2m50s with 69 passed. No step needs a secret.
+
+The run found one defect that the upstream workflow also has. The zip artifact step uploaded nothing. `actions/upload-artifact` skips hidden paths by default, and `.output/` starts with a dot. The step now sets `include-hidden-files: true`, and `if-no-files-found: error` so that a missing zip fails the run. The next run on `main` must show the `<sha>-prod-build` artifact.
+
+The Playwright report step also found no files. This is correct on a green run. CI uses the `github` reporter, which writes no HTML report, and `test-results/` gets files only when a test fails.
+
+**Open:** check that the next push to `main` starts a run. If it does not, enable workflows on the fork's Actions tab.
