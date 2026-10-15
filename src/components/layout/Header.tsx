@@ -1,7 +1,6 @@
 import { LogOut, Settings, User } from 'lucide-react'
 import { memo, useCallback } from 'react'
 
-import statsigLogo from '@/assets/statsig_full.png'
 import packageJson from '@/package.json'
 import { ProjectStatus } from '@/src/components/layout/ProjectStatus'
 import { Button } from '@/src/components/ui/button'
@@ -33,7 +32,7 @@ export const Header = memo(function Header({ onLogout }: HeaderProps) {
   return (
     <header className="flex items-center justify-between border-b bg-card px-4 py-2">
       <div className="flex items-center gap-2">
-        <img src={statsigLogo} alt="Statsig" className="h-6 dark:brightness-0 dark:invert" />
+        <span className="text-sm leading-none font-semibold whitespace-nowrap">Intake Experiment Testing</span>
         <span className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground">
           v{packageJson.version}
         </span>

@@ -11,9 +11,10 @@ describe('header', () => {
     useUIStore.getState().reset()
   })
 
-  it('renders the Statsig wordmark and version', () => {
+  it('renders the product name and version', () => {
     render(<Header onLogout={vi.fn()} />)
-    expect(screen.getByAltText('Statsig')).toBeInTheDocument()
+    expect(screen.getByText('Intake Experiment Testing')).toBeInTheDocument()
+    expect(screen.queryByAltText('Statsig')).toBeNull()
     expect(screen.getByText(/^v/u)).toBeInTheDocument()
   })
 

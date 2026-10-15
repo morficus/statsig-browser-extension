@@ -15,7 +15,7 @@ export default defineConfig({
         '32': 'icon/32.png',
         '48': 'icon/48.png',
       },
-      default_title: 'Statsig Browser Extension',
+      default_title: 'Intake Experiment Testing',
     },
     browser_specific_settings: {
       gecko: {
@@ -26,7 +26,7 @@ export default defineConfig({
       },
     },
     description:
-      'Manage Statsig feature gates and experiments directly from your browser. View user details, override gates, and debug efficiently.',
+      'Spot-test Statsig experiments on the Intake Site: see your groups, force yourself into a group, and take screenshots.',
     host_permissions: ['<all_urls>', 'https://statsigapi.net/*'],
     icons: {
       '128': 'icon/128.png',
@@ -37,7 +37,7 @@ export default defineConfig({
     },
     // Chromium-only: AMO rejects `key` as an unknown manifest field.
     ...(browser === 'firefox' ? {} : { key: CRX_PUBLIC_KEY }),
-    name: 'Statsig Browser Extension',
+    name: 'Intake Experiment Testing',
     permissions: ['storage', 'scripting', 'activeTab'],
   }),
   modules: ['@wxt-dev/module-react'],

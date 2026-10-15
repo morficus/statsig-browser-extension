@@ -53,7 +53,7 @@ describe('active tab lookup', () => {
     queryMock.mockRejectedValue(error)
 
     await expect(getActiveTab()).resolves.toBeNull()
-    expect(errorSpy).toHaveBeenCalledWith('[Statsig Extension] Failed to get active tab:', error)
+    expect(errorSpy).toHaveBeenCalledWith('[Intake Experiment Testing] Failed to get active tab:', error)
   })
 
   it('handles multiple tabs in query result and returns first', async () => {

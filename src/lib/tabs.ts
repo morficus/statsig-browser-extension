@@ -20,7 +20,7 @@ export async function getActiveTab() {
       return fallbackTabs[0]
     }
   } catch (error) {
-    console.error('[Statsig Extension] Failed to get active tab:', error)
+    console.error('[Intake Experiment Testing] Failed to get active tab:', error)
   }
   return null
 }

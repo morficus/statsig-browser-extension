@@ -1,8 +1,8 @@
 {
-  "name": "statsig-browser-extension",
+  "name": "intake-experiment-testing",
   "version": "1.7.2",
   "private": true,
-  "description": "Manage Statsig feature gates and experiments directly from your browser. View user details, override gates, and debug efficiently.",
+  "description": "Spot-test Statsig experiments on the Intake Site: see your groups, force yourself into a group, and take screenshots.",
   "keywords": [
     "ab-testing",
     "browser-extension",

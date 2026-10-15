@@ -73,7 +73,7 @@ export function useDetectedUser() {
   const retryDetection = useCallback(async () => {
     const tab = await getActiveTab()
     if (!tab?.id) {
-      console.error('[Statsig Extension] No active tab found')
+      console.error('[Intake Experiment Testing] No active tab found')
       return
     }
 
