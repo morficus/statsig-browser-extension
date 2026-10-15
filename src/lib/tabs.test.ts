@@ -1,6 +1,6 @@
 import { beforeEach, vi, describe, expect, it } from 'vitest'
 
-import { getActiveTab } from './tabs'
+import { getActiveIntakeTab, getActiveTab } from './tabs'
 
 const { queryMock } = vi.hoisted(() => ({
   queryMock: vi.fn(),
@@ -71,5 +71,38 @@ describe('active tab lookup', () => {
     queryMock.mockResolvedValueOnce([tab])
 
     await expect(getActiveTab()).resolves.toStrictEqual({ id: 1 })
+  })
+})
+
+describe('active intake tab lookup', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it.each(['https://app.talkiatry.com/assessment/start', 'https://app.staging.talkiatry.com/assessment'])(
+    'returns the tab for %s',
+    async (url) => {
+      const tab = { id: 1, url }
+      queryMock.mockResolvedValueOnce([tab])
+
+      await expect(getActiveIntakeTab()).resolves.toStrictEqual(tab)
+    },
+  )
+
+  it.each([
+    ['a non-Intake URL', { id: 1, url: 'https://example.com/' }],
+    ['a missing url', { id: 1 }],
+    ['a missing id', { url: 'https://app.staging.talkiatry.com/assessment' }],
+  ])('returns null for %s', async (_name, tab) => {
+    queryMock.mockResolvedValueOnce([tab])
+
+    await expect(getActiveIntakeTab()).resolves.toBeNull()
+  })
+
+  it('returns null when there is no active tab', async () => {
+    queryMock.mockResolvedValueOnce([])
+    queryMock.mockResolvedValueOnce([])
+
+    await expect(getActiveIntakeTab()).resolves.toBeNull()
   })
 })

@@ -1,10 +1,14 @@
 import { browser } from 'wxt/browser'
 
 import type { DetectedStatsigKeys } from '../lib/projects'
+import type { getActiveTab } from '../lib/tabs'
 import type { StatsigUser } from '../types/statsig'
 
 import { getUserDetailsFromPage } from '../lib/get-user-details-injector'
+import { isIntakeSiteUrl } from '../lib/intake-site'
 import { handleApiError } from '../lib/utils'
+
+type TabLike = Pick<NonNullable<Awaited<ReturnType<typeof getActiveTab>>>, 'id' | 'url'>
 
 export interface UserDetails {
   user: StatsigUser
@@ -13,7 +17,9 @@ export interface UserDetails {
   keys?: DetectedStatsigKeys
 }
 
-export const getUserDetails = async (tabId: number): Promise<UserDetails | undefined> => {
+const isReadable = (tab: TabLike): tab is TabLike & { id: number } => tab.id !== undefined && isIntakeSiteUrl(tab.url)
+
+const readPage = async (tabId: number): Promise<UserDetails | undefined> => {
   try {
     const [result] = await browser.scripting.executeScript({
       func: getUserDetailsFromPage,
@@ -33,4 +39,10 @@ export const getUserDetails = async (tabId: number): Promise<UserDetails | undef
     return undefined
   }
   return undefined
+}
+
+export const getUserDetails = async (tab: TabLike): Promise<UserDetails | undefined> => {
+  // REQ-SET-014: never read SDK state outside the Intake Site, whatever the caller checked.
+  const details = isReadable(tab) ? await readPage(tab.id) : undefined
+  return details
 }

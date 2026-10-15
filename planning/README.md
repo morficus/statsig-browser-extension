@@ -39,7 +39,7 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 | -------------------------------- | ------------------------------------------------------------------------------ | ----------- | ----- |
 | 0: Pre-build checks              | [F00: Pre-build checks (spec §8.1)](tickets/F00-pre-build-checks.md)           | In progress | 1/5   |
 | 1: Setup & hardening             | [F01: Rebrand and Chrome-only](tickets/F01-rebrand-chrome-only.md)             | Done        | 3/3   |
-|                                  | [F02: Intake Site scoping](tickets/F02-intake-site-scoping.md)                 | Todo        | 0/4   |
+|                                  | [F02: Intake Site scoping](tickets/F02-intake-site-scoping.md)                 | Done        | 4/4   |
 |                                  | [F03: Repository hygiene](tickets/F03-repo-hygiene.md)                         | In progress | 4/5   |
 |                                  | [F04: Console API hardening](tickets/F04-console-api-hardening.md)             | Todo        | 0/5   |
 | 2: Job 2 (force me into a group) | [F05: Stable ID and environment detection](tickets/F05-stable-id-detection.md) | Todo        | 0/2   |
@@ -64,8 +64,8 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 
 1. **Maurice:** move the new private signing key to a password manager before the machine restarts (WL-021).
 2. **F00-T2 to F00-T5** (Maurice): the manual checks against Statsig and the Intake Site. F00-T1 is done (WL-016), so the exact calls to test are known. Claude can prepare the curl commands (T3, T5) and the DevTools snippet (T4).
-3. Then the rest of phase 1 (F02 to F04), once Q2 is answered for them. F01 is done (WL-019 to WL-022).
-4. **F03-T3** (Maurice): approve a push of the `f03-repo-hygiene` branch, so that a CI run on the fork confirms that no upstream secret is missing. Then F03 is done. T1, T2, T4, and T5 are done (WL-034 to WL-039).
+3. **F02 is done** (WL-026 to WL-031). T-SET-1 passes. Merged into `main`. F05-T1 and F05-T2 carry two guard follow-ups (WL-031). Then F04, once Q2 is answered for it. F01 is done (WL-019 to WL-022).
+4. **F03-T3** (Maurice): approve a push of the `f03-repo-hygiene` branch, so that a CI run on the fork confirms that no upstream secret is missing. Then F03 is done. T1, T2, T4, and T5 are done (WL-034 to WL-039). F03 picked up the flaky e2e test (WL-023) and the worktree leak (WL-024).
 
 ## Open questions
 
@@ -74,7 +74,7 @@ Each resolved question becomes a `Decision` entry in `WORKLOG.md`. Then remove i
 | ID  | Question                                                                                                                                                                                                                            | Blocks      |
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
 | Q1  | **Popup layout.** Keep the Gates, Experiments, Configs, Audit Logs, and Cleanup tabs? Where do Job 2 and Job 1 live: new tabs, or inside the Experiments tab?                                                                       | F07, F10    |
-| Q2  | **Who runs phase 0, and when?** Can the rest of phase 1 (F02 to F04) start while the manual checks wait? Spec §11 says no. F01 already started (WL-019).                                                                            | F02 to F04  |
+| Q2  | **Who runs phase 0, and when?** Can the rest of phase 1 (F02 to F04) start while the manual checks wait? Spec §11 says no. F01 (WL-019), F02 (WL-026), and F03 (WL-033) started early.                                              | F04         |
 | Q4  | **Existing experiment override modal and REQ-OVR-009.** The base modal can delete any override row, and a delete removes every ID in that row. Should it be limited to the Tester's own ID, made read-only, or removed? See WL-004. | F06-T3, F07 |
 | Q5  | **Project gate.** The popup hides everything unless the page's SDK key matches a configured project. Do the Intake flows keep this gate (each Tester adds their key and pins it to the site), or bypass it? See WL-010.             | F07, F10    |
 | Q7  | **How is the key type set?** Nothing in the base code sets `read-key`. Should the Tester pick the type when adding a key, or should the extension detect it? See WL-013.                                                            | F04-T3      |

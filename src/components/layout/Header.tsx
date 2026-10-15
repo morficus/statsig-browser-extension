@@ -16,9 +16,11 @@ import { useUIStore } from '@/src/store/use-ui-store'
 
 interface HeaderProps {
   onLogout: () => void
+  /** Off-site (or still unknown) the project status and user details are hidden: nothing is read there. */
+  isIntakeSite: boolean | undefined
 }
 
-export const Header = memo(function Header({ onLogout }: HeaderProps) {
+export const Header = memo(function Header({ isIntakeSite, onLogout }: HeaderProps) {
   const { setUserDetailsSheetOpen, setSettingsSheetOpen } = useUIStore((state) => state)
 
   const handleOpenUserDetails = useCallback(() => {
@@ -36,7 +38,7 @@ export const Header = memo(function Header({ onLogout }: HeaderProps) {
         <span className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground">
           v{packageJson.version}
         </span>
-        <ProjectStatus />
+        {isIntakeSite === true && <ProjectStatus />}
       </div>
       <div className="flex items-center gap-2">
         <DropdownMenu>
@@ -53,10 +55,12 @@ export const Header = memo(function Header({ onLogout }: HeaderProps) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleOpenUserDetails} className="cursor-pointer">
-              <User className="mr-2 h-4 w-4" />
-              <span>User Details</span>
-            </DropdownMenuItem>
+            {isIntakeSite === true && (
+              <DropdownMenuItem onClick={handleOpenUserDetails} className="cursor-pointer">
+                <User className="mr-2 h-4 w-4" />
+                <span>User Details</span>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={handleOpenSettings} className="cursor-pointer">
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>

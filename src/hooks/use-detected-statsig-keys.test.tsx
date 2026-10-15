@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useDetectedStatsigKeys } from './use-detected-statsig-keys'
 
-const { getActiveTabMock, getUserDetailsMock, setDetectedKeysMock } = vi.hoisted(() => ({
-  getActiveTabMock: vi.fn(),
+const { getActiveIntakeTabMock, getUserDetailsMock, setDetectedKeysMock } = vi.hoisted(() => ({
+  getActiveIntakeTabMock: vi.fn(),
   getUserDetailsMock: vi.fn(),
   setDetectedKeysMock: vi.fn(),
 }))
@@ -14,7 +14,7 @@ vi.mock('@/src/handlers/get-user-details', () => ({
 }))
 
 vi.mock('@/src/lib/tabs', () => ({
-  getActiveTab: getActiveTabMock,
+  getActiveIntakeTab: getActiveIntakeTabMock,
 }))
 
 vi.mock('@/src/store/use-context-store', () => ({
@@ -24,7 +24,7 @@ vi.mock('@/src/store/use-context-store', () => ({
 describe('useDetectedStatsigKeys', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    getActiveTabMock.mockResolvedValue({ id: 7 })
+    getActiveIntakeTabMock.mockResolvedValue({ id: 7, url: 'https://app.staging.talkiatry.com/assessment' })
   })
 
   it('stores the keys read from the inspected page', async () => {
@@ -36,7 +36,7 @@ describe('useDetectedStatsigKeys', () => {
     })
 
     await vi.waitFor(() => {
-      expect(getUserDetailsMock).toHaveBeenCalledWith(7)
+      expect(getUserDetailsMock).toHaveBeenCalledWith({ id: 7, url: 'https://app.staging.talkiatry.com/assessment' })
     })
     expect(setDetectedKeysMock).toHaveBeenCalledWith(keys)
   })
@@ -53,15 +53,15 @@ describe('useDetectedStatsigKeys', () => {
     })
   })
 
-  it('does nothing without an active tab', async () => {
-    getActiveTabMock.mockResolvedValue(null)
+  it('does nothing without an Intake Site tab', async () => {
+    getActiveIntakeTabMock.mockResolvedValue(null)
 
     renderHook(() => {
       useDetectedStatsigKeys()
     })
 
     await vi.waitFor(() => {
-      expect(getActiveTabMock).toHaveBeenCalled()
+      expect(getActiveIntakeTabMock).toHaveBeenCalled()
     })
     expect(getUserDetailsMock).not.toHaveBeenCalled()
     expect(setDetectedKeysMock).not.toHaveBeenCalled()

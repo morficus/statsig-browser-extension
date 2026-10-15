@@ -1,6 +1,7 @@
 import { defineContentScript } from 'wxt/utils/define-content-script'
 
 import { getUserDetailsFromPage } from '@/src/lib/get-user-details-injector'
+import { INTAKE_SITE_MATCHES } from '@/src/lib/intake-site'
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null
 
@@ -56,7 +57,7 @@ export default defineContentScript({
       }
     })
   },
-  matches: ['<all_urls>'],
+  matches: [...INTAKE_SITE_MATCHES],
   runAt: 'document_idle',
   world: 'MAIN',
 })

@@ -245,6 +245,62 @@ Left for F03-T3, because these aren't about Firefox:
 
 Maurice installed pnpm 12. `pnpm` now resolves through proto (`~/.proto/shims/pnpm`) to 12.11.2 and runs without a shim, and `pnpm type-check` passes. Item 1 of WL-024 no longer applies. Item 2 (agent worktrees leaking into lint and tests) still stands.
 
+### WL-026 · 2026-10-15 · Decision · F02 starts before the phase 0 checkpoint
+
+**Tickets:** F02, Q2
+
+Maurice asked to start F02 while F00-T2 to F00-T5 wait for the manual checks. F02 uses no phase 0 result: REQ-SET-007 fixes the Intake Site URLs, and OPEN-003 is closed. Like WL-019, this is a deliberate exception to spec §11, for F02 only. Q2 stays open for F03 and F04.
+
+### WL-027 · 2026-10-15 · Decision · F02 design: one pattern constant, a derived matcher, one tab guard
+
+**Tickets:** F02-T1, F02-T2, F02-T3, F05, F09, F11 · REQ-SET-007 to REQ-SET-009, REQ-SET-014
+
+- **One constant.** `INTAKE_SITE_MATCHES` in `src/lib/intake-site.ts` holds the two patterns. `wxt.config.ts` (`host_permissions`) and both content scripts (`matches`) import it. The module has no imports, because WXT loads `wxt.config.ts` in Node.
+- **Derived runtime check.** `isIntakeSiteUrl(url)` doesn't hard-code hostnames. It runs the pattern strings through a small Chrome match-pattern matcher (`matchesUrlPattern`): `http`/`https` scheme, an exact or `*.` host, and `*` path globs matched against `pathname + search`. If the product owner widens the constant, the manifest and the runtime check widen together. Two choices are deliberate. A URL with an explicit non-default port never matches, which is stricter than Chrome, because the check is a security guard. `/assessments` does match, the same as Chrome's glob. The matcher uses `URL.parse` (Chrome 126+, Node 22+; the repo needs Node 24 or later).
+- **One tab guard.** Page reads get their tab from a new `getActiveIntakeTab()` in `src/lib/tabs.ts`, which returns the active tab only if its URL is an Intake Site URL. `getUserDetails` checks again just before `scripting.executeScript`. F05 and F09 add more page readers and must use the same guard.
+- **Popup off-site.** The popup shows its own "Not an Intake Site page" panel before the project gate. It doesn't reuse a `PageProjectGate` state, because that panel offers to pin the current site to a project. The panel lists the pages it accepts, derived from `INTAKE_SITE_MATCHES`, so the copy follows the constant.
+- **E2E.** The fake active tab becomes `https://app.staging.talkiatry.com/assessment` (was `https://e2e-app.test/`, WL-011).
+
+### WL-028 · 2026-10-15 · Risk · Content scripts don't load on client-side navigation into `/assessment`
+
+**Tickets:** F02-T2, F00-T4, F05, F09 · REQ-SET-009
+
+Chrome injects declared content scripts only when a document loads at a matching URL. Suppose the Intake Site is a single-page app that reaches `/assessment` from another path on the same origin through the History API, for example from `/login`. Then `entrypoints/content.ts` is not in the page until it reloads. Today this costs nothing. `entrypoints/statsig-detector.ts` isn't registered in the manifest (WL-029), so the `postMessage` path in `content.ts` never gets a user anyway. `scripting.executeScript` is the only detection that works, and it still works after client-side navigation, because the guard checks the tab's current URL (WL-027). The risk becomes real if F05 or F09 bring back the content-script path. Check in F00-T4 on the real Intake Site whether `/assessment` loads as a full document. If it doesn't, F05 and F09 read only through `executeScript`, or the product owner widens the patterns (REQ-SET-008).
+
+### WL-029 · 2026-10-15 · Discovery · Manifest narrowed; `statsig-detector` isn't a registered content script; `activeTab` looks redundant for now (F02-T2, F02-T4)
+
+**Tickets:** F02-T2, F02-T4, F05, F09, F11, F12-T2 · REQ-SET-007, REQ-SET-009, REQ-SET-010, REQ-SET-013
+
+- **Built manifest.** `host_permissions` is exactly `https://statsigapi.net/*`, `https://app.talkiatry.com/assessment*`, and `https://app.staging.talkiatry.com/assessment*`. `permissions` is `storage`, `scripting`, `activeTab`. The only `content_scripts` entry (`content.js`) matches the two Intake patterns. No key holds `<all_urls>`, and there is no `web_accessible_resources` or `externally_connectable`. `src/tests/unit/manifest.test.ts` guards the config, and the two content-script tests guard `matches`.
+- **`statsig-detector` isn't registered.** WXT registers only `entrypoints/content.ts` and `*.content.ts` as content scripts. `entrypoints/statsig-detector.ts` builds as an unlisted script (`statsig-detector.js`) that nothing injects, so its `matches` has no effect. `docs/project-key-detection.md:132` already notes this. Its `matches` now holds the Intake patterns anyway, so it stays correct if F05 or F09 register it.
+- **`activeTab` looks redundant until F11.** The Intake host permissions already let the popup read the tab URL and run `executeScript` on Intake tabs. On other tabs, `activeTab` only exposes the URL, and the guard treats a missing URL as "not Intake" anyway. It stays, because the ticket keeps it, REQ-SET-010 allows it, and F11's `tabs.captureVisibleTab` will need it. F11 or F12-T2 should recheck the justification.
+- **Permissions doc.** `docs/permissions-justification.md` now has one justification per permission and per host pattern. It no longer mentions `<all_urls>` or `storage-helper.js`. The Storage section lists what `src/lib/storage.ts` really stores. The doc gets its final pass in F12-T2.
+
+### WL-030 · 2026-10-15 · Discovery · Review of F02-T1, F02-T2, F02-T4: no guard bypass; Storage list corrected
+
+**Tickets:** F02-T1, F02-T2, F02-T4 · corrects WL-029 (Permissions doc)
+
+An Opus review probed `isIntakeSiteUrl` with userinfo tricks, IDN and punycode look-alikes, full-width and ideographic dots, percent-encoding, `..` segments, backslashes, whitespace, `blob:`, `filesystem:`, and `view-source:`. It found no URL that passes the guard without being an Intake Site assessment URL. Every trick either normalizes to the real Intake URL or is rejected. The path check is a policy, not a security boundary: every page on `app.talkiatry.com` shares the origin of `/assessment`. Scheme, host, and port are the real boundary, and they match exactly.
+
+- **Trailing dot.** `https://app.talkiatry.com./assessment` is rejected, which is stricter than Chrome. Like the port rule in WL-027, it fails closed.
+- **Doc fix.** WL-029 said the Storage section lists what `src/lib/storage.ts` stores. But `storage.ts` isn't the only store: `src/store/use-ui-preferences-store.ts` persists the UI preferences, and each project holds its own Console API key, client SDK keys, and gate hashes (`src/lib/projects.ts:4-14`). The doc now lists both.
+- **Follow-ups (brief `f02-review-fixes`).** Replace `URL.parse` with `new URL()` inside `try`, because `URL.parse` throws on Chrome before 126. Add the bypass probes as regression tests. Add `e2e/manifest.e2e.ts`, which checks the **built** manifest against an allow-list. The unit tests check only the WXT config and the two named entrypoints, so a new `*.content.ts` with `<all_urls>` would pass them.
+- **Merge gate.** The doc's claim that the extension reads only Intake pages becomes true with F02-T3. Don't merge the branch without it.
+
+### WL-031 · 2026-10-15 · Discovery · F02-T3 results, and two guard follow-ups for F05
+
+**Tickets:** F02-T3, F05-T1, F05-T2, F09-T1 · REQ-SET-014 · T-SET-1
+
+- **Guard coverage.** Every `scripting.executeScript` call (`src/handlers/get-user-details.ts`) and every `tabs.sendMessage` call (`fetchUser` and `retryDetection` in `src/hooks/use-detected-user.ts`) gets its tab from `getActiveIntakeTab()`. `getUserDetails` checks the URL again before it injects. An Opus review traced every page-access call site and found every one covered except the listener in item 2 below.
+- **Popup off-site.** The body shows `NotIntakeSitePanel`. The header hides `ProjectStatus` and the "User Details" item unless the tab is an Intake page. The review found that the header contradicted the body: on a non-assessment page of a pinned origin (for example `/login`), origin pinning showed "Project 1 · this page". The login modal still opens off-site when no key is stored, because `src/hooks/use-app-initialization.ts:17-19` depends only on the stored key.
+- **Tests.** The e2e fake tab is `https://app.staging.talkiatry.com/assessment`, and `mockApi(page, routes, { activeTabUrl })` can override it. The detection specs use Intake URLs. `e2e/intake-site.e2e.ts` covers the off-site panel, including the same-origin `/login` case. Final run: 734 unit tests and 69 e2e tests pass, with no `act()` warnings.
+- **T-SET-1 passes.** The built manifest has only `statsigapi.net` and the Intake patterns in `host_permissions` (WL-029), the new key, and no `statsig.com` ID (WL-021). `e2e/manifest.e2e.ts` guards it.
+
+Two review findings are deferred to F05, which touches the same code first:
+
+1. **The second check doesn't catch a stale URL (F05-T1).** `getUserDetails` re-checks the same `tabs.query` snapshot. If the tab moves to another path on the same origin between that check and `executeScript`, the script runs in the new document. The origin is the same, the window is milliseconds, and the path check is policy, not the security boundary (WL-030). Fix it in the injector: have `getUserDetailsFromPage` also return `location.href`, and drop the result unless `isIntakeSiteUrl(href)`.
+2. **The `runtime.onMessage` listener in `use-detected-user.ts` doesn't check the sender (F05-T2).** It accepts `STATSIG_USER_FOUND` and `STATSIG_DETECTED_BUT_ERROR` from any sender. This is dormant while `statsig-detector` isn't registered (WL-029). If F05 revives that path, accept messages only when `sender.tab.id` is the active Intake tab and `isIntakeSiteUrl(sender.tab.url)`.
+
 ### WL-033 · 2026-10-15 · Decision · F03 starts before the phase 0 checkpoint
 
 **Tickets:** F03, Q2
