@@ -29,7 +29,7 @@ The Console Key can only reach `statsigapi.net`, only the allowed write calls ca
 
 ### F04-T2: Allowlist the write calls
 
-- **Status:** Todo
+- **Status:** Done (`5335e4d`). Also refuses requests from content scripts and writes with a read key (WL-026)
 - **Owner:** Claude
 - **Size:** S
 - **Depends on:** F04-T1, F00-T1 (the layer override paths)
@@ -42,8 +42,8 @@ The Console Key can only reach `statsigapi.net`, only the allowed write calls ca
   Today only the two override handlers write (WL-014). The allowlist keeps it that way.
 
 - **Acceptance criteria:**
-  - [ ] Unit tests: allowed write paths pass; another POST, DELETE, or PATCH path is refused before any network call
-  - [ ] The gate override tests still pass (REQ-GAT-004)
+  - [x] Unit tests: allowed write paths pass; another POST, DELETE, or PATCH path is refused before any network call
+  - [x] The gate override tests still pass (REQ-GAT-004)
 - **Verification:** `pnpm vitest run src/tests/unit/background.test.ts src/handlers`
 - **Files likely touched:** `entrypoints/background.ts` or `src/lib/api-config.ts`, tests
 

@@ -1,7 +1,7 @@
 # Brief: F04-T1 + F04-T2 One API module with a host allowlist and a write allowlist
 
 slug: f04-t1-t2-api-module
-status: agreed
+status: done (6e255cf, 5335e4d)
 agent: f04-api (Sonnet, isolated worktree)
 
 ## Decision
