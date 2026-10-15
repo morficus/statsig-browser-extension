@@ -211,3 +211,30 @@ Maurice asked to start F01 while F00-T2 to F00-T5 wait for the manual checks. F0
 The new 2048-bit RSA key pair replaces the base key in `CRX_PUBLIC_KEY` (`wxt.config.ts`). The new extension ID is **`gaeiajloopaabgiminphfojiefoiggpc`**. It was computed from the public key, and Chromium loading `.output/chrome-mv3` (a Playwright script) reports the same ID. The e2e suite passes with the new key (62 tests).
 
 The private key (PKCS#8 PEM, mode 600) is outside the repository, at `/private/tmp/claude-501/-Users-maurice-Dev-Workspace-talkiatry-statsig-browser-extension/c22fe54b-4f5b-4e11-83e9-d7394987bb63/scratchpad/f01-signing-key/intake-experiment-testing.pem`. `/private/tmp` is cleared on reboot, so Maurice must move the key to a password manager. `*.pem` is in `.gitignore`. No `.pem` file is in the tree or in the git history.
+
+### WL-022 · 2026-10-14 · Discovery · Firefox removal results and leftovers (F01-T2)
+
+**Tickets:** F01-T2, F03-T3, Q6 · REQ-SET-004, REQ-SET-005
+
+`wxt.config.ts` now has a plain `manifest` object with an unconditional `key`, and no `browser_specific_settings`. The built manifest has no `gecko` and no `@statsig.com`. The Firefox scripts, the `.dev-profile-ff` profile, the Firefox release asset in `.releaserc.json`, and the Firefox steps in `submit.yml` are gone. `zip:chrome` produces only the Chrome zip, with no sources zip.
+
+The Opus review found that `submit.yml`'s `publish_chrome` input was dead after the change: set to `false`, it ran bpp with an empty key set. The input was removed, so the workflow now always submits Chrome. The workflow can no longer drop a `firefox` entry from the `SUBMIT_KEYS` secret. If that secret still has one, bpp will try an AMO submit. F03-T3 should check this if the workflow stays (Q6).
+
+Left for F03-T3, because these aren't about Firefox:
+
+- `.github/ISSUE_TEMPLATE/bug-report.yml` lists Safari.
+- `docs/publishing.md` has the `### GitHub Token` heading twice.
+- `docs/publishing.md` says `submit.yml` runs on `release`, but it runs on `push: tags: v*`.
+
+### WL-023 · 2026-10-14 · Risk · Flaky e2e test: "adds a second project, activates it and keeps its client keys"
+
+**Tickets:** F03, REQ-NFR-002
+
+`e2e/projects.e2e.ts:63` fails at random. The UI shows "2 client keys", but the test reads `chrome.storage.local` at once and sometimes gets `clientKeys: []`. The async write hasn't landed yet (`e2e/projects.e2e.ts:78-80`). This is older than F01: at `cf78d22` (before F01) it failed 2 of 12 runs. On the F01 branch it failed 1 of 8 isolated runs and once in each of two full runs, where the other 61 tests passed. The likely fix is to wait for storage with `expect.poll` instead of reading it once. Not fixed in F01.
+
+### WL-024 · 2026-10-14 · Discovery · Local tooling: pnpm 12 switch fails, and agent worktrees leak into lint and tests
+
+**Tickets:** F03-T2
+
+1. `package.json` pins `packageManager: pnpm@12.11.2`. On Maurice's machine the global pnpm (10.x) tries to switch to it and fails with `ENOEXEC`. The downloaded 12.11.2 bin is a shebang-less placeholder, because its install script never ran. `node ~/Library/pnpm/.tools/pnpm/12.11.2/node_modules/pnpm/bin/pnpm.mjs` works. This session used a scratchpad shim that runs it. A lasting fix is a proper pnpm 12 install (for example `npm i -g pnpm@12.11.2`, or Corepack).
+2. Claude Code agent worktrees live in `.claude/worktrees/` inside the repo, and that folder isn't gitignored. While they exist, plain `pnpm lint` and `pnpm test` pick up their copies and fail. Run the checks with `--ignore-pattern '.claude/**'` (oxlint) and `--exclude '.claude/**'` (vitest), or ignore `.claude/worktrees/` in `.gitignore`. F03-T2 should record this in `CLAUDE.md`.

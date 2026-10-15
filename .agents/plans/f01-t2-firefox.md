@@ -1,7 +1,7 @@
 # Brief: F01-T2 Remove the Firefox targets
 
 slug: f01-t2-firefox
-status: agreed
+status: done (38b68d3)
 agent: f01-t2-firefox (Sonnet, isolated worktree)
 
 ## Decision

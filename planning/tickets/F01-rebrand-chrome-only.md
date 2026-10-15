@@ -2,7 +2,7 @@
 
 | Field      | Value                                |
 | ---------- | ------------------------------------ |
-| Status     | In progress                          |
+| Status     | Done                                 |
 | Phase      | 1: Setup & hardening                 |
 | Spec       | REQ-SET-001 to REQ-SET-006 · T-SET-1 |
 | Depends on | Phase 0 checkpoint (see README Q2)   |
@@ -30,14 +30,14 @@ The extension becomes "Intake Experiment Testing", built for Chrome only, with i
 
 ### F01-T2: Remove the Firefox targets
 
-- **Status:** In progress
+- **Status:** Done (`38b68d3`). See WL-022.
 - **Owner:** Claude
 - **Size:** M
 - **Depends on:** None
 - **Description:** Remove the `browser_specific_settings.gecko` block (with its `@statsig.com` ID, per REQ-SET-004) and the `browser === 'firefox'` branch from `wxt.config.ts`. Remove the `*:firefox` and `zip:all` scripts. Remove the Firefox steps in `.github/workflows/submit.yml` (or drop the workflow, see Q6) and the Firefox notes in `docs/publishing.md`. Check `web-ext.config.ts` and the e2e comments too.
 - **Acceptance criteria:**
-  - [ ] No `gecko`, `firefox`, or `@statsig.com` in the built manifest or in `wxt.config.ts`
-  - [ ] `package.json` has no Firefox scripts
+  - [x] No `gecko`, `firefox`, or `@statsig.com` in the built manifest or in `wxt.config.ts`
+  - [x] `package.json` has no Firefox scripts
 - **Verification:** `pnpm build:chrome`; `grep -rni firefox --exclude-dir=node_modules --exclude-dir=.agents --exclude=CHANGELOG.md .`
 - **Files likely touched:** `wxt.config.ts`, `package.json`, `.github/workflows/submit.yml`, `docs/publishing.md`, `web-ext.config.ts`
 

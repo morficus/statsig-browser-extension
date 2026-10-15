@@ -38,7 +38,7 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 | Phase                            | Functionality                                                                  | Status      | Tasks |
 | -------------------------------- | ------------------------------------------------------------------------------ | ----------- | ----- |
 | 0: Pre-build checks              | [F00: Pre-build checks (spec §8.1)](tickets/F00-pre-build-checks.md)           | In progress | 1/5   |
-| 1: Setup & hardening             | [F01: Rebrand and Chrome-only](tickets/F01-rebrand-chrome-only.md)             | In progress | 2/3   |
+| 1: Setup & hardening             | [F01: Rebrand and Chrome-only](tickets/F01-rebrand-chrome-only.md)             | Done        | 3/3   |
 |                                  | [F02: Intake Site scoping](tickets/F02-intake-site-scoping.md)                 | Todo        | 0/4   |
 |                                  | [F03: Repository hygiene](tickets/F03-repo-hygiene.md)                         | Todo        | 0/3   |
 |                                  | [F04: Console API hardening](tickets/F04-console-api-hardening.md)             | Todo        | 0/5   |
@@ -62,9 +62,10 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 
 ## Next up
 
-1. **F01-T2** (Claude, in review): the last F01 task. F01-T1 and F01-T3 are done. F01 started before the phase 0 checkpoint by Maurice's call (WL-019), and its scope and copy are in WL-020. **Maurice:** move the new private key to a password manager (WL-021).
+1. **Maurice:** move the new private signing key to a password manager before the machine restarts (WL-021).
 2. **F00-T2 to F00-T5** (Maurice): the manual checks against Statsig and the Intake Site. F00-T1 is done (WL-016), so the exact calls to test are known. Claude can prepare the curl commands (T3, T5) and the DevTools snippet (T4).
-3. Then the rest of phase 1 (F02 to F04), once Q2 is answered for them.
+3. Then the rest of phase 1 (F02 to F04), once Q2 is answered for them. F01 is done (WL-019 to WL-022).
+4. Known flaky e2e test (WL-023) and local tooling notes (WL-024): pick these up with F03.
 
 ## Open questions
 
