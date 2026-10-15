@@ -238,3 +238,9 @@ Left for F03-T3, because these aren't about Firefox:
 
 1. `package.json` pins `packageManager: pnpm@12.11.2`. On Maurice's machine the global pnpm (10.x) tries to switch to it and fails with `ENOEXEC`. The downloaded 12.11.2 bin is a shebang-less placeholder, because its install script never ran. `node ~/Library/pnpm/.tools/pnpm/12.11.2/node_modules/pnpm/bin/pnpm.mjs` works. This session used a scratchpad shim that runs it. A lasting fix is a proper pnpm 12 install (for example `npm i -g pnpm@12.11.2`, or Corepack).
 2. Claude Code agent worktrees live in `.claude/worktrees/` inside the repo, and that folder isn't gitignored. While they exist, plain `pnpm lint` and `pnpm test` pick up their copies and fail. Run the checks with `--ignore-pattern '.claude/**'` (oxlint) and `--exclude '.claude/**'` (vitest), or ignore `.claude/worktrees/` in `.gitignore`. F03-T2 should record this in `CLAUDE.md`.
+
+### WL-025 · 2026-10-15 · Resolved · pnpm 12 is installed globally
+
+**Tickets:** F03-T2 · corrects WL-024 item 1
+
+Maurice installed pnpm 12. `pnpm` now resolves through proto (`~/.proto/shims/pnpm`) to 12.11.2 and runs without a shim, and `pnpm type-check` passes. Item 1 of WL-024 no longer applies. Item 2 (agent worktrees leaking into lint and tests) still stands.
