@@ -35,9 +35,10 @@ The popup injects one bundled function into the Intake Site page with `scripting
 The `storage` permission (`browser.storage.local` via WXT) is used to persist:
 
 1.  **Console API key**: The Statsig Console API key the Tester enters, and its key type.
-2.  **Projects**: The Statsig projects the Tester has added, the active project, and the Intake Site origins pinned to a project.
+2.  **Projects**: The Statsig projects the Tester has added, the active project, and the Intake Site origins pinned to a project. Each project keeps its Console API key, plus its client SDK keys and gate-name hashes, which the extension uses to recognize the project on a page.
 3.  **Settings**: The name of the page's localStorage key that holds the Statsig user, and the theme.
 4.  **Overrides**: The extension's record of the overrides it applied.
+5.  **UI preferences**: The popup's last active tab, and each table's filters, sorting, page, rows per page, and visible columns, including the audit log filters.
     This data is stored locally on the user's device and is never shared externally except when making authenticated requests to the Statsig API (using the stored API key).
 
 ## Single Purpose Description
