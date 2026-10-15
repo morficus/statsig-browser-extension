@@ -1,6 +1,7 @@
 import { browser } from 'wxt/browser'
 import { defineBackground } from 'wxt/utils/define-background'
 
+import { STATSIG_API_VERSION, isAllowedApiUrl } from '@/src/lib/api-config'
 import { apiKeyStorage } from '@/src/lib/storage'
 
 interface ApiRequestMessage {
@@ -25,6 +26,15 @@ export default defineBackground(() => {
 
     const { url, method, body, headers } = message.config
 
+    // Refuse before touching the key: the Console Key may only ever reach the Console API.
+    if (!isAllowedApiUrl(url)) {
+      sendResponse({
+        error: "This request isn't allowed by Intake Experiment Testing.",
+        success: false,
+      })
+      return false
+    }
+
     // Perform the fetch request
     void apiKeyStorage.getValue().then((apiKey: string | null) => {
       const finalHeaders = { ...headers }
@@ -32,11 +42,16 @@ export default defineBackground(() => {
         // Remove quotes if present (legacy support)
         finalHeaders['STATSIG-API-KEY'] = apiKey.replaceAll('"', '')
       }
+      if (!new Headers(finalHeaders).has('STATSIG-API-VERSION')) {
+        finalHeaders['STATSIG-API-VERSION'] = STATSIG_API_VERSION
+      }
 
       fetch(url, {
         body,
         headers: finalHeaders,
         method,
+        // A redirect must never carry the key to another host.
+        redirect: 'error',
       })
         .then(async (response) => {
           const responseData = await response.text().then((text) => {

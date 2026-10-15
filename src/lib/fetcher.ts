@@ -1,10 +1,8 @@
 import wretch from 'wretch'
 import { browser } from 'wxt/browser'
 
+import { API_BASE_URL } from '@/src/lib/api-config'
 import { useSettingsStore } from '@/src/store/use-settings-store'
-
-/** @internal Referenced by unit tests; used by the wretch client below. */
-export const API_BASE_URL = 'https://statsigapi.net/console/v1'
 
 const getRequestUrl = (url: RequestInfo | URL): string => {
   if (typeof url === 'string') {

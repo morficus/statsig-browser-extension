@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { API_BASE_URL } from '@/src/lib/api-config'
+
 const addListener = vi.fn()
 const getValue = vi.fn()
 
@@ -50,7 +52,7 @@ const jsonResponse = (body: unknown, init: Partial<Response> = {}) =>
     status: init.status ?? 200,
     statusText: init.statusText ?? 'OK',
     text: () => Promise.resolve(typeof body === 'string' ? body : JSON.stringify(body)),
-    url: init.url ?? 'https://statsigapi.net/console/v1/gates',
+    url: init.url ?? `${API_BASE_URL}/gates`,
   }) as Response
 
 describe('background API proxy', () => {
@@ -81,7 +83,7 @@ describe('background API proxy', () => {
         config: {
           headers: { Accept: 'application/json' },
           method: 'GET',
-          url: 'https://statsigapi.net/console/v1/gates',
+          url: `${API_BASE_URL}/gates`,
         },
         type: 'API_REQUEST',
       },
@@ -98,16 +100,21 @@ describe('background API proxy', () => {
           ok: true,
           status: 200,
           statusText: 'OK',
-          url: 'https://statsigapi.net/console/v1/gates',
+          url: `${API_BASE_URL}/gates`,
         },
         success: true,
       })
     })
 
-    expect(fetchMock).toHaveBeenCalledWith('https://statsigapi.net/console/v1/gates', {
+    expect(fetchMock).toHaveBeenCalledWith(`${API_BASE_URL}/gates`, {
       body: undefined,
-      headers: { Accept: 'application/json', 'STATSIG-API-KEY': 'console-quoted-key' },
+      headers: {
+        Accept: 'application/json',
+        'STATSIG-API-KEY': 'console-quoted-key',
+        'STATSIG-API-VERSION': '20240601',
+      },
       method: 'GET',
+      redirect: 'error',
     })
   })
 
@@ -124,7 +131,7 @@ describe('background API proxy', () => {
           body: '{"name":"gate"}',
           headers: { [headerName]: 'console-explicit' },
           method: 'POST',
-          url: 'https://statsigapi.net/console/v1/gates',
+          url: `${API_BASE_URL}/gates`,
         },
         type: 'API_REQUEST',
       },
@@ -136,10 +143,11 @@ describe('background API proxy', () => {
       expect(sendResponse).toHaveBeenCalled()
     })
 
-    expect(fetchMock).toHaveBeenCalledWith('https://statsigapi.net/console/v1/gates', {
+    expect(fetchMock).toHaveBeenCalledWith(`${API_BASE_URL}/gates`, {
       body: '{"name":"gate"}',
-      headers: { [headerName]: 'console-explicit' },
+      headers: { [headerName]: 'console-explicit', 'STATSIG-API-VERSION': '20240601' },
       method: 'POST',
+      redirect: 'error',
     })
     expect(sendResponse).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -155,7 +163,7 @@ describe('background API proxy', () => {
 
     const listener = await loadListener()
     const sendResponse = vi.fn()
-    listener({ config: { url: 'https://statsigapi.net/console/v1/gates' }, type: 'API_REQUEST' }, {}, sendResponse)
+    listener({ config: { url: `${API_BASE_URL}/gates` }, type: 'API_REQUEST' }, {}, sendResponse)
 
     await vi.waitFor(() => {
       expect(sendResponse).toHaveBeenCalledWith({ error: 'offline', success: false })
@@ -168,10 +176,60 @@ describe('background API proxy', () => {
 
     const listener = await loadListener()
     const sendResponse = vi.fn()
-    listener({ config: { url: 'https://statsigapi.net/console/v1/gates' }, type: 'API_REQUEST' }, {}, sendResponse)
+    listener({ config: { url: `${API_BASE_URL}/gates` }, type: 'API_REQUEST' }, {}, sendResponse)
 
     await vi.waitFor(() => {
       expect(sendResponse).toHaveBeenCalledWith({ error: 'Network error', success: false })
     })
+  })
+
+  it('keeps a caller-supplied STATSIG-API-VERSION header', async () => {
+    getValue.mockResolvedValue('console-stored')
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({}))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const listener = await loadListener()
+    const sendResponse = vi.fn()
+    listener(
+      { config: { headers: { 'statsig-api-version': '19990101' }, url: `${API_BASE_URL}/gates` }, type: 'API_REQUEST' },
+      {},
+      sendResponse,
+    )
+
+    await vi.waitFor(() => {
+      expect(sendResponse).toHaveBeenCalled()
+    })
+
+    expect(fetchMock).toHaveBeenCalledWith(`${API_BASE_URL}/gates`, {
+      body: undefined,
+      headers: { 'STATSIG-API-KEY': 'console-stored', 'statsig-api-version': '19990101' },
+      method: undefined,
+      redirect: 'error',
+    })
+  })
+
+  it.each([
+    'https://evil.example/x',
+    'https://statsigapi.net.evil.com/console/v1/gates',
+    'http://statsigapi.net/console/v1/gates',
+    'https://statsigapi.net/console/v1evil',
+    '/console/v1/gates',
+  ])('refuses %s without reading the key or calling fetch', async (url) => {
+    getValue.mockResolvedValue('console-stored')
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    const listener = await loadListener()
+    const sendResponse = vi.fn()
+    listener({ config: { headers: { 'STATSIG-API-KEY': 'k' }, url }, type: 'API_REQUEST' }, {}, sendResponse)
+
+    await vi.waitFor(() => {
+      expect(sendResponse).toHaveBeenCalledWith({
+        error: "This request isn't allowed by Intake Experiment Testing.",
+        success: false,
+      })
+    })
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(getValue).not.toHaveBeenCalled()
   })
 })

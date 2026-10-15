@@ -2,7 +2,8 @@ import { beforeEach, vi, describe, expect, it } from 'vitest'
 
 import { useSettingsStore } from '@/src/store/use-settings-store'
 
-import { API_BASE_URL, api, fetcher, poster } from './fetcher'
+import { API_BASE_URL } from './api-config'
+import { api, fetcher, poster } from './fetcher'
 
 const { sendMessageMock } = vi.hoisted(() => ({
   sendMessageMock: vi.fn(),
