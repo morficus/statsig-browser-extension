@@ -7,6 +7,7 @@ import { Input } from '@/src/components/ui/input'
 import { Label } from '@/src/components/ui/label'
 import { initialLogin } from '@/src/handlers/initial-login'
 import { useAddProject } from '@/src/hooks/use-projects'
+import { PERSONAL_KEY_GUIDANCE } from '@/src/lib/projects'
 import { useSettingsStore } from '@/src/store/use-settings-store'
 
 interface AddProjectFormProps {
@@ -86,6 +87,7 @@ export function AddProjectForm({ pinOrigin = false }: Readonly<AddProjectFormPro
           Add
         </Button>
       </div>
+      <p className="text-xs text-muted-foreground">{PERSONAL_KEY_GUIDANCE}</p>
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   )

@@ -56,6 +56,18 @@ describe('authForm component', () => {
     expect(screen.getByRole('button', { name: /Login/iu })).toBeInTheDocument()
   })
 
+  it('tells the tester to use their own Personal Console Key', () => {
+    renderWithProviders(
+      <Dialog open>
+        <DialogContent>
+          <AuthForm {...defaultProps} />
+        </DialogContent>
+      </Dialog>,
+    )
+
+    expect(screen.getByText('Use your own Personal Console Key, not a shared project key.')).toBeInTheDocument()
+  })
+
   it('shows validation error for empty API key', async () => {
     const { user } = renderWithProviders(
       <Dialog open>

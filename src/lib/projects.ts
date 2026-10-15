@@ -39,6 +39,9 @@ const MIN_FINGERPRINT_MATCHES = 3
 const MIN_FINGERPRINT_RATIO = 0.5
 
 /** User-facing wording for the signal that resolved a match. */
+/** Shown under every Console Key input, so each change in Statsig is tied to a person. */
+export const PERSONAL_KEY_GUIDANCE = 'Use your own Personal Console Key, not a shared project key.'
+
 export const MATCH_REASON_LABELS: Record<ProjectMatchReason, string> = {
   'client-key': 'SDK key matches this project',
   fingerprint: 'Gates match this project',

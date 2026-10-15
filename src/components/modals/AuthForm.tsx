@@ -13,6 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/src/components/ui/input'
 import { initialLogin } from '@/src/handlers/initial-login'
 import { useAddProject } from '@/src/hooks/use-projects'
+import { PERSONAL_KEY_GUIDANCE } from '@/src/lib/projects'
 
 const authSchema = z.object({
   apiKey: z.string().min(1, 'Please enter an API key').startsWith('console-', 'API key should start with "console-"'),
@@ -78,6 +79,7 @@ export function AuthForm({ onSuccess }: Readonly<AuthFormProps>) {
         <FormControl>
           <Input placeholder="console-..." {...field} disabled={isPending} />
         </FormControl>
+        <p className="text-xs text-muted-foreground">{PERSONAL_KEY_GUIDANCE}</p>
         <FormMessage />
       </FormItem>
     ),
