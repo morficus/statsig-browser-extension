@@ -8,8 +8,6 @@ export default defineConfig({
   test: {
     clearMocks: true,
     coverage: {
-      // Coverage costs ~20% of runtime; CI needs it for Codecov, a local `pnpm test` does not.
-      enabled: Boolean(process.env.CI),
       exclude: ['src/tests/**/*', '**/*.d.ts', '**/*.test.ts', '**/*.test.tsx', 'src/components/ui/**/*', '.claude/**'],
       include: ['{src,entrypoints}/**/*.{ts,tsx}'],
       reporter: ['text', 'json', 'html'],

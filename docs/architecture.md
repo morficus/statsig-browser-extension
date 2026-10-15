@@ -13,7 +13,7 @@ Technical reference for the extension internals. For setup, commit conventions, 
 - **Testing**: [Vitest](https://vitest.dev/) + [Testing Library](https://testing-library.com/)
 - **Linting & Formatting**: [oxlint](https://oxlint.dev/) + [oxfmt](https://github.com/oxc-project/oxfmt)
 - **Icons**: [Lucide React](https://lucide.dev/)
-- **CI/CD**: GitHub Actions, [semantic-release](https://github.com/semantic-release/semantic-release), [Codecov](https://codecov.io/), [SonarCloud](https://sonarcloud.io/)
+- **CI**: GitHub Actions (`.github/workflows/build.yml`)
 - **Package Manager**: [pnpm](https://pnpm.io/)
 
 ## Project Structure
@@ -77,4 +77,3 @@ user overrides before removing a gate. See [Statsig evaluation semantics](https:
 
 - [Project key detection](project-key-detection.md) — how the extension matches a page's SDK key to a stored project
 - [Permissions justification](permissions-justification.md) — why each manifest permission is requested
-- [Publishing](publishing.md) — release automation and store submission

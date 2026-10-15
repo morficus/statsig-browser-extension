@@ -1,7 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
 
-  // WXT, Vitest, Playwright, PostCSS, Tailwind, semantic-release, husky,
+  // WXT, Vitest, Playwright, PostCSS, Tailwind, husky,
   // lint-staged and oxlint plugins auto-activate from their config files.
   // Only override what they can't infer.
   // Do not override wxt.entry: the plugin already uses entrypoints/**/* as

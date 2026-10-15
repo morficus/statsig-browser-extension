@@ -43,13 +43,13 @@ The fork doesn't take automatic updates, and future sessions have a `CLAUDE.md` 
 
 ### F03-T3: Review CI workflows and the `web/` site for the fork
 
-- **Status:** In progress
+- **Status:** In progress. The changes are committed (WL-035, WL-037). A CI run on a pushed branch must still confirm the second criterion, and the push needs Maurice's approval.
 - **Owner:** Claude proposes, Maurice decides
 - **Size:** S
 - **Depends on:** Q6, resolved (WL-035)
 - **Description:** `.github/workflows/` has `build.yml`, `pages.yml`, `release.yml`, and `submit.yml`. `submit.yml` publishes to the browser stores, which is out of scope (spec §2.2), and `pages.yml` deploys the Statsig-branded `web/` landing page. Also check Codecov and SonarCloud, which the fork may not have set up. Apply the Q6 decision.
 - **Acceptance criteria:**
-  - [ ] Each workflow is kept, adapted, or removed, with the reason logged in `WORKLOG.md`
+  - [x] Each workflow is kept, adapted, or removed, with the reason logged in `WORKLOG.md` (WL-035)
   - [ ] CI on the fork doesn't fail because of missing upstream secrets
 - **Verification:** Push a branch and check the workflow runs (with Maurice's approval).
 - **Files likely touched:** `.github/workflows/*.yml`, `web/`, `.releaserc.json`, `sonar-project.properties`

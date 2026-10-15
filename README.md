@@ -1,10 +1,5 @@
 # Statsig Browser Extension
 
-[![codecov](https://codecov.io/gh/d0whc3r/statsig-browser-extension/graph/badge.svg?token=HGBG8HS0VJ)](https://codecov.io/gh/d0whc3r/statsig-browser-extension)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=d0whc3r_statsig-browser-extension&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=d0whc3r_statsig-browser-extension)
-
-[![Chrome Web Store](https://img.shields.io/badge/Chrome-Web_Store-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white)](https://chromewebstore.google.com/detail/statsig-browser-extension/dcoabmhfndkoogomhielncgjbaomfkmh)
-
 Inspect and override Statsig feature gates, experiments, and dynamic configs from your browser toolbar — no code changes, no dashboard round-trips.
 
 Useful when you need to see why a gate returns `false`, force an experiment group to check a UI variant, or confirm the SDK initialized with the user object you expected.
@@ -53,7 +48,6 @@ Your Console API Key is stored locally in browser extension storage and is only 
 - [Contributing](CONTRIBUTING.md) — local setup, code standards, commits, and PRs
 - [Architecture](docs/architecture.md) — tech stack and project structure
 - [Project key detection](docs/project-key-detection.md) — how the active project is chosen
-- [Publishing](docs/publishing.md) — release and store submission
 - [Changelog](CHANGELOG.md)
 
 ## License

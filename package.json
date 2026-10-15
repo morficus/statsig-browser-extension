@@ -69,9 +69,6 @@
   },
   "devDependencies": {
     "@playwright/test": "1.64.0",
-    "@semantic-release/changelog": "7.0.0",
-    "@semantic-release/exec": "7.1.0",
-    "@semantic-release/git": "11.0.1",
     "@tailwindcss/postcss": "4.3.3",
     "@testing-library/dom": "10.4.2",
     "@testing-library/jest-dom": "7.0.1",
@@ -97,7 +94,6 @@
     "oxlint-tsgolint": "7.0.2004",
     "postcss": "8.5.30",
     "postcss-load-config": "6.0.1",
-    "semantic-release": "25.0.9",
     "tailwindcss": "4.3.3",
     "typescript": "7.0.2",
     "vitest": "5.0.4",

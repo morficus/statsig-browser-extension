@@ -276,3 +276,14 @@ The fork (`morficus/statsig-browser-extension`) is public, and Actions are enabl
 **Tickets:** F03-T5 · corrects WL-024 item 2
 
 A test file planted in `.claude/worktrees/zz-plant/` held a failing test, a lint error, a type error, and bad formatting. Only `pnpm vitest run` reported it. `oxlint.config.ts` already ignores `.claude`, and oxfmt, knip, and tsc skipped the plant. So WL-024 item 2 was right about vitest and wrong about lint. F03-T5 adds `.claude/worktrees/` to `.gitignore`, and adds `.claude/**` to the vitest `test.exclude` and `coverage.exclude` lists. With the plant in place, all five commands pass. `.claude/skills` is a symlink, and it stays tracked.
+
+### WL-037 · 2026-10-15 · Discovery · What else changed when semantic-release and Codecov went (F03-T3)
+
+**Tickets:** F03-T3 · WL-035
+
+The code review of F03-T3 found these consequences, and F03-T3 fixes them:
+
+- **`braces` is no longer installed.** Removing the 4 semantic-release dev dependencies removed 214 packages from `pnpm-lock.yaml`, `braces` 3.0.3 among them. No other package was added or changed. `CONTRIBUTING.md` listed `braces` as a security exception that "comes through release tooling". That bullet is deleted, and `node-forge` 1.4.0 is now the only exception.
+- **The commit types no longer trigger releases.** `CONTRIBUTING.md` no longer says that `feat`, `fix`, and breaking changes make MINOR, PATCH, and MAJOR releases.
+- **Runs on `main` are never cancelled.** `build.yml` cancels a superseded run only on pull requests (`cancel-in-progress: ${{ github.event_name == 'pull_request' }}`). So each commit on `main` keeps its own check status and zip artifact.
+- **Coverage is opt-in.** `vitest.config.ts` turned coverage on when `CI` was set, only for the Codecov upload. That switch is gone. `pnpm vitest run --coverage` still works, and CI runs about 20% faster. `actionlint` passes on `build.yml`.

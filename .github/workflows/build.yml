@@ -1,17 +1,23 @@
 name: 'Build the extension'
 on:
+  push:
+    branches: [main]
   pull_request:
     types: [opened, reopened, synchronize]
 
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   NODE_OPTIONS: '--max-old-space-size=4096 --trace-warnings'
 
 # Superseded pushes to the same PR are pointless work and compete for runners.
+# Runs on main are never cancelled, so each commit there keeps its status and zip artifact.
 concurrency:
   group: build-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -25,13 +31,14 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Test
-        run: pnpm vitest run --reporter=dot --silent --coverage.reporter=lcovonly
+      - name: Type check
+        run: pnpm type-check
 
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Test
+        run: pnpm vitest run --reporter=dot --silent
 
       - name: Build the extension
         run: pnpm run zip:chrome

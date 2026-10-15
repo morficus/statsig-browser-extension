@@ -1,14 +1,14 @@
 # Specification: Intake Experiment Testing (Chrome Extension)
 
-| Item | Value |
-|---|---|
-| Document status | Draft 0.4 |
-| Date | 2026-10-14 |
-| Writing style | ASD-STE100 (simplified technical English) |
-| Implementer | Claude Code |
-| Base repository | `d0whc3r/statsig-browser-extension` |
-| Base commit | `97aa1389daed4e63c582fba35a0c6a8509a71db0` (2026-10-13) |
-| Base license | ISC |
+| Item            | Value                                                   |
+| --------------- | ------------------------------------------------------- |
+| Document status | Draft 0.4                                               |
+| Date            | 2026-10-14                                              |
+| Writing style   | ASD-STE100 (simplified technical English)               |
+| Implementer     | Claude Code                                             |
+| Base repository | `d0whc3r/statsig-browser-extension`                     |
+| Base commit     | `97aa1389daed4e63c582fba35a0c6a8509a71db0` (2026-10-13) |
+| Base license    | ISC                                                     |
 
 ---
 
@@ -53,21 +53,21 @@ Do not build these items in this version:
 
 ## 3. Definitions
 
-| Term | Meaning |
-|---|---|
-| Extension | The Chrome extension that this document describes. |
-| Tester | A person who uses the Extension. |
-| Intake Site | The web pages that the Testers test. They run the Statsig JavaScript client SDK. The pages are `https://app.talkiatry.com/assessment` (production) and `https://app.staging.talkiatry.com/assessment` (staging). |
-| Console API | The Statsig management API at `https://statsigapi.net/console/v1`. |
-| Console Key | A Statsig Console API key. It starts with `console-`. Each Tester uses a Personal Console Key. |
-| Personal Console Key | A Console Key that a Tester creates for himself or herself in Statsig. It has the same access as the role of the Tester. It is tied to its owner. |
-| Stable ID | The Statsig identifier that the SDK stores for one browser. |
-| Group | One variant of an experiment, for example "Control" or "Test". |
-| Control arm | The group whose name is "control" when you ignore letter case. |
-| Treatment arm | Any group that is not the control arm. |
-| Override | A Statsig rule that forces one ID into one group of one experiment. |
-| Cached evaluation | The SDK result that the SDK stores in page `localStorage` under keys that start with `statsig.cached.evaluations.`. |
-| Popup | The window that opens when the Tester clicks the Extension icon. |
+| Term                 | Meaning                                                                                                                                                                                                          |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Extension            | The Chrome extension that this document describes.                                                                                                                                                               |
+| Tester               | A person who uses the Extension.                                                                                                                                                                                 |
+| Intake Site          | The web pages that the Testers test. They run the Statsig JavaScript client SDK. The pages are `https://app.talkiatry.com/assessment` (production) and `https://app.staging.talkiatry.com/assessment` (staging). |
+| Console API          | The Statsig management API at `https://statsigapi.net/console/v1`.                                                                                                                                               |
+| Console Key          | A Statsig Console API key. It starts with `console-`. Each Tester uses a Personal Console Key.                                                                                                                   |
+| Personal Console Key | A Console Key that a Tester creates for himself or herself in Statsig. It has the same access as the role of the Tester. It is tied to its owner.                                                                |
+| Stable ID            | The Statsig identifier that the SDK stores for one browser.                                                                                                                                                      |
+| Group                | One variant of an experiment, for example "Control" or "Test".                                                                                                                                                   |
+| Control arm          | The group whose name is "control" when you ignore letter case.                                                                                                                                                   |
+| Treatment arm        | Any group that is not the control arm.                                                                                                                                                                           |
+| Override             | A Statsig rule that forces one ID into one group of one experiment.                                                                                                                                              |
+| Cached evaluation    | The SDK result that the SDK stores in page `localStorage` under keys that start with `statsig.cached.evaluations.`.                                                                                              |
+| Popup                | The window that opens when the Tester clicks the Extension icon.                                                                                                                                                 |
 
 ---
 
@@ -204,11 +204,11 @@ Each requirement has an ID. The word "must" marks a mandatory requirement. The w
 - **REQ-SHT-003.** The Extension must use the Chrome `debugger` API and the DevTools Protocol. Use `Emulation.setDeviceMetricsOverride`, `Emulation.setTouchEmulationEnabled`, `Emulation.setUserAgentOverride`, and `Page.captureScreenshot`.
 - **REQ-SHT-004.** The Extension must have these presets:
 
-  | Preset | Width (px) | Height (px) | Device scale factor | Touch | Mobile user agent |
-  |---|---|---|---|---|---|
-  | Desktop | 1440 | 900 | 1 | No | No |
-  | Tablet | 820 | 1180 | 2 | Yes | Yes |
-  | Mobile | 390 | 844 | 3 | Yes | Yes |
+  | Preset  | Width (px) | Height (px) | Device scale factor | Touch | Mobile user agent |
+  | ------- | ---------- | ----------- | ------------------- | ----- | ----------------- |
+  | Desktop | 1440       | 900         | 1                   | No    | No                |
+  | Tablet  | 820        | 1180        | 2                   | Yes   | Yes               |
+  | Mobile  | 390        | 844         | 3                   | Yes   | Yes               |
 
 - **REQ-SHT-005.** The Tester must be able to capture one preset or all three presets with one action.
 - **REQ-SHT-006.** The Tester must be able to choose "Visible area" or "Full page". The default is "Full page".
@@ -243,16 +243,16 @@ Each requirement has an ID. The word "must" marks a mandatory requirement. The w
 
 This section is a guide. The implementer can choose a different design if the requirements stay true.
 
-| Task | Where to start |
-|---|---|
-| Rename, new key, permissions, remove Firefox | `wxt.config.ts`, `package.json`, `entrypoints/statsig-detector.ts` |
-| Single API module and base URL | `src/lib/fetcher.ts` |
-| Key and record storage | `src/lib/storage.ts` (`currentOverridesStorage` is a start for REQ-OVR-012) |
-| Stable ID search, cache reading, hash match | `src/lib/get-user-details-injector.ts`, `src/lib/djb2.ts` |
-| Override write and delete | `src/handlers/experiment-overrides.ts` |
-| Override user interface | `src/components/modals/manage-experiment/`, `src/components/common/GenericAddOverrideForm.tsx` |
-| Gate override feature (keep, no change) | `src/components/modals/manage-gate-overrides/`, `src/handlers/gate-overrides.ts` |
-| Screenshot module | New files. Use the background script for the `debugger` calls. |
+| Task                                         | Where to start                                                                                 |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Rename, new key, permissions, remove Firefox | `wxt.config.ts`, `package.json`, `entrypoints/statsig-detector.ts`                             |
+| Single API module and base URL               | `src/lib/fetcher.ts`                                                                           |
+| Key and record storage                       | `src/lib/storage.ts` (`currentOverridesStorage` is a start for REQ-OVR-012)                    |
+| Stable ID search, cache reading, hash match  | `src/lib/get-user-details-injector.ts`, `src/lib/djb2.ts`                                      |
+| Override write and delete                    | `src/handlers/experiment-overrides.ts`                                                         |
+| Override user interface                      | `src/components/modals/manage-experiment/`, `src/components/common/GenericAddOverrideForm.tsx` |
+| Gate override feature (keep, no change)      | `src/components/modals/manage-gate-overrides/`, `src/handlers/gate-overrides.ts`               |
+| Screenshot module                            | New files. Use the background script for the `debugger` calls.                                 |
 
 Rules for the implementer:
 
@@ -276,26 +276,26 @@ The implementer must do each test. Record the results in the README or in the pu
 
 ### 8.2 Acceptance tests
 
-| ID | Test | Pass condition |
-|---|---|---|
-| T-SET-1 | Read the built `manifest.json`. | `host_permissions` has only `statsigapi.net` and the Intake Site origins. No `statsig.com` extension ID. A new `key`. |
-| T-SEC-1 | Do a full session with the network log open. | Requests go to `statsigapi.net` only. |
-| T-SEC-2 | Set the key type to `read-key`. | All write actions are disabled with a reason. |
-| T-SEC-3 | Search the code for write calls. | Only experiment, layer, and gate override calls. |
-| T-GAT-1 | Add and delete a gate override for your own ID. | Both actions work as in the base code. |
-| T-OVR-1 | Open the Intake Site. Force a group of a running experiment. | The tab reloads. The page shows the chosen group. |
-| T-OVR-2 | Repeat T-OVR-1 with an experiment in a layer. | The override is at the layer level. The page shows the chosen group. |
-| T-OVR-3 | Force a second group of the same experiment. | The Stable ID is in the second group only. |
-| T-OVR-4 | Clear one override. | The override is gone from Statsig. The tab reloads. The badge count goes down. |
-| T-OVR-5 | Use an invalid key. | The message says that the key is not valid. |
-| T-OVR-6 | Block the Stable ID read. | The Popup shows an error and the manual entry. |
-| T-ASG-1 | Open the Popup on the Intake Site with the SDK live. | The Popup lists each experiment with the correct group and arm badge. |
-| T-ASG-2 | Remove the live SDK access. Use only the cache. | The Popup shows the same data. The source says "cached". |
-| T-ASG-3 | Set a group named "CONTROL". | The badge says "Control". |
-| T-ASG-4 | Force the Treatment group. | The badge says "Treatment" and the group name. The experiment has the override mark. |
-| T-ASG-5 | Open the Popup on a page without the SDK. | The Popup shows the message in REQ-ASG-010. |
-| T-SHT-1 | Capture all three presets with "Full page". | Three PNG files. Each file has a footer with the required data. |
-| T-SHT-2 | Cancel a capture. | The emulation is off. The debugger is detached. The page is in its original size. |
+| ID      | Test                                                         | Pass condition                                                                                                        |
+| ------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| T-SET-1 | Read the built `manifest.json`.                              | `host_permissions` has only `statsigapi.net` and the Intake Site origins. No `statsig.com` extension ID. A new `key`. |
+| T-SEC-1 | Do a full session with the network log open.                 | Requests go to `statsigapi.net` only.                                                                                 |
+| T-SEC-2 | Set the key type to `read-key`.                              | All write actions are disabled with a reason.                                                                         |
+| T-SEC-3 | Search the code for write calls.                             | Only experiment, layer, and gate override calls.                                                                      |
+| T-GAT-1 | Add and delete a gate override for your own ID.              | Both actions work as in the base code.                                                                                |
+| T-OVR-1 | Open the Intake Site. Force a group of a running experiment. | The tab reloads. The page shows the chosen group.                                                                     |
+| T-OVR-2 | Repeat T-OVR-1 with an experiment in a layer.                | The override is at the layer level. The page shows the chosen group.                                                  |
+| T-OVR-3 | Force a second group of the same experiment.                 | The Stable ID is in the second group only.                                                                            |
+| T-OVR-4 | Clear one override.                                          | The override is gone from Statsig. The tab reloads. The badge count goes down.                                        |
+| T-OVR-5 | Use an invalid key.                                          | The message says that the key is not valid.                                                                           |
+| T-OVR-6 | Block the Stable ID read.                                    | The Popup shows an error and the manual entry.                                                                        |
+| T-ASG-1 | Open the Popup on the Intake Site with the SDK live.         | The Popup lists each experiment with the correct group and arm badge.                                                 |
+| T-ASG-2 | Remove the live SDK access. Use only the cache.              | The Popup shows the same data. The source says "cached".                                                              |
+| T-ASG-3 | Set a group named "CONTROL".                                 | The badge says "Control".                                                                                             |
+| T-ASG-4 | Force the Treatment group.                                   | The badge says "Treatment" and the group name. The experiment has the override mark.                                  |
+| T-ASG-5 | Open the Popup on a page without the SDK.                    | The Popup shows the message in REQ-ASG-010.                                                                           |
+| T-SHT-1 | Capture all three presets with "Full page".                  | Three PNG files. Each file has a footer with the required data.                                                       |
+| T-SHT-2 | Cancel a capture.                                            | The emulation is off. The debugger is detached. The page is in its original size.                                     |
 
 ---
 
@@ -312,18 +312,18 @@ The implementer must do each test. Record the results in the README or in the pu
 
 ## 10. Open items
 
-| ID | Question | Status | Owner | Needed before |
-|---|---|---|---|---|
-| OPEN-001 | Does an override work on an experiment that is not started? | Open | Implementer (test in 8.1) | Job 2 acceptance |
-| OPEN-002 | What is the Stable ID storage? | Closed. Use the `localStorage` key that starts with `statsig.stable_id.`. Do not use the cookie. | Product owner | - |
-| OPEN-003 | What are the Intake Site URLs? | Closed. See REQ-SET-007. | Product owner | - |
-| OPEN-004 | Does the override write call add to the list or replace the list? | Product owner expects that it adds to the list. Confirm with test 2 in 8.1. Do not skip this test. A wrong result deletes the overrides of other users. | Implementer (test in 8.1) | REQ-OVR-009 |
-| OPEN-005 | Can the Testers create their own Console Keys? | Product owner says yes. Confirm with test 4 in 8.1. | Implementer | Release to Testers |
-| OPEN-006 | What is the Extension name? | Closed. "Intake Experiment Testing". | Product owner | - |
-| OPEN-007 | What are the real SDK value fields (group name, layer allocation, `sha256` method, override marker)? | Open | Implementer (test in 8.1) | Job 1 acceptance |
-| OPEN-008 | Does a Personal Console Key of a non-administrator role have permission to add and clear overrides? Does the organization setting allow personal keys? | Product owner says yes. Confirm with test 4 in 8.1. | Implementer (test in 8.1) | Release to Testers |
-| OPEN-009 | Do all experiments name the control group "Control"? REQ-ASG-006 uses this name. | Closed. The product owner confirms that the control group is always named "Control". | Product owner | - |
-| OPEN-010 | What are the real screen widths for tablet and mobile? REQ-SHT-004 uses 820 and 390. | Closed. The product owner accepts the values in REQ-SHT-004. | Product owner | - |
+| ID       | Question                                                                                                                                               | Status                                                                                                                                                  | Owner                     | Needed before      |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ------------------ |
+| OPEN-001 | Does an override work on an experiment that is not started?                                                                                            | Open                                                                                                                                                    | Implementer (test in 8.1) | Job 2 acceptance   |
+| OPEN-002 | What is the Stable ID storage?                                                                                                                         | Closed. Use the `localStorage` key that starts with `statsig.stable_id.`. Do not use the cookie.                                                        | Product owner             | -                  |
+| OPEN-003 | What are the Intake Site URLs?                                                                                                                         | Closed. See REQ-SET-007.                                                                                                                                | Product owner             | -                  |
+| OPEN-004 | Does the override write call add to the list or replace the list?                                                                                      | Product owner expects that it adds to the list. Confirm with test 2 in 8.1. Do not skip this test. A wrong result deletes the overrides of other users. | Implementer (test in 8.1) | REQ-OVR-009        |
+| OPEN-005 | Can the Testers create their own Console Keys?                                                                                                         | Product owner says yes. Confirm with test 4 in 8.1.                                                                                                     | Implementer               | Release to Testers |
+| OPEN-006 | What is the Extension name?                                                                                                                            | Closed. "Intake Experiment Testing".                                                                                                                    | Product owner             | -                  |
+| OPEN-007 | What are the real SDK value fields (group name, layer allocation, `sha256` method, override marker)?                                                   | Open                                                                                                                                                    | Implementer (test in 8.1) | Job 1 acceptance   |
+| OPEN-008 | Does a Personal Console Key of a non-administrator role have permission to add and clear overrides? Does the organization setting allow personal keys? | Product owner says yes. Confirm with test 4 in 8.1.                                                                                                     | Implementer (test in 8.1) | Release to Testers |
+| OPEN-009 | Do all experiments name the control group "Control"? REQ-ASG-006 uses this name.                                                                       | Closed. The product owner confirms that the control group is always named "Control".                                                                    | Product owner             | -                  |
+| OPEN-010 | What are the real screen widths for tablet and mobile? REQ-SHT-004 uses 820 and 390.                                                                   | Closed. The product owner accepts the values in REQ-SHT-004.                                                                                            | Product owner             | -                  |
 
 ---
 
