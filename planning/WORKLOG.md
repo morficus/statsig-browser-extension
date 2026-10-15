@@ -433,3 +433,11 @@ Left as is, on purpose:
 - **Key and type are two storage writes.** `persist` writes the key and then the type, and the popup also attaches the key itself (`src/lib/fetcher.ts`). A write sent in the instant between switching to a read-only project and the type write would pass the client check. Statsig rejects writes from a read-only key anyway, so the client check is UX plus defense in depth. A fix (one storage item, or `setItems`/`getItems`, and dropping the popup-side attach) touches the project-transition logic. Revisit with F06 if needed.
 - **ID path segments aren't restricted.** `{id}` and `{userID}` match any non-empty segment, including `%2F`. Restricting them to `[\w.-]+` could reject real user IDs. Only extension pages can send requests, so abusing this needs XSS in the popup.
 - **Disabled flash.** While storage loads, `useWriteAccess` returns `canWrite: false`. Write-key users can see controls disabled for a moment when the popup opens. This only affects looks.
+
+### WL-044 · 2026-10-15 · Resolved · Q8: login form intro copy
+
+**Tickets:** F04-T5, F12-T1 · Q8 · REQ-SEC-010 · WL-042
+
+Maurice decided that the login form should ask for a Console API key and send Testers who don't know how to create one to engineering. The intro (`src/components/modals/AuthForm.tsx`) now reads: "Before you can use this extension, log in with a **Statsig Console API Key**. If you don't know how to create one, reach out to someone from engineering for help."
+
+The old "Read Only" wording is gone. So is the link to Project Settings → Keys & Environments: those steps describe project keys, and Testers should use a Personal Console Key. The guidance line under the input stays. The README part is F12-T1.

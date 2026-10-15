@@ -66,7 +66,7 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 2. **F00-T2 to F00-T5** (Maurice): the manual checks against Statsig and the Intake Site. F00-T1 is done (WL-016), so the exact calls to test are known. Claude can prepare the curl commands (T3, T5) and the DevTools snippet (T4).
 3. **F02 is done** (WL-026 to WL-031). T-SET-1 passes. Merged into `main`. F05-T1 and F05-T2 carry two guard follow-ups (WL-031). F01 is done (WL-019 to WL-022).
 4. **F03-T3** (Maurice): approve a push of `main`, so that a CI run on the fork confirms that no upstream secret is missing. F03 is merged into `main`, and the pushed commit has no release workflow. Then F03 is done. T1, T2, T4, and T5 are done (WL-034 to WL-039). F03 picked up the flaky e2e test (WL-023) and the worktree leak (WL-024).
-5. **F04 is done** (WL-040 to WL-042). All 5 tasks, plus fixes from the Opus review. Not merged into `main` yet. Maurice: run T-SEC-1 (network log shows only `statsigapi.net`) and T-SEC-2 (a read-only project disables all writes) in a real browser, and answer Q8 (login intro copy).
+5. **F04 is done** (WL-040 to WL-042). All 5 tasks, plus fixes from the Opus review. Not merged into `main` yet. Maurice: run T-SEC-1 (network log shows only `statsigapi.net`) and T-SEC-2 (a read-only project disables all writes) in a real browser. Q8 is resolved (WL-044).
 
 ## Open questions
 
@@ -78,4 +78,3 @@ Each resolved question becomes a `Decision` entry in `WORKLOG.md`. Then remove i
 | Q2  | **Who runs phase 0, and when?** Can the rest of phase 1 (F02 to F04) start while the manual checks wait? Spec §11 says no. F01 (WL-019), F02 (WL-026), F03 (WL-033), F04 (WL-040) started early.                                    | None now    |
 | Q4  | **Existing experiment override modal and REQ-OVR-009.** The base modal can delete any override row, and a delete removes every ID in that row. Should it be limited to the Tester's own ID, made read-only, or removed? See WL-004. | F06-T3, F07 |
 | Q5  | **Project gate.** The popup hides everything unless the page's SDK key matches a configured project. Do the Intake flows keep this gate (each Tester adds their key and pins it to the site), or bypass it? See WL-010.             | F07, F10    |
-| Q8  | **Login form intro copy.** It tells the Tester to use a "Read Only" Console API Key, but Job 2 needs write access. What should it say? See WL-042.                                                                                  | F07, F12-T1 |

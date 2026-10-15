@@ -71,6 +71,20 @@ describe('authForm component', () => {
     expect(screen.getByText('Use your own Personal Console Key, not a shared project key.')).toBeInTheDocument()
   })
 
+  it('asks for a Console API Key and points to engineering for help, without requiring a read-only key', () => {
+    renderWithProviders(
+      <Dialog open>
+        <DialogContent>
+          <AuthForm {...defaultProps} />
+        </DialogContent>
+      </Dialog>,
+    )
+
+    expect(screen.getByText('Statsig Console API Key', { selector: 'b' })).toBeInTheDocument()
+    expect(screen.getByText(/reach out to someone from engineering for help\./u)).toBeInTheDocument()
+    expect(screen.queryByText(/Read Only/u)).not.toBeInTheDocument()
+  })
+
   it('shows validation error for empty API key', async () => {
     const { user } = renderWithProviders(
       <Dialog open>

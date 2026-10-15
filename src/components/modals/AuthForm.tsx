@@ -2,7 +2,7 @@ import type { ControllerRenderProps } from 'react-hook-form'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ExternalLink, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import React, { useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -106,17 +106,8 @@ export function AuthForm({ onSuccess }: Readonly<AuthFormProps>) {
       <DialogHeader>
         <DialogTitle>Login to Statsig</DialogTitle>
         <DialogDescription className="pt-2 text-justify">
-          Before you can use this extension, you need to login to your Statsig account. This can be done with a{' '}
-          <b>Read Only Statsig Console API Key</b>. This key can be created in the <b>Project Settings</b> under the{' '}
-          <a
-            href="https://console.statsig.com/api_keys"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center font-medium text-primary hover:underline"
-          >
-            Keys & Environments <ExternalLink className="ml-0.5 h-3 w-3" />
-          </a>{' '}
-          tab.
+          Before you can use this extension, log in with a <b>Statsig Console API Key</b>. If you don&apos;t know how to
+          create one, reach out to someone from engineering for help.
         </DialogDescription>
       </DialogHeader>
 
