@@ -3,7 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useDetectedUser } from './use-detected-user'
 
-type MessageListener = (message: unknown) => void
+interface TestSender {
+  tab?: { id?: number; url?: string }
+}
+
+type MessageListener = (message: unknown, sender: TestSender) => unknown
 
 const {
   browserMock,
@@ -60,6 +64,45 @@ vi.mock('@/src/store/use-context-store', () => ({
 
 const INTAKE_URL = 'https://app.staging.talkiatry.com/assessment'
 
+const ACTIVE_TAB_ID = 5
+
+const USER_FOUND = {
+  context: { stableID: 's1' },
+  type: 'STATSIG_USER_FOUND',
+  user: { userID: 'u_msg' },
+}
+const DETECTED_BUT_ERROR = { error: 'page broken', type: 'STATSIG_DETECTED_BUT_ERROR' }
+
+// The tests run on fake timers: advancing them also settles every pending microtask, so the listener's async work is done.
+const flush = () => vi.advanceTimersByTimeAsync(0)
+
+// Mounts the hook, waits for the mount-time fetch, then clears the mocks so the tests see only the listener's calls.
+const mountHook = async () => {
+  const { unmount } = renderHook(() => useDetectedUser())
+  await vi.waitFor(() => {
+    expect(listeners).toHaveLength(1)
+    expect(browserMock.tabs.sendMessage).toHaveBeenCalledTimes(1)
+  })
+  await flush()
+  getActiveIntakeTabMock.mockClear()
+  setDetectedUserMock.mockClear()
+  setDetectedContextMock.mockClear()
+  setDetectionErrorMock.mockClear()
+  return { listener: listeners[0], unmount }
+}
+
+const mountAndGetListener = async () => {
+  const { listener } = await mountHook()
+  return listener
+}
+
+// Every store write the hook made, in one list, so a test can assert that there was none
+const storeWrites = () => [
+  ...setDetectedUserMock.mock.calls,
+  ...setDetectedContextMock.mock.calls,
+  ...setDetectionErrorMock.mock.calls,
+]
+
 describe('useDetectedUser', () => {
   beforeEach(() => {
     vi.useFakeTimers()
@@ -115,14 +158,19 @@ describe('useDetectedUser', () => {
     })
 
     act(() => {
-      listeners[0]({
-        context: { stableID: 's1' },
-        type: 'STATSIG_USER_FOUND',
-        user: { userID: 'u_msg' },
-      })
+      listeners[0](
+        {
+          context: { stableID: 's1' },
+          type: 'STATSIG_USER_FOUND',
+          user: { userID: 'u_msg' },
+        },
+        { tab: { id: 1, url: INTAKE_URL } },
+      )
     })
 
-    expect(setDetectedUserMock).toHaveBeenCalledWith({ userID: 'u_msg' })
+    await vi.waitFor(() => {
+      expect(setDetectedUserMock).toHaveBeenCalledWith({ userID: 'u_msg' })
+    })
     expect(setDetectedContextMock).toHaveBeenCalledWith({ stableID: 's1' })
     expect(setDetectionErrorMock).toHaveBeenLastCalledWith(null)
   })
@@ -138,10 +186,12 @@ describe('useDetectedUser', () => {
     })
 
     act(() => {
-      listeners[0]({ error: 'page broken', type: 'STATSIG_DETECTED_BUT_ERROR' })
+      listeners[0]({ error: 'page broken', type: 'STATSIG_DETECTED_BUT_ERROR' }, { tab: { id: 1, url: INTAKE_URL } })
     })
 
-    expect(setDetectionErrorMock).toHaveBeenCalledWith('page broken')
+    await vi.waitFor(() => {
+      expect(setDetectionErrorMock).toHaveBeenCalledWith('page broken')
+    })
     expect(setDetectedUserMock).not.toHaveBeenCalled()
   })
 
@@ -156,8 +206,8 @@ describe('useDetectedUser', () => {
     })
 
     act(() => {
-      listeners[0]('not an object')
-      listeners[0]({ no_type: true })
+      listeners[0]('not an object', { tab: { id: 1, url: INTAKE_URL } })
+      listeners[0]({ no_type: true }, { tab: { id: 1, url: INTAKE_URL } })
     })
 
     expect(setDetectedUserMock).not.toHaveBeenCalled()
@@ -276,5 +326,177 @@ describe('useDetectedUser', () => {
     expect(setDetectionErrorMock).not.toHaveBeenCalled()
     expect(console.error).not.toHaveBeenCalled()
     expect(vi.getTimerCount()).toBe(0)
+  })
+
+  describe('runtime message listener', () => {
+    beforeEach(() => {
+      vi.spyOn(console, 'log').mockImplementation(() => {})
+      getActiveIntakeTabMock.mockResolvedValue({ id: ACTIVE_TAB_ID, url: INTAKE_URL })
+      browserMock.tabs.sendMessage.mockResolvedValue({})
+    })
+
+    it('sets the user and context and clears the error for STATSIG_USER_FOUND from the active Intake tab', async () => {
+      const listener = await mountAndGetListener()
+
+      listener(USER_FOUND, { tab: { id: ACTIVE_TAB_ID, url: INTAKE_URL } })
+
+      await vi.waitFor(() => {
+        expect(setDetectedUserMock).toHaveBeenCalledWith({ userID: 'u_msg' })
+      })
+      expect(setDetectedContextMock).toHaveBeenCalledWith({ stableID: 's1' })
+      expect(setDetectionErrorMock).toHaveBeenLastCalledWith(null)
+    })
+
+    it('does not set the context when STATSIG_USER_FOUND carries none', async () => {
+      const listener = await mountAndGetListener()
+
+      listener(
+        { type: 'STATSIG_USER_FOUND', user: { userID: 'u_msg' } },
+        { tab: { id: ACTIVE_TAB_ID, url: INTAKE_URL } },
+      )
+
+      await vi.waitFor(() => {
+        expect(setDetectedUserMock).toHaveBeenCalledWith({ userID: 'u_msg' })
+      })
+      expect(setDetectedContextMock).not.toHaveBeenCalled()
+      expect(setDetectionErrorMock).toHaveBeenLastCalledWith(null)
+    })
+
+    it('sets the error for STATSIG_DETECTED_BUT_ERROR from the active Intake tab', async () => {
+      const listener = await mountAndGetListener()
+
+      listener(DETECTED_BUT_ERROR, { tab: { id: ACTIVE_TAB_ID, url: INTAKE_URL } })
+
+      await vi.waitFor(() => {
+        expect(setDetectionErrorMock).toHaveBeenCalledWith('page broken')
+      })
+      expect(setDetectedUserMock).not.toHaveBeenCalled()
+      expect(setDetectedContextMock).not.toHaveBeenCalled()
+    })
+
+    it('returns nothing, so the runtime keeps no response channel open', async () => {
+      const listener = await mountAndGetListener()
+
+      const result = listener(USER_FOUND, { tab: { id: ACTIVE_TAB_ID, url: INTAKE_URL } })
+
+      expect(result).toBeUndefined()
+      await flush()
+    })
+
+    describe.each([
+      ['STATSIG_USER_FOUND', USER_FOUND],
+      ['STATSIG_DETECTED_BUT_ERROR', DETECTED_BUT_ERROR],
+    ])('%s is ignored', (_type, message) => {
+      it('without a sender tab', async () => {
+        const listener = await mountAndGetListener()
+
+        listener(message, {})
+        await flush()
+
+        expect(storeWrites()).toStrictEqual([])
+      })
+
+      it('without a sender tab id', async () => {
+        const listener = await mountAndGetListener()
+
+        listener(message, { tab: { url: INTAKE_URL } })
+        await flush()
+
+        expect(storeWrites()).toStrictEqual([])
+      })
+
+      it('from a tab that is not the active Intake tab', async () => {
+        const listener = await mountAndGetListener()
+
+        listener(message, { tab: { id: ACTIVE_TAB_ID + 1, url: INTAKE_URL } })
+        await flush()
+
+        expect(storeWrites()).toStrictEqual([])
+      })
+
+      it('from a non-Intake sender tab URL', async () => {
+        const listener = await mountAndGetListener()
+
+        listener(message, { tab: { id: ACTIVE_TAB_ID, url: 'https://example.com/' } })
+        await flush()
+
+        expect(storeWrites()).toStrictEqual([])
+      })
+
+      it('from a sender tab without a URL', async () => {
+        const listener = await mountAndGetListener()
+
+        listener(message, { tab: { id: ACTIVE_TAB_ID } })
+        await flush()
+
+        expect(storeWrites()).toStrictEqual([])
+      })
+
+      it.each([
+        ['undefined', undefined],
+        ['null', null],
+      ])('when there is no active Intake tab (%s)', async (_label, noTab) => {
+        const listener = await mountAndGetListener()
+        getActiveIntakeTabMock.mockResolvedValue(noTab)
+
+        listener(message, { tab: { id: ACTIVE_TAB_ID, url: INTAKE_URL } })
+        await flush()
+
+        expect(getActiveIntakeTabMock).toHaveBeenCalledTimes(1)
+        expect(storeWrites()).toStrictEqual([])
+      })
+
+      it('without logging', async () => {
+        const listener = await mountAndGetListener()
+
+        listener(message, { tab: { id: ACTIVE_TAB_ID + 1, url: 'https://example.com/' } })
+        await flush()
+
+        expect(console.error).not.toHaveBeenCalled()
+        expect(console.log).not.toHaveBeenCalled()
+      })
+    })
+
+    it.each([
+      ['STATSIG_USER_FOUND', USER_FOUND],
+      ['STATSIG_DETECTED_BUT_ERROR', DETECTED_BUT_ERROR],
+    ])('writes nothing for %s when the active tab lookup settles after the hook unmounts', async (_type, message) => {
+      const { listener, unmount } = await mountHook()
+      const lookup = Promise.withResolvers<{ id: number; url: string }>()
+      getActiveIntakeTabMock.mockReturnValue(lookup.promise)
+
+      listener(message, { tab: { id: ACTIVE_TAB_ID, url: INTAKE_URL } })
+      await flush()
+      expect(getActiveIntakeTabMock).toHaveBeenCalledTimes(1)
+
+      unmount()
+      lookup.resolve({ id: ACTIVE_TAB_ID, url: INTAKE_URL })
+      await flush()
+
+      expect(storeWrites()).toStrictEqual([])
+    })
+
+    it('does not look up the active tab for a message that does not parse', async () => {
+      const listener = await mountAndGetListener()
+      const sender = { tab: { id: ACTIVE_TAB_ID, url: INTAKE_URL } }
+
+      listener('not an object', sender)
+      listener({ no_type: true }, sender)
+      listener(null, sender)
+      await flush()
+
+      expect(getActiveIntakeTabMock).not.toHaveBeenCalled()
+      expect(storeWrites()).toStrictEqual([])
+    })
+
+    it('does not look up the active tab for a parsed message of another type', async () => {
+      const listener = await mountAndGetListener()
+
+      listener({ type: 'OTHER' }, { tab: { id: ACTIVE_TAB_ID, url: INTAKE_URL } })
+      await flush()
+
+      expect(getActiveIntakeTabMock).not.toHaveBeenCalled()
+      expect(storeWrites()).toStrictEqual([])
+    })
   })
 })

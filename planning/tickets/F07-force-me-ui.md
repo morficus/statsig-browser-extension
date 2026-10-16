@@ -33,7 +33,7 @@ From the popup, a Tester finds an experiment, picks a group, and lands in it aft
 - **Owner:** Claude
 - **Size:** M
 - **Depends on:** F07-T1, F05-T1, F06-T1, F06-T2, F06-T5
-- **Description:** Each experiment shows its groups, and each group has "Force me into this group" (REQ-OVR-003). The environment defaults to the SDK tier, or `production` if there isn't one, and the Tester can change it (REQ-OVR-007). Disable the action with a reason for read keys (F04-T3). Show a result message for every write (REQ-OVR-016). Mark the Tester's current forced group.
+- **Description:** Each experiment shows its groups, and each group has "Force me into this group" (REQ-OVR-003). The environment defaults to the SDK tier, or `production` if there isn't one, and the Tester can change it (REQ-OVR-007). Disable the action with a reason for read keys (F04-T3). Show a result message for every write (REQ-OVR-016). Mark the Tester's current forced group. Get the Stable ID and the tier from `useTesterStableId()` only, and place `StableIdFallback` (F05-T2) in the Intake tab. Force only when `isLoading` and `isRefetching` are false (WL-065, WL-066).
 - **Acceptance criteria:**
   - [ ] Picks the right handler for experiments in a layer and not in a layer
   - [ ] The environment defaults are unit tested
