@@ -2,6 +2,7 @@ import wretch from 'wretch'
 import { browser } from 'wxt/browser'
 
 import { API_BASE_URL } from '@/src/lib/api-config'
+import { NetworkError } from '@/src/lib/utils'
 import { useSettingsStore } from '@/src/store/use-settings-store'
 
 const getRequestUrl = (url: RequestInfo | URL): string => {
@@ -20,6 +21,7 @@ const getRequestUrl = (url: RequestInfo | URL): string => {
 interface ExtMessageResponse {
   success: boolean
   error?: string
+  networkError?: boolean
   response?: {
     data: unknown
     headers: HeadersInit
@@ -34,6 +36,12 @@ const isExtMessageResponse = (val: unknown): val is ExtMessageResponse => {
   }
   return 'success' in val
 }
+
+// Only the background's rejected `fetch` carries `networkError`. Every other failure stays a TypeError.
+const toFailure = (response: ExtMessageResponse): Error =>
+  !response.success && response.networkError === true
+    ? new NetworkError(response.error ?? 'Network error')
+    : new TypeError(response.error ?? 'Unknown error')
 
 const getProjectRequestHeaders = (headers?: HeadersInit): HeadersInit | undefined => {
   const requestHeaders = new Headers(headers)
@@ -61,7 +69,7 @@ const customFetch = async (url: RequestInfo | URL, init?: RequestInit): Promise<
   }
 
   if (!response.success || !response.response) {
-    throw new TypeError(response.error ?? 'Unknown error')
+    throw toFailure(response)
   }
 
   const { data, headers, status, statusText } = response.response

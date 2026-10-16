@@ -102,6 +102,7 @@ export default defineBackground(() => {
           const errorMessage = error instanceof Error ? error.message : 'Network error'
           sendResponse({
             error: errorMessage,
+            networkError: true,
             success: false,
           })
         })

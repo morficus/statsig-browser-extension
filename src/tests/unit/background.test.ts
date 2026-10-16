@@ -218,8 +218,30 @@ describe('background API proxy', () => {
     listener({ config: { url: `${API_BASE_URL}/gates` }, type: 'API_REQUEST' }, extensionSender, sendResponse)
 
     await vi.waitFor(() => {
-      expect(sendResponse).toHaveBeenCalledWith({ error: 'offline', success: false })
+      expect(sendResponse).toHaveBeenCalledWith({ error: 'offline', networkError: true, success: false })
     })
+  })
+
+  it('forwards a non-OK HTTP response as a success without a networkError flag', async () => {
+    getValue.mockResolvedValue('console-stored')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(jsonResponse('Unauthorized', { ok: false, status: 401, statusText: 'Unauthorized' })),
+    )
+
+    const listener = await loadListener()
+    const sendResponse = vi.fn()
+    listener({ config: { url: `${API_BASE_URL}/gates` }, type: 'API_REQUEST' }, extensionSender, sendResponse)
+
+    await vi.waitFor(() => {
+      expect(sendResponse).toHaveBeenCalledTimes(1)
+    })
+    const [reply] = sendResponse.mock.calls[0] as [Record<string, unknown>]
+    expect(reply).toMatchObject({
+      response: { data: 'Unauthorized', ok: false, status: 401, statusText: 'Unauthorized' },
+      success: true,
+    })
+    expect(reply).not.toHaveProperty('networkError')
   })
 
   it('falls back to a generic message when fetch rejects a non-Error', async () => {
@@ -231,7 +253,7 @@ describe('background API proxy', () => {
     listener({ config: { url: `${API_BASE_URL}/gates` }, type: 'API_REQUEST' }, extensionSender, sendResponse)
 
     await vi.waitFor(() => {
-      expect(sendResponse).toHaveBeenCalledWith({ error: 'Network error', success: false })
+      expect(sendResponse).toHaveBeenCalledWith({ error: 'Network error', networkError: true, success: false })
     })
   })
 
@@ -285,6 +307,7 @@ describe('background API proxy', () => {
         success: false,
       })
     })
+    expect(sendResponse.mock.calls[0]?.[0]).not.toHaveProperty('networkError')
     expect(fetchMock).not.toHaveBeenCalled()
     expect(getValue).not.toHaveBeenCalled()
   })
@@ -391,6 +414,7 @@ describe('background API proxy', () => {
         success: false,
       })
     })
+    expect(sendResponse.mock.calls[0]?.[0]).not.toHaveProperty('networkError')
     expect(fetchMock).not.toHaveBeenCalled()
   })
 

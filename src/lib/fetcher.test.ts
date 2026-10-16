@@ -4,6 +4,7 @@ import { useSettingsStore } from '@/src/store/use-settings-store'
 
 import { API_BASE_URL } from './api-config'
 import { api, fetcher, poster } from './fetcher'
+import { NetworkError, handleApiError } from './utils'
 
 const { sendMessageMock } = vi.hoisted(() => ({
   sendMessageMock: vi.fn(),
@@ -157,6 +158,93 @@ describe('custom fetch bridge', () => {
     })
 
     await expect(fetcher('/forbidden')).rejects.toThrow('Forbidden')
+  })
+
+  describe('background failures (REQ-OVR-016)', () => {
+    it('throws a NetworkError when the background marks the failure as a network error', async () => {
+      sendMessageMock.mockResolvedValue({ error: 'Failed to fetch', networkError: true, success: false })
+
+      const error: unknown = await fetcher('/offline').catch((error_: unknown) => error_)
+
+      expect(error).toBeInstanceOf(NetworkError)
+      expect(error).toHaveProperty('message', 'Failed to fetch')
+    })
+
+    it('uses a default message when a network error carries none', async () => {
+      sendMessageMock.mockResolvedValue({ networkError: true, success: false })
+
+      const error: unknown = await fetcher('/offline').catch((error_: unknown) => error_)
+
+      expect(error).toBeInstanceOf(NetworkError)
+      expect(error).toHaveProperty('message', 'Network error')
+    })
+
+    it('keeps a TypeError for a failure without the network flag', async () => {
+      sendMessageMock.mockResolvedValue({ error: "This request isn't allowed", success: false })
+
+      const error: unknown = await fetcher('/refused').catch((error_: unknown) => error_)
+
+      expect(error).toBeInstanceOf(TypeError)
+      expect(error).not.toBeInstanceOf(NetworkError)
+    })
+
+    it('keeps a TypeError when the network flag is not true', async () => {
+      sendMessageMock.mockResolvedValue({ error: 'nope', networkError: false, success: false })
+
+      const error: unknown = await fetcher('/refused').catch((error_: unknown) => error_)
+
+      expect(error).toBeInstanceOf(TypeError)
+      expect(error).not.toBeInstanceOf(NetworkError)
+    })
+
+    it('reaches the caller of fetcher as an error that handleApiError maps to the network message', async () => {
+      sendMessageMock.mockResolvedValue({ error: 'Failed to fetch', networkError: true, success: false })
+
+      const error: unknown = await fetcher('/offline').catch((error_: unknown) => error_)
+
+      expect(handleApiError(error)).toBe('Cannot reach Statsig. Check your network connection, then try again.')
+    })
+
+    it('reaches the caller of api and poster as the same network message', async () => {
+      sendMessageMock.mockResolvedValue({ error: 'Failed to fetch', networkError: true, success: false })
+
+      const apiError: unknown = await api
+        .url('/experiments/exp/overrides')
+        .patch({ ids: [] })
+        .json()
+        .catch((error_: unknown) => error_)
+      const posterError: unknown = await poster('/gates/g/overrides', {}).catch((error_: unknown) => error_)
+
+      expect(handleApiError(apiError)).toBe('Cannot reach Statsig. Check your network connection, then try again.')
+      expect(handleApiError(posterError)).toBe('Cannot reach Statsig. Check your network connection, then try again.')
+    })
+
+    it('maps a plain-text 401 from the background to "key not valid"', async () => {
+      sendMessageMock.mockResolvedValue({
+        response: { data: 'Unauthorized', headers: {}, status: 401, statusText: 'Unauthorized' },
+        success: true,
+      })
+
+      const error: unknown = await fetcher('/experiments').catch((error_: unknown) => error_)
+
+      expect(handleApiError(error)).toBe('The Console Key is not valid. Check the key, then try again.')
+    })
+
+    it('maps the read-only JSON 401 from the background to "read-only key"', async () => {
+      sendMessageMock.mockResolvedValue({
+        response: {
+          data: { message: 'Read only API keys can not modify entities', status: 401 },
+          headers: { 'content-type': 'application/json' },
+          status: 401,
+          statusText: 'Unauthorized',
+        },
+        success: true,
+      })
+
+      const error: unknown = await poster('/experiments/exp/overrides', {}).catch((error_: unknown) => error_)
+
+      expect(handleApiError(error)).toBe('Read-only key. Add a key with write access to change overrides.')
+    })
   })
 
   it('handles non-JSON content types correctly', async () => {
