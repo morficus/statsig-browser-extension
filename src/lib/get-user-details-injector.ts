@@ -2,19 +2,31 @@
  * declared inside it and the usual size and scoping rules cannot apply. */
 // oxlint-disable no-inner-declarations, max-statements, max-lines-per-function, unicorn/consistent-function-scoping
 import type { DetectedStatsigKeys } from '../lib/projects'
-import type { StatsigInstance, WindowWithStatsig } from '../types/statsig'
+import type { PageStableId, StatsigInstance, WindowWithStatsig } from '../types/statsig'
+
+/** What the page reader returns. `context`, `keys`, and the tier are left out when the page has no SDK instance. */
+interface PageReadResult {
+  href: string
+  user: Record<string, unknown>
+  context?: Record<string, unknown> | undefined
+  keys?: DetectedStatsigKeys
+  stableId?: PageStableId
+  environmentTier?: string
+}
 
 /**
  * Reads the Statsig state of the page. Injected verbatim by `scripting.executeScript`, which
  * serializes this function on its own: every helper it uses has to live inside it, imports and
  * module-level values are not available in the page.
  */
-export const getUserDetailsFromPage = () => {
+export const getUserDetailsFromPage = (): PageReadResult | null => {
   try {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     const win = globalThis as unknown as WindowWithStatsig
     const CLIENT_KEY_PREFIX = 'client-'
     const CACHED_EVALUATIONS_PREFIX = 'statsig.cached.evaluations.'
+    // The number at the end of the key changes, so only the prefix is ever matched.
+    const STABLE_ID_PREFIX = 'statsig.stable_id.'
 
     function isRecord(value: unknown): value is Record<string, unknown> {
       return typeof value === 'object' && value !== null
@@ -173,6 +185,65 @@ export const getUserDetailsFromPage = () => {
       return null
     }
 
+    /** The JS SDK stores the ID as a JSON string. A raw value is used as it is. */
+    function parseStoredStableId(raw: string | null) {
+      if (raw === null) {
+        return null
+      }
+
+      let parsed: unknown = raw
+      try {
+        parsed = JSON.parse(raw)
+      } catch {
+        // Not JSON: use the raw value
+      }
+
+      if (typeof parsed !== 'string') {
+        return null
+      }
+
+      const value = parsed.trim()
+      return value === '' ? null : value
+    }
+
+    /** First `statsig.stable_id.*` key, in index order, that holds a usable value. Never reads cookies. */
+    function readLocalStorageStableId() {
+      try {
+        for (let index = 0; index < globalThis.localStorage.length; index++) {
+          const key = globalThis.localStorage.key(index)
+          if (key?.startsWith(STABLE_ID_PREFIX)) {
+            const value = parseStoredStableId(globalThis.localStorage.getItem(key))
+            if (value) {
+              return value
+            }
+          }
+        }
+      } catch {
+        // Storage blocked or sandboxed: there is no localStorage Stable ID
+      }
+
+      return null
+    }
+
+    /** The SDK instance lookups come first. localStorage is read only when none of them gives an ID. */
+    function findStableId(instance: StatsigInstance): PageStableId | undefined {
+      const sdkStableID = getStableID(instance)
+      if (typeof sdkStableID === 'string' && sdkStableID !== '') {
+        return { source: 'sdk', value: sdkStableID }
+      }
+
+      const storedStableID = readLocalStorageStableId()
+      return storedStableID ? { source: 'localStorage', value: storedStableID } : undefined
+    }
+
+    function readEnvironmentTier(context: Record<string, unknown> | undefined) {
+      const options = isRecord(context) ? context.options : undefined
+      const environment = isRecord(options) ? options.environment : undefined
+      const tier = isRecord(environment) ? environment.tier : undefined
+
+      return typeof tier === 'string' && tier !== '' ? tier : undefined
+    }
+
     function getStatsigInstance() {
       // 1. Check window.statsig (JS SDK)
       if (win.statsig) {
@@ -208,24 +279,36 @@ export const getUserDetailsFromPage = () => {
       return null
     }
 
+    const { href } = globalThis.location
     const instance = getStatsigInstance()
+
     if (!instance) {
-      return null
+      const storedStableID = readLocalStorageStableId()
+      if (!storedStableID) {
+        return null
+      }
+
+      const stableId: PageStableId = { source: 'localStorage', value: storedStableID }
+      return { href, stableId, user: { stableID: storedStableID } }
     }
 
     const user = getUser(instance) ?? {}
-    const stableID = getStableID(instance)
+    const stableId = findStableId(instance)
 
-    if (stableID) {
-      user.stableID = stableID
+    if (stableId) {
+      user.stableID = stableId.value
     }
 
     const context = typeof instance.getContext === 'function' ? instance.getContext() : undefined
     const keys = collectKeys(context)
+    const environmentTier = readEnvironmentTier(context)
 
     return {
       context,
+      ...(environmentTier !== undefined && { environmentTier }),
+      href,
       ...(keys && { keys }),
+      ...(stableId && { stableId }),
       user,
     }
   } catch {

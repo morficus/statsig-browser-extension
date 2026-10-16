@@ -21,6 +21,45 @@ export interface UserDetails {
   environmentTier?: string
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null
+
+// The page runs in the MAIN world, so its own scripts can change what the SDK returns.
+// The extension checks the two new fields again before it uses them.
+const sanitizeStableId = (value: unknown): PageStableId | undefined => {
+  if (!isRecord(value)) {
+    return undefined
+  }
+
+  const { source, value: id } = value
+  if ((source !== 'sdk' && source !== 'localStorage') || typeof id !== 'string') {
+    return undefined
+  }
+
+  const trimmed = id.trim()
+  return trimmed === '' ? undefined : { source, value: trimmed }
+}
+
+const sanitizeEnvironmentTier = (value: unknown) => (typeof value === 'string' && value !== '' ? value : undefined)
+
+const sanitizePage = (page: NonNullable<ReturnType<typeof getUserDetailsFromPage>>): UserDetails | undefined => {
+  const { environmentTier, href, stableId, ...details } = page
+
+  // The tab URL was checked before injection, but the page can navigate before the script runs.
+  // The href the page reports is the one the script ran on, so check that one again.
+  if (typeof href !== 'string' || !isIntakeSiteUrl(href)) {
+    return undefined
+  }
+
+  const cleanStableId = sanitizeStableId(stableId)
+  const cleanEnvironmentTier = sanitizeEnvironmentTier(environmentTier)
+
+  return {
+    ...details,
+    ...(cleanEnvironmentTier !== undefined && { environmentTier: cleanEnvironmentTier }),
+    ...(cleanStableId && { stableId: cleanStableId }),
+  }
+}
+
 const isReadable = (tab: TabLike): tab is TabLike & { id: number } => tab.id !== undefined && isIntakeSiteUrl(tab.url)
 
 const readPage = async (tabId: number): Promise<UserDetails | undefined> => {
@@ -32,7 +71,7 @@ const readPage = async (tabId: number): Promise<UserDetails | undefined> => {
     })
 
     if (result?.result) {
-      return result.result
+      return sanitizePage(result.result)
     }
   } catch (error) {
     // Ignore error when accessing restricted URLs like about:blank
