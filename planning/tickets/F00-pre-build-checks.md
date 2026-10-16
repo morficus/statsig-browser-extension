@@ -76,16 +76,16 @@ Confirm the facts that the override code and the values reader depend on before 
 
 ### F00-T5: Personal Console Key errors, admin part (OPEN-005, OPEN-008)
 
-- **Status:** In progress
+- **Status:** Done (2026-10-16). See WL-055, WL-056.
 - **Owner:** Maurice
 - **Size:** XS
 - **Depends on:** F00-T1
-- **Description:** Spec §8.1 check 4, the part an admin can do (WL-048). The two key checks are done (WL-055). The org setting is still to record. Record the org setting for Personal Console Keys. Run `t5-401` and `t5-403` from the phase 0 script. The non-admin part is F00-T6.
+- **Description:** Spec §8.1 check 4, the part an admin can do (WL-048). The two key checks are in WL-055, and the org setting is in WL-056. Record the org setting for Personal Console Keys. Run `t5-401` and `t5-403` from the phase 0 script. The non-admin part is F00-T6.
 - **Acceptance criteria:**
-  - [ ] It's recorded whether the org setting allows personal keys
+  - [x] It's recorded whether the org setting allows personal keys. It does (WL-056).
   - [x] The real `403` body is recorded, from a read-only key that tries a write (the docs don't cover it, WL-016). The write got `401`, not `403` (WL-055).
   - [x] The real `401` body is recorded, using a made-up key: does it echo the full key? (WL-017). No (WL-055).
-  - [ ] Results in a `WORKLOG.md` entry
+  - [x] Results in a `WORKLOG.md` entry
 - **Verification:** The WL entry exists.
 
 ### F00-T6: Personal Console Key with a non-admin role (OPEN-005, OPEN-008)

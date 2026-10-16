@@ -647,3 +647,12 @@ Maurice ran `t5-401` at 2026-10-16 01:10 UTC and `t5-403` at 01:12 UTC, both on 
 - **A read-only key's write gets `401`, not `403`.** So `401` has two meanings. The mapper (F06-T5) must check the body. If the JSON `message` says the key is read only, show "key not allowed (read only)". For any other `401`, show "key not valid". The mapper must not expect a JSON body, because the bad-key `401` is plain text.
 - **`403` is still not seen.** It may come from a non-admin role (F00-T6). F00-T6 records any `403` body.
 - The write was refused, so the override state didn't change.
+
+### WL-056 · 2026-10-16 · Resolved · F00-T5 is done; the phase 0 checkpoint passes
+
+**Tickets:** F00-T5, F00-T6, F06, F09 · OPEN-005, OPEN-008 · WL-048, WL-053, WL-054, WL-055
+
+- **Org setting.** Maurice checked in Statsig: the org allows Personal Console Keys. This is the admin's view of OPEN-005. Whether a non-admin Tester can create one and use it for overrides is F00-T6 (WL-048).
+- **F00-T5 is done.** The `401` bodies are in WL-055.
+- **The phase 0 checkpoint passes.** OPEN-001, OPEN-004, and OPEN-007 have results (WL-053, WL-054). So does the admin part of OPEN-008 (WL-055, this entry). The override request shapes are confirmed (WL-053). F06-T1 and F09 are no longer blocked by phase 0.
+- **Still open:** F00-T6 (a non-admin key) before the release. Maurice also runs `cleanup` and deletes the test objects.

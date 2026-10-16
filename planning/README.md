@@ -37,7 +37,7 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 
 | Phase                            | Functionality                                                                  | Status      | Tasks |
 | -------------------------------- | ------------------------------------------------------------------------------ | ----------- | ----- |
-| 0: Pre-build checks              | [F00: Pre-build checks (spec §8.1)](tickets/F00-pre-build-checks.md)           | In progress | 4/6   |
+| 0: Pre-build checks              | [F00: Pre-build checks (spec §8.1)](tickets/F00-pre-build-checks.md)           | In progress | 5/6   |
 | 1: Setup & hardening             | [F01: Rebrand and Chrome-only](tickets/F01-rebrand-chrome-only.md)             | Done        | 3/3   |
 |                                  | [F02: Intake Site scoping](tickets/F02-intake-site-scoping.md)                 | Done        | 4/4   |
 |                                  | [F03: Repository hygiene](tickets/F03-repo-hygiene.md)                         | Done        | 5/5   |
@@ -53,7 +53,7 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 
 ### Checkpoints
 
-- [ ] **After phase 0:** OPEN-001, OPEN-004, and OPEN-007 have recorded results in `WORKLOG.md`. So does the admin part of OPEN-008 (F00-T5). The request shapes for the override endpoints are confirmed.
+- [x] **After phase 0:** OPEN-001, OPEN-004, and OPEN-007 have recorded results in `WORKLOG.md`. So does the admin part of OPEN-008 (F00-T5). The request shapes for the override endpoints are confirmed. Passed on 2026-10-16 (WL-056).
 - [ ] **After phase 1:** the built manifest passes T-SET-1. T-SEC-1, T-SEC-2, T-SEC-3, and T-GAT-1 pass. All existing tests pass.
 - [ ] **After phase 2:** T-OVR-1 to T-OVR-6 pass on staging. The Job 2 e2e tests pass.
 - [ ] **After phase 3:** T-ASG-1 to T-ASG-5 pass. The Job 1 e2e tests pass.
@@ -63,7 +63,10 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 ## Next up
 
 1. **Maurice:** move the new private signing key to a password manager before the machine restarts (WL-021).
-2. **F00-T2 to F00-T5** (Maurice): the manual checks against Statsig and the Intake Site. Claude is building the check script, the SDK snippet, and the runbook in `planning/phase0/` (WL-047). Maurice follows the runbook. F00-T2, F00-T3, and F00-T4 are done: OPEN-001, OPEN-004, and OPEN-007 are answered (WL-053, WL-054). Next: F00-T5 (`t5-401`, `t5-403`, and the org setting), then `cleanup`. F00-T6 (the non-admin key) waits for the first Tester (WL-048).
+2. **Phase 0 passes** (WL-056). F00-T1 to F00-T5 are done. OPEN-001, OPEN-004, and OPEN-007 are answered (WL-053, WL-054).
+   - **Maurice:** run `cleanup` from `planning/phase0/`. Then delete the test experiments, the layer, and the read-only key, and delete `planning/phase0/.env`.
+   - **F00-T6** (a non-admin key) waits for the first Tester, before the release (WL-048).
+   - **Claude, next:** F05-T1, F06-T4, and F06-T5 have no open dependencies. F06-T1 is unblocked by phase 0 (WL-053).
 3. **F02 is done** (WL-026 to WL-031). T-SET-1 passes. Merged into `main`. F05-T1 and F05-T2 carry two guard follow-ups (WL-031). F01 is done (WL-019 to WL-022).
 4. **F03 is done** (WL-033 to WL-041). It is merged into `main` and pushed. Each push to `main` runs CI on the fork, and the run uploads the zip artifact.
 5. **F04 is done** (WL-042 to WL-046) and merged into `main`. Two manual checks are still to do (Maurice), in a real browser against the real Statsig API and the Intake Site:
