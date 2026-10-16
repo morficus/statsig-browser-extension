@@ -32,7 +32,7 @@ export interface WindowWithStatsig extends Window {
 }
 
 /** Where the page reader found the Tester's Stable ID (REQ-OVR-004). */
-export type StableIdSource = 'localStorage' | 'sdk'
+type StableIdSource = 'localStorage' | 'sdk'
 
 export interface PageStableId {
   source: StableIdSource

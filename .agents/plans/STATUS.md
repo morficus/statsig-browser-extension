@@ -8,12 +8,12 @@ Planning of record lives in `planning/` (board, tickets, WORKLOG). This list tra
 
 ## Agreed
 
-- f05-t2-manual-stable-id — F05-T2 error and manual Stable ID entry, session storage per origin (WL-060)
 
 
 
 ## Done
 
+- f05-listener-sender-check — WL-031 item 2, the detection listener accepts only the active Intake tab — `bcad1dc`
 - f05-t1-page-reader — F05-T1 Stable ID lookup order, environment tier, `href` guard (WL-031 item 1) — `221da76` (Opus review pending)
 - f00-phase0-script — F00-T2 to T5 check script, SDK snippet, and runbook, plus a layer-ID guard added in review — `ffa3bfc`
 - f04-review-fixes — F04 Opus review fixes (WL-043) — `06231a1`
