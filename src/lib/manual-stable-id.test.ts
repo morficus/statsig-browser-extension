@@ -104,10 +104,19 @@ describe('manual Stable ID storage', () => {
     ['null', null],
     ['an empty string', ''],
     ['an array', ['abc']],
+    ['only spaces', '   '],
+    ['a value with a space inside', 'a b'],
+    ['a value with a tab inside', 'a\tb'],
   ])('reads undefined when the stored value is %s', async (_label, stored) => {
     await fakeBrowser.storage.session.set({ [rawKeyFor(STAGING)]: stored })
 
     await expect(getManualStableId(STAGING)).resolves.toBeUndefined()
+  })
+
+  it('reads a stored value with padding as the trimmed value', async () => {
+    await fakeBrowser.storage.session.set({ [rawKeyFor(STAGING)]: '  abc-123  ' })
+
+    await expect(getManualStableId(STAGING)).resolves.toBe('abc-123')
   })
 
   it.each([

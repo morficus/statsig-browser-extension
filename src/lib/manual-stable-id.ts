@@ -21,8 +21,13 @@ export function validateManualStableId(raw: string): ManualStableIdValidation {
 
 export async function getManualStableId(origin: string): Promise<string | undefined> {
   const stored = await storage.getItem<unknown>(storageKey(origin))
+  if (typeof stored !== 'string') {
+    return undefined
+  }
 
-  return typeof stored === 'string' && stored !== '' ? stored : undefined
+  // Session storage is not trusted: a value that fails validation reads as missing.
+  const result = validateManualStableId(stored)
+  return result.ok ? result.value : undefined
 }
 
 export async function saveManualStableId(origin: string, value: string): Promise<void> {

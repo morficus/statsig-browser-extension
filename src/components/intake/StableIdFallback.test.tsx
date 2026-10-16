@@ -1,11 +1,12 @@
-import { act, screen } from '@testing-library/react'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { act, fireEvent, renderHook, screen, waitFor } from '@testing-library/react'
 import { useState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 
 import type { TesterStableId, useTesterStableId } from '@/src/hooks/use-tester-stable-id'
 
-import { saveManualStableId as saveStoredManualStableId } from '@/src/lib/manual-stable-id'
+import { getManualStableId, saveManualStableId as saveStoredManualStableId } from '@/src/lib/manual-stable-id'
 import { renderWithProviders } from '@/src/tests/utils/TestUtils'
 
 import { StableIdFallback } from './StableIdFallback'
@@ -80,6 +81,12 @@ const watchForAlert = () => {
   return { observer, seen }
 }
 
+/** The one polite live region on screen: the form error slot in state A, the Clear error slot in state B. */
+const getLiveRegion = () => {
+  const regions = document.querySelectorAll('[aria-live="polite"]')
+  expect(regions).toHaveLength(1)
+  return regions[0]
+}
 const getInput = () => screen.getByLabelText('Stable ID')
 const getSubmit = () => screen.getByRole('button', { name: 'Use this ID' })
 
@@ -137,7 +144,7 @@ describe('stableIdFallback', () => {
       renderWithProviders(<StableIdFallback />)
 
       const alert = screen.getByRole('alert')
-      expect(alert).toHaveTextContent(
+      expect(alert.textContent).toBe(
         "Stable ID not foundThe extension can't read your Stable ID from this page. Reload the page and try again, or enter your Stable ID below.Try again",
       )
       expect(alert).toHaveClass('border-destructive/50', 'bg-destructive/10')
@@ -310,6 +317,110 @@ describe('stableIdFallback', () => {
 
       expect(screen.queryByText("The Stable ID wasn't saved. Try again.")).not.toBeInTheDocument()
     })
+
+    it('renders the form error slot as an empty polite live region, with the one alert kept', () => {
+      renderWithProviders(<StableIdFallback />)
+
+      const slot = getLiveRegion()
+      expect(slot).toBeEmptyDOMElement()
+      expect(slot).toHaveClass('text-xs', 'text-destructive')
+      expect(screen.getAllByRole('alert')).toHaveLength(1)
+    })
+
+    it('fills and empties the form error slot in place', async () => {
+      const { user } = renderWithProviders(<StableIdFallback />)
+      const slot = getLiveRegion()
+
+      await user.click(getSubmit())
+
+      expect(getLiveRegion()).toBe(slot)
+      expect(slot).toHaveTextContent('Enter a Stable ID.')
+      expect(getInput()).toHaveAttribute('aria-describedby', slot.id)
+
+      await user.type(getInput(), 'a')
+
+      expect(getLiveRegion()).toBe(slot)
+      expect(slot).toBeEmptyDOMElement()
+    })
+
+    it('does not move focus on first render', () => {
+      renderWithProviders(<StableIdFallback />)
+
+      expect(getInput()).not.toHaveFocus()
+    })
+
+    it('focuses the input after the empty error', async () => {
+      const { user } = renderWithProviders(<StableIdFallback />)
+
+      await user.click(getSubmit())
+
+      expect(getInput()).toHaveFocus()
+    })
+
+    it('focuses the input after the whitespace error', async () => {
+      const { user } = renderWithProviders(<StableIdFallback />)
+      await user.type(getInput(), 'abc 123')
+
+      await user.click(getSubmit())
+
+      expect(screen.getByText("A Stable ID can't contain spaces.")).toBeInTheDocument()
+      expect(getInput()).toHaveFocus()
+    })
+
+    it('focuses the input after the save error', async () => {
+      saveManualStableId.mockRejectedValue(new Error('storage failed'))
+      const { user } = renderWithProviders(<StableIdFallback />)
+      await user.type(getInput(), 'abc-123')
+
+      await user.click(getSubmit())
+
+      await screen.findByText("The Stable ID wasn't saved. Try again.")
+      expect(getInput()).toHaveFocus()
+    })
+
+    it('focuses the Clear button after a successful save', async () => {
+      const { user } = renderWithProviders(<StableIdFallback />)
+      await user.type(getInput(), 'abc-123')
+
+      await user.click(getSubmit())
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Clear' })).toHaveFocus()
+      })
+    })
+
+    it('ignores a second submit while a save is running', async () => {
+      const pending = Promise.withResolvers<void>()
+      saveManualStableId.mockReturnValue(pending.promise)
+      renderWithProviders(<StableIdFallback />)
+      fireEvent.change(getInput(), { target: { value: 'abc-123' } })
+
+      fireEvent.submit(getSubmit())
+      fireEvent.submit(getSubmit())
+
+      expect(saveManualStableId).toHaveBeenCalledTimes(1)
+
+      await act(async () => {
+        pending.resolve()
+        await pending.promise
+      })
+
+      await screen.findByText('Using the Stable ID you entered.')
+      expect(saveManualStableId).toHaveBeenCalledTimes(1)
+    })
+
+    it('saves again after a failed save', async () => {
+      saveManualStableId.mockRejectedValueOnce(new Error('storage failed'))
+      const { user } = renderWithProviders(<StableIdFallback />)
+      await user.type(getInput(), 'abc-123')
+      await user.click(getSubmit())
+      await screen.findByText("The Stable ID wasn't saved. Try again.")
+
+      await user.click(getSubmit())
+
+      await screen.findByText('Using the Stable ID you entered.')
+      expect(saveManualStableId).toHaveBeenCalledTimes(2)
+    })
   })
 
   describe('state B: missing, a typed-in ID is in use', () => {
@@ -375,6 +486,52 @@ describe('stableIdFallback', () => {
 
       await screen.findByRole('alert')
     })
+
+    it('keeps the Clear error slot as one empty live region that fills and empties in place', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      const pending = Promise.withResolvers<void>()
+      clearManualStableId.mockRejectedValueOnce(new Error('storage failed'))
+      clearManualStableId.mockReturnValueOnce(pending.promise)
+      const { user } = renderWithProviders(<StableIdFallback />)
+      const slot = getLiveRegion()
+      expect(slot).toBeEmptyDOMElement()
+      expect(slot).toHaveClass('text-xs', 'text-destructive')
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: 'Clear' }))
+
+      await waitFor(() => {
+        expect(slot).toHaveTextContent("The Stable ID wasn't cleared. Try again.")
+      })
+      expect(getLiveRegion()).toBe(slot)
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: 'Clear' }))
+
+      expect(getLiveRegion()).toBe(slot)
+      expect(slot).toBeEmptyDOMElement()
+
+      await act(async () => {
+        pending.resolve()
+        await pending.promise
+      })
+    })
+
+    it('does not move focus on first render', () => {
+      renderWithProviders(<StableIdFallback />)
+
+      expect(screen.getByRole('button', { name: 'Clear' })).not.toHaveFocus()
+    })
+
+    it('focuses the input after Clear succeeds', async () => {
+      const { user } = renderWithProviders(<StableIdFallback />)
+
+      await user.click(screen.getByRole('button', { name: 'Clear' }))
+
+      await waitFor(() => {
+        expect(getInput()).toHaveFocus()
+      })
+    })
   })
 
   describe('save then clear', () => {
@@ -423,6 +580,28 @@ describe('stableIdFallback', () => {
 
       expect(seen.alert).toBeTruthy()
       expect(getInput()).toHaveValue('')
+    })
+
+    it('lets the Tester type an ID in when the read is blocked, and shares it with other consumers (T-OVR-6)', async () => {
+      getUserDetailsMock.mockRejectedValue(new Error('read blocked'))
+      const { queryClient, user } = renderWithProviders(<StableIdFallback />)
+      await screen.findByRole('alert')
+
+      await user.type(getInput(), '  abc-123  {Enter}')
+
+      await screen.findByText('Using the Stable ID you entered.')
+      expect(screen.getByRole('button', { name: 'abc-123' })).toBeInTheDocument()
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+
+      const second = renderHook(() => useTesterStableIdMock(), {
+        wrapper: ({ children }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>,
+      })
+
+      await waitFor(() => {
+        expect(second.result.current.stableId).toBe('abc-123')
+      })
+      expect(second.result.current.source).toBe('manual')
+      await expect(getManualStableId('https://app.staging.talkiatry.com')).resolves.toBe('abc-123')
     })
   })
 })

@@ -83,6 +83,8 @@ const useManualStableId = (origin: string | undefined) => {
         throw new Error('No Intake Site tab found')
       }
       await saveStoredManualStableId(origin, value)
+      // A read that started before the write would finish later with the old value and overwrite the cache.
+      await queryClient.cancelQueries({ queryKey: manualQueryKey(origin) })
       queryClient.setQueryData(manualQueryKey(origin), value.trim())
     },
     [origin, queryClient],
@@ -93,6 +95,7 @@ const useManualStableId = (origin: string | undefined) => {
       throw new Error('No Intake Site tab found')
     }
     await clearStoredManualStableId(origin)
+    await queryClient.cancelQueries({ queryKey: manualQueryKey(origin) })
     queryClient.setQueryData(manualQueryKey(origin), null)
   }, [origin, queryClient])
 

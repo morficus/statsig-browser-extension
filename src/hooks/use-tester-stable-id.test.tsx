@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook, waitFor } from '@testing-library/react'
+import { useEffect } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { storage } from 'wxt/utils/storage'
@@ -26,6 +27,7 @@ vi.mock('../handlers/get-user-details', () => ({
 const STAGING = 'https://app.staging.talkiatry.com'
 const PRODUCTION = 'https://app.talkiatry.com'
 const stagingTab = { id: 42, url: `${STAGING}/assessment` }
+const productionTab = { id: 43, url: `${PRODUCTION}/assessment` }
 
 const createWrapper = () => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -39,6 +41,37 @@ const renderUseTesterStableId = () => {
   const { queryClient, wrapper } = createWrapper()
   return { queryClient, ...renderHook(() => useTesterStableId(), { wrapper }) }
 }
+
+/** Renders the hook and records what every committed render returned, tagged with the current phase. */
+const renderRecording = () => {
+  const { queryClient, wrapper } = createWrapper()
+  const phase = { current: 'start' }
+  const renders: { isLoading: boolean; isRefetching: boolean; phase: string; stableId?: string }[] = []
+  const hook = renderHook(
+    () => {
+      const state = useTesterStableId()
+      useEffect(() => {
+        renders.push({
+          isLoading: state.isLoading,
+          isRefetching: state.isRefetching,
+          phase: phase.current,
+          stableId: state.stableId,
+        })
+      })
+      return state
+    },
+    { wrapper },
+  )
+  return { ...hook, phase, queryClient, renders }
+}
+
+/** Lets a read that was cancelled or overwritten show up in the cache, if it is going to. */
+const flushReads = () =>
+  act(async () => {
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 20)
+    })
+  })
 
 /** Holds every storage read until the promise settles, so the typed-in ID read stays pending. */
 const holdStorageRead = (pending: Promise<unknown>) => vi.spyOn(storage, 'getItem').mockReturnValue(pending)
@@ -415,6 +448,116 @@ describe('useTesterStableId', () => {
 
       expect(result.current.stableId).toBe('typed-id')
       expect(result.current.source).toBe('manual')
+    })
+  })
+
+  describe('a typed-in ID read that is already running', () => {
+    beforeEach(() => {
+      getUserDetailsMock.mockResolvedValue({ user: {} })
+    })
+
+    it('does not put a cleared ID back when it finishes after Clear', async () => {
+      await saveManualStableId(STAGING, 'typed-id')
+      const { queryClient, result } = renderUseTesterStableId()
+      await waitFor(() => {
+        expect(result.current.stableId).toBe('typed-id')
+      })
+
+      // The next storage read would return the value from before the Clear.
+      const held = Promise.withResolvers<unknown>()
+      const storageRead = vi.spyOn(storage, 'getItem').mockReturnValueOnce(held.promise)
+      act(() => {
+        void queryClient.invalidateQueries()
+      })
+      await waitFor(() => {
+        expect(storageRead).toHaveBeenCalled()
+      })
+
+      await act(async () => {
+        await result.current.clearManualStableId()
+      })
+      await waitFor(() => {
+        expect(result.current.stableId).toBeUndefined()
+      })
+
+      held.resolve('typed-id')
+      await flushReads()
+
+      expect(result.current.stableId).toBeUndefined()
+      expect(result.current.source).toBeUndefined()
+      expect(result.current.manualStableId).toBeUndefined()
+      await expect(getManualStableId(STAGING)).resolves.toBeUndefined()
+    })
+
+    it('does not drop a saved ID when it finishes after Save', async () => {
+      const { queryClient, result } = renderUseTesterStableId()
+      await waitForRead(result)
+
+      // The next storage read would return the value from before the Save.
+      const held = Promise.withResolvers<unknown>()
+      const storageRead = vi.spyOn(storage, 'getItem').mockReturnValueOnce(held.promise)
+      act(() => {
+        void queryClient.invalidateQueries()
+      })
+      await waitFor(() => {
+        expect(storageRead).toHaveBeenCalled()
+      })
+
+      await act(async () => {
+        await result.current.saveManualStableId('typed-id')
+      })
+      await waitFor(() => {
+        expect(result.current.stableId).toBe('typed-id')
+      })
+
+      held.resolve(null)
+      await flushReads()
+
+      expect(result.current.stableId).toBe('typed-id')
+      expect(result.current.source).toBe('manual')
+      await expect(getManualStableId(STAGING)).resolves.toBe('typed-id')
+    })
+  })
+
+  describe('the active tab changes to another origin (REQ-OVR-009)', () => {
+    it('never uses the typed-in ID of the old origin, and stays loading until the new origin read lands', async () => {
+      getUserDetailsMock.mockResolvedValue({ user: {} })
+      const { phase, renders, result } = renderRecording()
+      await waitForRead(result)
+      await act(async () => {
+        await result.current.saveManualStableId('staging-id')
+      })
+      await waitFor(() => {
+        expect(result.current.stableId).toBe('staging-id')
+      })
+
+      // The Tester moves to production. The typed-in ID read for production does not finish yet.
+      const pending = Promise.withResolvers<unknown>()
+      const storageRead = holdStorageRead(pending.promise)
+      getActiveIntakeTabMock.mockResolvedValue(productionTab)
+      phase.current = 'switched'
+      await act(async () => {
+        await result.current.refetch()
+      })
+      await waitFor(() => {
+        expect(storageRead).toHaveBeenCalled()
+      })
+
+      expect(result.current.isLoading).toBeTruthy()
+      expect(result.current.stableId).toBeUndefined()
+
+      phase.current = 'landed'
+      pending.resolve(null)
+      await waitForRead(result)
+
+      // A render during the refetch may still show the old page. F07 must not force while isRefetching.
+      const settled = renders.filter((render) => render.phase !== 'start').filter((render) => !render.isRefetching)
+      const beforeReadLands = settled.filter((render) => render.phase === 'switched')
+      expect(beforeReadLands.length).toBeGreaterThan(0)
+      expect(settled.filter((render) => render.stableId === 'staging-id')).toStrictEqual([])
+      expect(beforeReadLands.filter((render) => !render.isLoading)).toStrictEqual([])
+      expect(result.current.stableId).toBeUndefined()
+      expect(result.current.isMissing).toBeTruthy()
     })
   })
 })

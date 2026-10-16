@@ -1,5 +1,5 @@
 import { TriangleAlert } from 'lucide-react'
-import { useCallback, useId, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 
 import type { TesterStableId } from '@/src/hooks/use-tester-stable-id'
 
@@ -20,6 +20,50 @@ const ERROR_MESSAGES: Record<FieldError, string> = {
 }
 
 const CLEAR_ERROR_MESSAGE = "The Stable ID wasn't cleared. Try again."
+
+/** Where focus goes after an action moves the Tester to the other view. */
+type FocusTarget = 'clear' | 'input'
+
+/**
+ * Lets an action ask the view it leads to for focus. The request is dropped if the action fails,
+ * and the view that takes it clears it, so a later mount (a refetch, a tab change) does not steal focus.
+ */
+function useFocusRequest() {
+  const requested = useRef<FocusTarget | null>(null)
+
+  const run = useCallback(async (target: FocusTarget, action: () => Promise<void>) => {
+    requested.current = target
+    try {
+      await action()
+    } catch (error) {
+      requested.current = null
+      throw error
+    }
+  }, [])
+
+  const take = useCallback((target: FocusTarget) => {
+    const isRequested = requested.current === target
+    if (isRequested) {
+      requested.current = null
+    }
+    return isRequested
+  }, [])
+
+  return { run, take }
+}
+
+type FocusRequest = ReturnType<typeof useFocusRequest>
+
+/** Moves focus to `element` when the view mounts, but only if an action asked for it. */
+function useFocusOnMount(request: FocusRequest, target: FocusTarget, element: React.RefObject<HTMLElement | null>) {
+  const { take } = request
+
+  useEffect(() => {
+    if (take(target)) {
+      element.current?.focus()
+    }
+  }, [element, take, target])
+}
 
 function StableIdAlert({
   isRefetching,
@@ -48,12 +92,39 @@ function StableIdAlert({
   )
 }
 
-function StableIdForm({ onSave }: Readonly<{ onSave: TesterStableId['saveManualStableId'] }>) {
+function useStableIdForm(
+  onSave: TesterStableId['saveManualStableId'],
+  inputRef: React.RefObject<HTMLInputElement | null>,
+) {
   const [input, setInput] = useState('')
   const [error, setError] = useState<FieldError | undefined>()
   const [isSaving, setIsSaving] = useState(false)
-  const inputId = useId()
-  const errorId = useId()
+  const isSavingRef = useRef(false)
+
+  const fail = useCallback(
+    (reason: FieldError) => {
+      setError(reason)
+      inputRef.current?.focus()
+    },
+    [inputRef],
+  )
+
+  const persist = useCallback(
+    async (value: string) => {
+      isSavingRef.current = true
+      setIsSaving(true)
+      try {
+        await onSave(value)
+        return true
+      } catch {
+        return false
+      } finally {
+        isSavingRef.current = false
+        setIsSaving(false)
+      }
+    },
+    [onSave],
+  )
 
   const handleChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setInput(event.target.value)
@@ -61,21 +132,21 @@ function StableIdForm({ onSave }: Readonly<{ onSave: TesterStableId['saveManualS
   }, [])
 
   const save = useCallback(async () => {
-    const result = validateManualStableId(input)
-    if (!result.ok) {
-      setError(result.reason)
+    // The button is disabled while a save runs, but a second submit can still arrive before it re-renders.
+    if (isSavingRef.current) {
       return
     }
 
-    setIsSaving(true)
-    try {
-      await onSave(result.value)
-    } catch {
-      setError('save')
-    } finally {
-      setIsSaving(false)
+    const result = validateManualStableId(input)
+    if (!result.ok) {
+      fail(result.reason)
+      return
     }
-  }, [input, onSave])
+
+    if (!(await persist(result.value))) {
+      fail('save')
+    }
+  }, [fail, input, persist])
 
   const handleSubmit = useCallback(
     (event: React.SyntheticEvent<HTMLFormElement>) => {
@@ -85,11 +156,25 @@ function StableIdForm({ onSave }: Readonly<{ onSave: TesterStableId['saveManualS
     [save],
   )
 
+  return { error, handleChange, handleSubmit, input, isSaving }
+}
+
+function StableIdForm({
+  focusRequest,
+  onSave,
+}: Readonly<{ focusRequest: FocusRequest; onSave: TesterStableId['saveManualStableId'] }>) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const inputId = useId()
+  const errorId = useId()
+  const { error, handleChange, handleSubmit, input, isSaving } = useStableIdForm(onSave, inputRef)
+  useFocusOnMount(focusRequest, 'input', inputRef)
+
   return (
     <form className="space-y-2" onSubmit={handleSubmit}>
       <Label htmlFor={inputId}>Stable ID</Label>
       <div className="flex items-center gap-2">
         <Input
+          ref={inputRef}
           id={inputId}
           value={input}
           autoComplete="off"
@@ -102,11 +187,9 @@ function StableIdForm({ onSave }: Readonly<{ onSave: TesterStableId['saveManualS
           Use this ID
         </Button>
       </div>
-      {error && (
-        <p id={errorId} className="text-xs text-destructive">
-          {ERROR_MESSAGES[error]}
-        </p>
-      )}
+      <p id={errorId} aria-live="polite" className="text-xs text-destructive empty:mb-0">
+        {error ? ERROR_MESSAGES[error] : null}
+      </p>
       <p className="text-xs text-muted-foreground">
         To find it, open DevTools &gt; Application &gt; Local Storage. Copy the value of the key that starts with{' '}
         <code>statsig.stable_id.</code>.
@@ -116,10 +199,17 @@ function StableIdForm({ onSave }: Readonly<{ onSave: TesterStableId['saveManualS
 }
 
 function ManualStableIdInUse({
+  focusRequest,
   manualStableId,
   onClear,
-}: Readonly<{ manualStableId: string; onClear: TesterStableId['clearManualStableId'] }>) {
+}: Readonly<{
+  focusRequest: FocusRequest
+  manualStableId: string
+  onClear: TesterStableId['clearManualStableId']
+}>) {
   const [hasClearError, setHasClearError] = useState(false)
+  const clearRef = useRef<HTMLButtonElement>(null)
+  useFocusOnMount(focusRequest, 'clear', clearRef)
 
   const handleClear = useCallback(() => {
     setHasClearError(false)
@@ -132,13 +222,17 @@ function ManualStableIdInUse({
   return (
     <div className="space-y-2">
       <p className="text-sm">Using the Stable ID you entered.</p>
-      <div className="flex items-center justify-between gap-2">
-        <CopyableText value={manualStableId} valueClassName="font-mono text-sm break-all" />
-        <Button type="button" variant="outline" size="sm" onClick={handleClear}>
-          Clear
-        </Button>
+      <div>
+        <div className="flex items-center justify-between gap-2">
+          <CopyableText value={manualStableId} valueClassName="font-mono text-sm break-all" />
+          <Button ref={clearRef} type="button" variant="outline" size="sm" onClick={handleClear}>
+            Clear
+          </Button>
+        </div>
+        <p aria-live="polite" className="mt-1 text-xs text-destructive empty:mt-0">
+          {hasClearError ? CLEAR_ERROR_MESSAGE : null}
+        </p>
       </div>
-      {hasClearError && <p className="text-xs text-destructive">{CLEAR_ERROR_MESSAGE}</p>}
     </div>
   )
 }
@@ -150,19 +244,28 @@ function ManualStableIdInUse({
 export function StableIdFallback() {
   const { clearManualStableId, isLoading, isMissing, isRefetching, manualStableId, refetch, saveManualStableId } =
     useTesterStableId()
+  const focusRequest = useFocusRequest()
+  const { run } = focusRequest
+
+  const handleSave = useCallback(
+    (value: string) => run('clear', () => saveManualStableId(value)),
+    [run, saveManualStableId],
+  )
+
+  const handleClear = useCallback(() => run('input', clearManualStableId), [clearManualStableId, run])
 
   if (isLoading || !isMissing) {
     return null
   }
 
   if (manualStableId !== undefined) {
-    return <ManualStableIdInUse manualStableId={manualStableId} onClear={clearManualStableId} />
+    return <ManualStableIdInUse focusRequest={focusRequest} manualStableId={manualStableId} onClear={handleClear} />
   }
 
   return (
     <div className="space-y-3">
       <StableIdAlert isRefetching={isRefetching} onRetry={refetch} />
-      <StableIdForm onSave={saveManualStableId} />
+      <StableIdForm focusRequest={focusRequest} onSave={handleSave} />
     </div>
   )
 }
