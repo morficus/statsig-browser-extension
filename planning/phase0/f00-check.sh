@@ -8,7 +8,9 @@
 # - The Console Key never goes into argv, a URL, or the output. curl reads the key header from a
 #   process substitution (`-H @<(printf ...)`, a bash builtin, so no process gets the key as an
 #   argument). Every byte the script writes goes through redact_stream.
-# - Writes go only to experiments whose name starts with intake_ext_phase0_ and whose status is setup.
+# - Writes go only to experiments whose name starts with intake_ext_phase0_ and whose status is setup,
+#   and to a layer whose ID starts with intake_ext_phase0_. The layer's experiment must be in that
+#   layer and in setup, but its name can be anything: no write goes to it directly (WL-051).
 # - Only the calls that WL-016 records are made (planning/WORKLOG.md).
 # - DRY_RUN=1 prints the requests and sends nothing.
 # - The env file is read line by line. It is never sourced or evaluated.
@@ -690,8 +692,8 @@ guard_writes() {
   GUARD_MODE=stop
   GUARD_FAILED=0
   case $1 in exp | both) guard_name EXPERIMENT "$EXPERIMENT" ;; esac
-  case $1 in layer | both) guard_name LAYER_EXPERIMENT "$LAYER_EXPERIMENT" ;; esac
-  # The layer itself must be a test layer too: if PATCH replaces the list, a real layer loses overrides.
+  # Layer writes go to /layers/LAYER_ID, so the layer is what must be a test object: if PATCH
+  # replaces the list, a real layer loses overrides. LAYER_EXPERIMENT only has to be in it (WL-051).
   case $1 in layer | both) guard_name LAYER_ID "$LAYER_ID" ;; esac
   case $1 in exp | both) guard_test_experiment EXPERIMENT "$EXPERIMENT" both '' ;; esac
   case $1 in layer | both) guard_test_experiment LAYER_EXPERIMENT "$LAYER_EXPERIMENT" a-only "$LAYER_ID" ;; esac
@@ -736,7 +738,6 @@ step_preflight() {
 
   if [ -n "$LAYER_EXPERIMENT" ]; then
     printf -- '-- LAYER_EXPERIMENT --\n'
-    guard_name LAYER_EXPERIMENT "$LAYER_EXPERIMENT"
     guard_test_experiment LAYER_EXPERIMENT "$LAYER_EXPERIMENT" a-only "$LAYER_ID"
     if [ -z "$LAYER_ID" ]; then
       if is_dry; then

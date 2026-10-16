@@ -28,7 +28,7 @@ Create these objects in the Statsig project that the Intake Site uses:
 
 Then set `EXPERIMENT` and `LAYER_EXPERIMENT` in `.env`.
 
-The script writes only to experiments whose name starts with `intake_ext_phase0_` and whose status is `setup`. It writes only to a layer whose ID starts with `intake_ext_phase0_`. Do not put the test experiment in a real layer.
+The script writes only to experiments whose name starts with `intake_ext_phase0_` and whose status is `setup`. It writes only to a layer whose ID starts with `intake_ext_phase0_`. The experiment in that layer can have any name. Do not put the test experiment in a real layer.
 
 ## 3. T4 baseline
 

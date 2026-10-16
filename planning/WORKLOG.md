@@ -510,3 +510,28 @@ Maurice confirmed that the test experiments and the test layer existed before th
 This is half of OPEN-001. The other half is whether the SDK serves the override group after `t3-move` puts the Stable ID in `Test`.
 
 For Job 1 (F09, F10): an experiment that isn't in the values can't be shown from them. The Console API list has to supply it, so "My groups" can show it as "not served".
+
+### WL-051 · 2026-10-16 · Discovery · Correction: the test experiment was in the SDK values; first preflight results
+
+**Tickets:** F00-T2, F00-T3, F00-T4, F09-T1 · OPEN-001, OPEN-007 · Corrects WL-049 (the "Test objects" item) and WL-050 · WL-047
+
+**Correction.** The T4 baseline (WL-049) searched for the runbook's default names. Maurice's test objects have other names, so WL-049's "Test objects" item and all of WL-050 are wrong. These are the real names, from `preflight` at 2026-10-16 00:51 UTC:
+
+| Object                     | ID                                                                       | `status` | `idType`   | `layerID`                                |
+| -------------------------- | ------------------------------------------------------------------------ | -------- | ---------- | ---------------------------------------- |
+| Experiment, not in a layer | `intake_ext_phase0_maurice-temp-testing`                                 | `setup`  | `userID`   | `null`                                   |
+| Layer                      | `intake_ext_phase0_maurice-temp-testing` (the same ID as the experiment) |          |            |                                          |
+| Experiment in the layer    | `maurice-temp-testing-xp-in-layer`                                       | `setup`  | `stableID` | `intake_ext_phase0_maurice-temp-testing` |
+
+- `intake_ext_phase0_maurice-temp-testing` hashes to djb2 `1451326467`, the key that was in both `dynamic_configs` and `layer_configs`. **So the experiment and the layer were in the SDK values at the baseline,** with no override. Maurice says the experiment is in Statsig's "test mode", and the API reports it as `setup`.
+- So an experiment in `setup` with test mode on is sent to the page on staging. Whether an experiment in `setup` without test mode is sent is still open.
+- `maurice-temp-testing-xp-in-layer` (djb2 `1259935451`) isn't a key in `dynamic_configs`. Its layer is in `layer_configs`.
+
+**API facts from `preflight`:**
+
+- `GET /experiments/{id}` gives `layerID` as the layer's ID string. It works as the path `id` of `GET /layers/{id}/overrides`, which returned 200. PATCH and DELETE on that path are still to be confirmed (`t3-layer`).
+- An ID override added in the Console shows up in `userIDOverrides` with `environment: null` (the all-environments bucket). Its `unitType` is the experiment's ID type, `userID`. A gate or segment override shows up in `overrides`.
+
+**Decision: the layer experiment can have any name.** `f00-check.sh` no longer requires `LAYER_EXPERIMENT` to start with `intake_ext_phase0_`. Layer writes go only to `/layers/{LAYER_ID}`. `LAYER_ID` must still start with the prefix, and the layer experiment must still have that `layerID` and status `setup`. No write goes to the layer experiment directly.
+
+**Still to fix before T3:** the experiment's ID type must be Stable ID, and it needs one gate or segment override.
