@@ -16,7 +16,7 @@ The extension reliably knows the Tester's Stable ID and the SDK's environment ti
 
 ### F05-T1: Page reader: Stable ID order and environment tier
 
-- **Status:** Done (WL-059, WL-061)
+- **Status:** Done (WL-064, WL-066)
 - **Owner:** Claude
 - **Size:** M
 - **Depends on:** None
@@ -30,7 +30,7 @@ The extension reliably knows the Tester's Stable ID and the SDK's environment ti
 
 ### F05-T2: Error and manual Stable ID entry
 
-- **Status:** Done (WL-060, WL-061). `StableIdFallback` isn't placed yet. F07-T2 places it.
+- **Status:** Done (WL-065, WL-066). `StableIdFallback` isn't placed yet. F07-T2 places it.
 - **Owner:** Claude
 - **Size:** S
 - **Depends on:** F05-T1, Q1 (decided: the Intake tab, WL-057)

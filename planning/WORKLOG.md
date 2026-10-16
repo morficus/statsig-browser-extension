@@ -689,7 +689,7 @@ Maurice accepted Claude's two recommendations. Work doesn't start until Maurice 
 2. **Wave 2, one after the other.** F06-T1, then F06-T2, then F06-T3. They share the handler files.
 3. **Wave 3: the Intake tab UI.** F07-T1 to F07-T4, plus F05-T2. Before any UI is built, Claude brings Maurice a layout proposal. Then Claude reviews the screenshots against it.
 
-### WL-059 · 2026-10-16 · Discovery · F05-T1 results: the lookup order, the tier, and the `href` guard
+### WL-064 · 2026-10-16 · Discovery · F05-T1 results: the lookup order, the tier, and the `href` guard
 
 **Tickets:** F05-T1 · REQ-OVR-004, REQ-OVR-007, REQ-SET-014 · §7 rule 3 · WL-028, WL-031
 
@@ -702,7 +702,7 @@ Maurice accepted Claude's two recommendations. Work doesn't start until Maurice 
 - **Self-contained check (§7 rule 3).** A unit test now runs the serialized function in a fresh `vm` context with only page globals. Before, a module-level reference passed every test and failed only in Chrome. The review also showed that an `es2017` build target turns object spreads into a module-level helper, and the function then returns `null` in Chrome. Don't lower the build target.
 - **Contract.** `PageStableId` is in `src/types/statsig/sdk.ts`. `UserDetails` has `stableId` and `environmentTier`.
 
-### WL-060 · 2026-10-16 · Decision · F05-T2: a typed-in Stable ID goes to session storage per origin; the fallback layout
+### WL-065 · 2026-10-16 · Decision · F05-T2: a typed-in Stable ID goes to session storage per origin; the fallback layout
 
 **Tickets:** F05-T2, F07-T2 · REQ-OVR-005, REQ-OVR-009, REQ-OVR-011 · T-OVR-6 · WL-057, WL-058
 
@@ -713,7 +713,7 @@ Maurice decided these points. Each one was Claude's recommendation.
 - **Layout.** First an alert box with the error and Try again. Then the Stable ID field with Use this ID, and a hint that says where to find the ID. After a valid entry, one line says that the typed-in ID is in use, with Clear. The component is `StableIdFallback`. It ships on its own, and F07-T2 places it in the Intake tab. This layout is agreed for F05-T2 only. The rest of the Intake tab still needs its layout proposal (WL-058).
 - **One source for forcing.** F07 gets the Stable ID from `useTesterStableId()` and from nowhere else.
 
-### WL-061 · 2026-10-16 · Discovery · Opus reviews of F05; the listener check; notes for F07 and F09
+### WL-066 · 2026-10-16 · Discovery · Opus reviews of F05; the listener check; notes for F07 and F09
 
 **Tickets:** F05-T1, F05-T2, F07-T2, F07-T4, F09 · REQ-OVR-009, REQ-GAT-001 · WL-029, WL-031
 

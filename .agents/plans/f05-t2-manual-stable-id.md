@@ -8,7 +8,7 @@ agent: f05-t2
 
 REQ-OVR-005: if the extension can't find the Stable ID, it shows an error and lets the Tester type the ID in. T-OVR-6: with the read blocked, the error and the input show, and the typed-in ID is the one used for forcing.
 
-Maurice decided these points (WL-060):
+Maurice decided these points (WL-065):
 
 - **Storage.** A typed-in ID goes to `browser.storage.session`, keyed by the origin of the active Intake tab. It survives the popup closing and the tab reload after each force (REQ-OVR-011). Chrome clears it on restart, so it can't go stale for long. Staging and production keep separate IDs, because the Stable ID lives in each origin's `localStorage`. `storage` already covers `storage.session`, so no new permission.
 - **A detected ID always wins** over a typed-in one. The typed-in ID is used only while the page read finds nothing. Don't delete the stored ID when detection later succeeds. Just don't use it.
