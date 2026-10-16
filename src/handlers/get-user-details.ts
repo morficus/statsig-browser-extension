@@ -2,7 +2,7 @@ import { browser } from 'wxt/browser'
 
 import type { DetectedStatsigKeys } from '../lib/projects'
 import type { getActiveTab } from '../lib/tabs'
-import type { StatsigUser } from '../types/statsig'
+import type { PageStableId, StatsigUser } from '../types/statsig'
 
 import { getUserDetailsFromPage } from '../lib/get-user-details-injector'
 import { isIntakeSiteUrl } from '../lib/intake-site'
@@ -15,6 +15,10 @@ export interface UserDetails {
   context?: Record<string, unknown>
   /** Identifiers that tell which Statsig project the page belongs to. */
   keys?: DetectedStatsigKeys
+  /** The Tester's Stable ID and where it came from (REQ-OVR-004). */
+  stableId?: PageStableId
+  /** `getContext().options.environment.tier`, when the SDK reports one (REQ-OVR-007). */
+  environmentTier?: string
 }
 
 const isReadable = (tab: TabLike): tab is TabLike & { id: number } => tab.id !== undefined && isIntakeSiteUrl(tab.url)

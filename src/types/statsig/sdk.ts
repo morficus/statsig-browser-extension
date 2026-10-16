@@ -30,3 +30,11 @@ export interface WindowWithStatsig extends Window {
     firstInterface?: StatsigInstance | (() => StatsigInstance)
   }
 }
+
+/** Where the page reader found the Tester's Stable ID (REQ-OVR-004). */
+export type StableIdSource = 'localStorage' | 'sdk'
+
+export interface PageStableId {
+  source: StableIdSource
+  value: string
+}

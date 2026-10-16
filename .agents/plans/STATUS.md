@@ -8,6 +8,9 @@ Planning of record lives in `planning/` (board, tickets, WORKLOG). This list tra
 
 ## Agreed
 
+- f05-t1-page-reader — F05-T1 Stable ID lookup order, environment tier, `href` guard (WL-031 item 1)
+- f05-listener-sender-check — WL-031 item 2, the detection listener accepts only the active Intake tab
+
 
 
 ## Done
