@@ -2,7 +2,7 @@
 
 | Field      | Value                                                       |
 | ---------- | ----------------------------------------------------------- |
-| Status     | Todo                                                        |
+| Status     | Done                                                        |
 | Phase      | 2: Job 2                                                    |
 | Spec       | REQ-OVR-004, REQ-OVR-005, REQ-OVR-007 · T-OVR-6 · §7 rule 3 |
 | Depends on | F02-T3 (the Intake-only guard)                              |
@@ -16,27 +16,27 @@ The extension reliably knows the Tester's Stable ID and the SDK's environment ti
 
 ### F05-T1: Page reader: Stable ID order and environment tier
 
-- **Status:** Todo
+- **Status:** Done (WL-059, WL-061)
 - **Owner:** Claude
 - **Size:** M
 - **Depends on:** None
 - **Description:** WL-009. In `getUserDetailsFromPage`, keep the SDK-instance lookups first (`getStableID()`, `getContext().stableID`, plus the existing instance fallbacks). Then fall back to the first `localStorage` key that **starts with** `statsig.stable_id.`, since the number at the end changes. Never use the cookie. Also return `getContext().options.environment.tier` when it exists. Keep the function self-contained: no imports or module-level values, because Chrome serializes it. Page reads get their tab from `getActiveIntakeTab()` (WL-027). Also return `location.href`, and drop the result unless `isIntakeSiteUrl(href)` (WL-031, item 1).
 - **Acceptance criteria:**
-  - [ ] Unit tests for each step of the lookup order, including a localStorage key with a different number at the end
-  - [ ] The result has the Stable ID source (`sdk` or `localStorage`) and the tier (or none)
-  - [ ] The existing `get-user-details-injector` tests pass
+  - [x] Unit tests for each step of the lookup order, including a localStorage key with a different number at the end
+  - [x] The result has the Stable ID source (`sdk` or `localStorage`) and the tier (or none)
+  - [x] The existing `get-user-details-injector` tests pass
 - **Verification:** `pnpm vitest run src/lib/get-user-details-injector.test.ts src/handlers/get-user-details.test.ts`
 - **Files likely touched:** `src/lib/get-user-details-injector.ts`, `src/types/statsig/sdk.ts`, tests
 
 ### F05-T2: Error and manual Stable ID entry
 
-- **Status:** Todo
+- **Status:** Done (WL-060, WL-061). `StableIdFallback` isn't placed yet. F07-T2 places it.
 - **Owner:** Claude
 - **Size:** S
 - **Depends on:** F05-T1, Q1 (decided: the Intake tab, WL-057)
 - **Description:** REQ-OVR-005. If no Stable ID is found, show an error and an input for entering it by hand. Decide whether a typed-in ID lasts for the popup session or is stored per tab or site, and log the decision. If the content-script path comes back, make the `runtime.onMessage` listener in `use-detected-user.ts` accept messages only from the active Intake tab (WL-031, item 2).
 - **Acceptance criteria:**
-  - [ ] T-OVR-6: with the read blocked, the error and the input show, and a typed-in ID is used for forcing
-  - [ ] Basic format validation (not empty, trimmed)
+  - [x] T-OVR-6: with the read blocked, the error and the input show, and a typed-in ID is used for forcing (unit and component tests; `useTesterStableId` gives the typed-in ID with source `manual`. The e2e check is F07-T4.)
+  - [x] Basic format validation (not empty, trimmed, no whitespace inside)
 - **Verification:** Component tests; covered again in F07-T4 e2e
 - **Files likely touched:** a new component under `src/components/`, `src/hooks/use-detected-user.ts`

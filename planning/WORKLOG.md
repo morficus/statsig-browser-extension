@@ -688,3 +688,39 @@ Maurice accepted Claude's two recommendations. Work doesn't start until Maurice 
 1. **Wave 1, in parallel.** Each task owns different files: F05-T1 (page reader), F06-T4 (override record), F06-T5 (error messages, WL-055), F06-T6 (the read-only modal and the write allowlist), F07-T5 (no project gate on the Intake Site). Claude reads the F06-T6 allowlist change line by line.
 2. **Wave 2, one after the other.** F06-T1, then F06-T2, then F06-T3. They share the handler files.
 3. **Wave 3: the Intake tab UI.** F07-T1 to F07-T4, plus F05-T2. Before any UI is built, Claude brings Maurice a layout proposal. Then Claude reviews the screenshots against it.
+
+### WL-059 · 2026-10-16 · Discovery · F05-T1 results: the lookup order, the tier, and the `href` guard
+
+**Tickets:** F05-T1 · REQ-OVR-004, REQ-OVR-007, REQ-SET-014 · §7 rule 3 · WL-028, WL-031
+
+- **Lookup order.** The page reader tries the SDK steps first, in the same order as before: `getStableID()`, `getContext().stableID`, the `firstInstance` context, `_stableID`, `identity.stableID`. Each step accepts only a string that isn't blank after trimming. If a step fails, the next step runs. Then the reader takes the first `localStorage` key that starts with `statsig.stable_id.` and has a usable value. It parses the value as JSON, or uses the raw value if that fails, then trims it. It never reads the cookie. The result says `sdk` or `localStorage`.
+- **No SDK instance.** Before, the reader returned `null`. Now it returns the `localStorage` ID, with no context, keys, or tier. It returns `null` only when it finds nothing.
+- **Tier.** The reader returns `getContext().options.environment.tier` only if it is a non-empty string.
+- **Throwing accessors.** Each read runs in its own `try`/`catch`. A throwing SDK accessor drops only its own field, and the `localStorage` fallback still runs.
+- **`href` guard (WL-031, item 1, closed).** The page reports `window.location.href`. `getUserDetails` drops the result unless that URL is an Intake Site URL, and it doesn't pass `href` on. The Opus review showed that a page can replace `globalThis` and fake `globalThis.location`. A page can't replace `window.location`.
+- **Sanitized fields.** The page's own scripts can change what the SDK returns. So `getUserDetails` keeps `stableId` only with a known source and a non-blank string, and keeps the tier only as a non-empty string.
+- **Self-contained check (§7 rule 3).** A unit test now runs the serialized function in a fresh `vm` context with only page globals. Before, a module-level reference passed every test and failed only in Chrome. The review also showed that an `es2017` build target turns object spreads into a module-level helper, and the function then returns `null` in Chrome. Don't lower the build target.
+- **Contract.** `PageStableId` is in `src/types/statsig/sdk.ts`. `UserDetails` has `stableId` and `environmentTier`.
+
+### WL-060 · 2026-10-16 · Decision · F05-T2: a typed-in Stable ID goes to session storage per origin; the fallback layout
+
+**Tickets:** F05-T2, F07-T2 · REQ-OVR-005, REQ-OVR-009, REQ-OVR-011 · T-OVR-6 · WL-057, WL-058
+
+Maurice decided these points. Each one was Claude's recommendation.
+
+- **Storage.** A typed-in ID goes to `browser.storage.session`, with one key per origin of the Intake tab (`manual-stable-id:<origin>`). Chrome destroys the popup each time it closes, so popup state would lose the ID after each forced reload (REQ-OVR-011). `storage.local` would keep an old ID after the SDK makes a new one. Chrome clears session storage when it restarts. Staging and production keep separate IDs. The `storage` permission covers it, so no new permission is needed.
+- **A detected ID always wins.** The typed-in ID is used only while the page read finds nothing.
+- **Layout.** First an alert box with the error and Try again. Then the Stable ID field with Use this ID, and a hint that says where to find the ID. After a valid entry, one line says that the typed-in ID is in use, with Clear. The component is `StableIdFallback`. It ships on its own, and F07-T2 places it in the Intake tab. This layout is agreed for F05-T2 only. The rest of the Intake tab still needs its layout proposal (WL-058).
+- **One source for forcing.** F07 gets the Stable ID from `useTesterStableId()` and from nowhere else.
+
+### WL-061 · 2026-10-16 · Discovery · Opus reviews of F05; the listener check; notes for F07 and F09
+
+**Tickets:** F05-T1, F05-T2, F07-T2, F07-T4, F09 · REQ-OVR-009, REQ-GAT-001 · WL-029, WL-031
+
+- **Listener (WL-031, item 2, closed).** F05 doesn't revive the content-script path, but the sender check is small, so it is in. The `runtime.onMessage` listener in `use-detected-user.ts` ignores other message types before any tab query. It accepts a message only when `sender.tab` is an Intake Site page and is the active Intake tab, and only while the hook is still mounted. The check proves which tab sent the message, not which script in the page. Page scripts can still send `STATSIG_USER_FOUND` through the content script's `postMessage` relay. Forcing doesn't read that store, so Job 2 isn't affected.
+- **Fixed after the review.** A background read of the typed-in ID could overwrite a Save or a Clear in the query cache. After Clear, the hook could still return the cleared ID. The hook now cancels that read before it writes the cache. A new test switches from the staging origin to the production origin while the hook is mounted, so a later change can't leak one origin's ID to the other (REQ-OVR-009). The component moves focus after each state change and announces its errors.
+- **For F07.** `useTesterStableId` keeps the last read while `isRefetching` is true. The page query has a fixed key and the default 5-minute stale time, so it doesn't see a tab or origin change by itself. Force only when `isLoading` and `isRefetching` are false. Call `refetch()` just before a write, or check the origin of `getActiveIntakeTab()` again. `TesterStableIdSource` isn't exported yet. Export it when F07 needs it.
+- **Gate panel (REQ-GAT-001).** With no SDK instance on the page, `useUserDetails` now returns `{ stableID }` from `localStorage` instead of `{}`. So the gate override panel shows its pass and fail actions for that ID. The add and delete calls don't change. Recorded only.
+- **`statsig-detector` (dormant).** It now gets a result when the page has no SDK yet but `localStorage` has a Stable ID. It would post `context: undefined` and stop polling too early. It isn't registered (WL-029). If F09 or a later task registers it, make it wait for `result.context`.
+- **Risk: more than one `statsig.stable_id.*` key.** The reader takes the first usable key in index order. It doesn't tie the key to the page's SDK key. One origin normally has one SDK key, so it has one key. This isn't checked on the real Intake Site. If it matters, prefer the key whose suffix matches the hash of the page's SDK key.
+- **Checks.** 1072 unit tests pass in 114 files. `pnpm type-check`, `pnpm lint`, `pnpm format:check`, and `pnpm knip` are clean. The e2e suite passes, 70 of 70. That includes the 6 detection specs, which inject the reader in Chrome.
