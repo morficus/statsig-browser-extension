@@ -52,7 +52,7 @@ Handlers and storage with no UI. They put the Tester's Stable ID into exactly on
 - **Status:** Todo
 - **Owner:** Claude
 - **Size:** S
-- **Depends on:** F06-T1, F06-T2, Q4
+- **Depends on:** F06-T1, F06-T2, Q4 (decided: the base modal becomes read-only, F06-T6, WL-057)
 - **Description:** A handler like `clearStableIdOverride(record)` that deletes only the Tester's Stable ID, through `DELETE /experiments/{id}/overrides/userID/{stableId}?groupID=…&unitType=stableID&environment=…` or `DELETE /layers/{layerID}/overrides/userID/{stableId}?groupName=…&experimentName=…&idType=stableID&environment=…` (WL-016). Both are documented as idempotent and touch one bucket only. Pass the exact environment from the record, because leaving it out targets the all-environments bucket. URL-encode the path and query values. If Q4 says to restrict the base modal, move its delete to this call too.
 - **Acceptance criteria:**
   - [ ] Only the single-ID DELETE paths are used, with the record's group, ID type, and environment (unit tested)
@@ -85,3 +85,16 @@ Handlers and storage with no UI. They put the Tester's Stable ID into exactly on
   - [ ] T-OVR-5: an invalid key shows "key not valid"
 - **Verification:** `pnpm vitest run src/lib/utils.test.ts`
 - **Files likely touched:** `src/lib/utils.ts`, `src/lib/utils.test.ts`, maybe `src/lib/fetcher.ts`
+
+### F06-T6: Make the base experiment override modal read-only (Q4)
+
+- **Status:** Todo
+- **Owner:** Claude
+- **Size:** S
+- **Depends on:** None
+- **Description:** WL-057, WL-003, WL-004. The base experiment override modal shows the overrides, but it has no add or delete controls. Remove the base `POST /experiments/{id}/overrides` and bulk `DELETE /experiments/{id}/overrides` from the write allowlist (F04-T2, WL-042). Don't change the gate override feature (REQ-GAT-001).
+- **Acceptance criteria:**
+  - [ ] Unit tests: the modal lists the overrides and has no add or delete control
+  - [ ] Unit tests: the write allowlist refuses `POST` and the bulk `DELETE` on `/experiments/{id}/overrides`, and still allows the four calls in WL-016
+  - [ ] The existing gate override tests pass unchanged
+- **Verification:** `pnpm vitest run`

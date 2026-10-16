@@ -77,7 +77,7 @@ One action captures the page at desktop, tablet, and mobile sizes, with a metada
 - **Status:** Todo
 - **Owner:** Claude
 - **Size:** M
-- **Depends on:** F11-T3, F11-T4, Q1
+- **Depends on:** F11-T3, F11-T4, Q1 (decided, WL-057)
 - **Description:** A separate "Screenshots" tab (REQ-SHT-001). Choose one preset or all (REQ-SHT-005), choose visible area or full page with full page as the default (REQ-SHT-006), and show progress and a Cancel button.
 - **Acceptance criteria:**
   - [ ] T-SHT-1: all three presets with full page give three PNGs with correct footers

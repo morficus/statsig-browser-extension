@@ -33,7 +33,7 @@ The extension reliably knows the Tester's Stable ID and the SDK's environment ti
 - **Status:** Todo
 - **Owner:** Claude
 - **Size:** S
-- **Depends on:** F05-T1, Q1 (where it shows)
+- **Depends on:** F05-T1, Q1 (decided: the Intake tab, WL-057)
 - **Description:** REQ-OVR-005. If no Stable ID is found, show an error and an input for entering it by hand. Decide whether a typed-in ID lasts for the popup session or is stored per tab or site, and log the decision. If the content-script path comes back, make the `runtime.onMessage` listener in `use-detected-user.ts` accept messages only from the active Intake tab (WL-031, item 2).
 - **Acceptance criteria:**
   - [ ] T-OVR-6: with the read blocked, the error and the input show, and a typed-in ID is used for forcing

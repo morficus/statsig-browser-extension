@@ -5,7 +5,7 @@
 | Status     | Todo                                                                                                                                                  |
 | Phase      | 2: Job 2                                                                                                                                              |
 | Spec       | REQ-OVR-001, REQ-OVR-002, REQ-OVR-003, REQ-OVR-007, REQ-OVR-011, REQ-OVR-016, REQ-SEC-008 · T-OVR-1, T-OVR-2, T-OVR-3, T-OVR-5, T-OVR-6 · REQ-NFR-004 |
-| Depends on | F05, F06, F04-T3, Q1, Q5                                                                                                                              |
+| Depends on | F05, F06, F04-T3, Q1 and Q5 (decided, WL-057)                                                                                                         |
 | Blocks     | F10-T1 (override mark)                                                                                                                                |
 
 ## Goal
@@ -19,7 +19,7 @@ From the popup, a Tester finds an experiment, picks a group, and lands in it aft
 - **Status:** Todo
 - **Owner:** Claude
 - **Size:** M
-- **Depends on:** Q1, F00-T1 (status values)
+- **Depends on:** Q1 (decided: the Intake tab, WL-057), F00-T1 (status values)
 - **Description:** A list of experiments from the Console API that includes unstarted experiments (`status: setup`) and leaves out archived ones (`status: archived`), filtered on our side as well (WL-016) (REQ-OVR-001), with search by name (REQ-OVR-002). Think about `fields=id,name,status,groups,layerID,idType` to keep the payload small. Reuse `useExperiments` (pagination) and the existing Fuse search. Q1 decides where it lives.
 - **Acceptance criteria:**
   - [ ] Archived experiments are left out, and unstarted ones are included (unit tested)
@@ -64,3 +64,17 @@ From the popup, a Tester finds an experiment, picks a group, and lands in it aft
   - [ ] The flows above pass in `pnpm test:e2e`
 - **Verification:** `pnpm test:e2e`
 - **Files likely touched:** `e2e/force-group.e2e.ts` (new), `e2e/mock-data.ts`, `e2e/mocks.ts`
+
+### F07-T5: No project gate on the Intake Site (Q5)
+
+- **Status:** Todo
+- **Owner:** Claude
+- **Size:** S
+- **Depends on:** F02-T3
+- **Description:** WL-057, WL-010, WL-049. On an Intake Site tab, the popup uses the active project and skips the SDK-key match in `usePageProject()`, so `PageProjectGate` doesn't ask for a key. If no project is set up, the login form shows as before. On a tab that isn't an Intake Site tab, keep the current behavior. F10 needs this too.
+- **Acceptance criteria:**
+  - [ ] Unit tests: on an Intake Site tab with an active project, the main tabs show without a match
+  - [ ] Unit tests: with no project, the login form shows
+  - [ ] The existing project-gate tests pass, or are changed only where this decision changes the behavior
+- **Verification:** `pnpm vitest run`
+- **Files likely touched:** `entrypoints/popup/App.tsx`, `src/components/layout/PageProjectGate.tsx`, their tests

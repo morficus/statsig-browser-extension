@@ -656,3 +656,16 @@ Maurice ran `t5-401` at 2026-10-16 01:10 UTC and `t5-403` at 01:12 UTC, both on 
 - **F00-T5 is done.** The `401` bodies are in WL-055.
 - **The phase 0 checkpoint passes.** OPEN-001, OPEN-004, and OPEN-007 have results (WL-053, WL-054). So does the admin part of OPEN-008 (WL-055, this entry). The override request shapes are confirmed (WL-053). F06-T1 and F09 are no longer blocked by phase 0.
 - **Still open:** F00-T6 (a non-admin key) before the release. Maurice also runs `cleanup` and deletes the test objects.
+
+### WL-057 · 2026-10-16 · Decision · Q1, Q4, and Q5 are decided; Q2 is closed
+
+**Tickets:** F05-T2, F06-T3, F06-T6, F07, F07-T5, F10, F11 · Q1, Q2, Q4, Q5 · REQ-OVR-009, REQ-SEC-007, REQ-GAT-001 · WL-004, WL-010, WL-042, WL-049
+
+Maurice decided these points. Each one was Claude's recommendation.
+
+- **Q1: one new "Intake" tab.** It's the first tab of the popup. It holds My groups (Job 1), Force me into a group (Job 2), and the active overrides. The base tabs (Gates, Experiments, Configs, Audit Logs, Cleanup) stay as they are. Screenshots gets its own tab (REQ-SHT-001).
+- **Q4: the base experiment override modal becomes read-only.** It shows the overrides, but it can't add or delete. Force me (F07) and Clear (F08) cover the Tester's own overrides. The base `POST` and bulk `DELETE /experiments/{id}/overrides` leave the write allowlist (WL-042 said this is a one-line edit). This makes REQ-OVR-009 safe by design, and REQ-SEC-007 gets tighter. The gate override feature doesn't change (REQ-GAT-001). New task: F06-T6.
+- **Q5: no project gate on the Intake Site.** On an Intake Site tab, the popup uses the active project and skips the SDK-key match. The extension runs only on the Intake Site (F02), and the match reads `statsig.cached.evaluations.*`, which staging doesn't have (WL-049). If no project is set up, the login form shows as before. New task: F07-T5.
+- **Q2 is closed.** Phase 0 passed (WL-056), so it no longer matters who runs it or when.
+
+Maurice also ran `cleanup` from `planning/phase0/` after T5.

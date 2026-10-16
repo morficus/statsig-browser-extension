@@ -5,7 +5,7 @@
 | Status     | Todo                                                                                                                         |
 | Phase      | 3: Job 1                                                                                                                     |
 | Spec       | REQ-ASG-005, REQ-ASG-007, REQ-ASG-008, REQ-ASG-009, REQ-ASG-010, REQ-ASG-011 · REQ-NFR-004, REQ-NFR-005 · T-ASG-1 to T-ASG-5 |
-| Depends on | F09, Q1, Q5                                                                                                                  |
+| Depends on | F09, Q1 and Q5 (decided, WL-057), F07-T5                                                                                     |
 | Blocks     | None                                                                                                                         |
 
 ## Goal
@@ -19,7 +19,7 @@ When a Tester opens the popup on the Intake Site, they see right away which expe
 - **Status:** Todo
 - **Owner:** Claude
 - **Size:** M
-- **Depends on:** F09-T3, F09-T4, Q1
+- **Depends on:** F09-T3, F09-T4, Q1 (decided: the Intake tab, WL-057)
 - **Description:** For each experiment, show the name, the group name, the arm badge, and the override mark (REQ-ASG-005, REQ-ASG-007), plus a source label ("live", or "cached · 5 min ago") (REQ-ASG-002). Goal: the list shows within 3 seconds of opening if cached values exist (REQ-NFR-005), so render from the cache first and don't wait on the Console API to draw the list.
 - **Acceptance criteria:**
   - [ ] Component tests for each badge state and the source label
