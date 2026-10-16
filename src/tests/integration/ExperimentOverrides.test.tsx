@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, vi, describe, expect, it } from 'vitest'
 
 import { AppContent } from '@/entrypoints/popup/App'
@@ -16,25 +16,30 @@ import {
 import { resetUIStoreState } from '../utils/integration-mocks'
 import { renderWithProviders } from '../utils/TestUtils'
 
-// Mock the api instance methods
-const { mockJson, mockWretch } = vi.hoisted(() => {
-  const innerMockJson = vi.fn()
+// Mock the api instance methods.
+// Every write method the extension could use is here. A write from the UI then reaches an assertion.
+// Without them, it would throw inside the call.
+const { mockWretch } = vi.hoisted(() => {
   const instanceWretch = {
     body: vi.fn(),
     delete: vi.fn(),
     get: vi.fn(),
     headers: vi.fn(),
-    json: innerMockJson,
+    json: vi.fn(),
+    patch: vi.fn(),
     post: vi.fn(),
+    put: vi.fn(),
     url: vi.fn(),
   }
   instanceWretch.body.mockReturnValue(instanceWretch)
   instanceWretch.delete.mockReturnValue(instanceWretch)
   instanceWretch.get.mockReturnValue(instanceWretch)
   instanceWretch.headers.mockReturnValue(instanceWretch)
+  instanceWretch.patch.mockReturnValue(instanceWretch)
   instanceWretch.post.mockReturnValue(instanceWretch)
+  instanceWretch.put.mockReturnValue(instanceWretch)
   instanceWretch.url.mockReturnValue(instanceWretch)
-  return { mockJson: innerMockJson, mockWretch: instanceWretch }
+  return { mockWretch: instanceWretch }
 })
 
 vi.mock('@/src/lib/fetcher', async (importOriginal) => {
@@ -151,17 +156,6 @@ const setupMocks = () => {
     }
     return Promise.resolve({ data: {} })
   })
-
-  // Mock poster - also returns wrapped response
-  vi.mocked(poster).mockResolvedValue({ data: { success: true } })
-
-  // Smart mock for api.json() - used for DELETE and setting body
-  mockJson.mockImplementation((body) => {
-    if (body) {
-      return mockWretch // Chain
-    }
-    return Promise.resolve({ data: mockOverrides }) // Response for DELETE
-  })
 }
 
 const openExperimentOverrides = async (user: { click: (element: Element) => Promise<void> }) => {
@@ -172,6 +166,35 @@ const openExperimentOverrides = async (user: { click: (element: Element) => Prom
   await waitFor(() => expect(screen.getByRole('tab', { name: /Overrides/iu })).toBeInTheDocument())
   await user.click(screen.getByRole('tab', { name: /Overrides/iu }))
 }
+
+const MAX_CLICK_ROUNDS = 5
+
+// Click every enabled button in the panel, then the buttons that those clicks revealed, until none is new.
+const clickEnabledButtons = async (user: ReturnType<typeof renderWithProviders>['user'], panel: HTMLElement) => {
+  const clicked = new Set<HTMLElement>()
+  const unclicked = () =>
+    within(panel)
+      .getAllByRole('button')
+      .filter((button) => !button.hasAttribute('disabled') && !clicked.has(button))
+
+  for (let round = 0; round < MAX_CLICK_ROUNDS && unclicked().length > 0; round += 1) {
+    for (const button of unclicked()) {
+      clicked.add(button)
+      // A user clicks one button after another
+      // oxlint-disable-next-line no-await-in-loop
+      await user.click(button)
+    }
+  }
+  return clicked.size
+}
+
+// A mutation calls its function after a few microtasks, so wait for a macrotask before asserting it never ran.
+const flushPendingMutations = () =>
+  act(async () => {
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0)
+    })
+  })
 
 describe('experiment Overrides Flow', () => {
   beforeEach(() => {
@@ -199,118 +222,50 @@ describe('experiment Overrides Flow', () => {
     expect(screen.getByText('segment')).toBeInTheDocument()
   })
 
-  it('should allow creating a new user override via modal', async () => {
-    setupMocks()
-    const { user } = renderWithProviders(<AppContent />)
-
-    await openExperimentOverrides(user)
-
-    // Click Add Manual
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Add Manual/iu })).toBeInTheDocument()
-    })
-    const addBtn = screen.getByRole('button', { name: /Add Manual/iu })
-    await user.click(addBtn)
-
-    // Fill form (modal is lazy-loaded; await it so the Suspense resolution stays inside act)
-    const idInput = await screen.findByLabelText(/ID Value/iu)
-    await user.type(idInput, 'new_user_456')
-
-    const groupSelect = screen.getByLabelText('Group')
-    await user.click(groupSelect)
-    const option = await screen.findByRole('option', { name: 'Test' })
-    await user.click(option)
-
-    // Submit
-    const saveBtn = screen.getByRole('button', { name: /Add Override to Test/iu })
-    await user.click(saveBtn)
-
-    // Verify API call
-    await waitFor(() => {
-      const overrideMatcher = expect.objectContaining({
-        environment: 'Production',
-        groupID: 'Test',
-        ids: expect.arrayContaining(['new_user_456']) as unknown as string[],
-        unitType: 'userID',
-      })
-      expect(poster).toHaveBeenCalledWith(
-        '/experiments/exp_1/overrides',
-        expect.objectContaining({
-          userIDOverrides: expect.arrayContaining([overrideMatcher]) as unknown as unknown[],
-        }),
-      )
-    })
-  })
-
-  it('should allow creating a new gate override via modal', async () => {
-    setupMocks()
-    const { user } = renderWithProviders(<AppContent />)
-
-    await openExperimentOverrides(user)
-
-    // Click Add Manual
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Add Manual/iu })).toBeInTheDocument()
-    })
-    await user.click(screen.getByRole('button', { name: /Add Manual/iu }))
-
-    // Switch to Gate/Segment tab (modal is lazy-loaded; await it so the Suspense resolution stays inside act)
-    await user.click(await screen.findByRole('tab', { name: /Gate\/Segment Override/iu }))
-
-    // Fill form
-    await user.type(screen.getByLabelText('Name'), 'my_new_gate')
-
-    const groupSelect = screen.getByLabelText('Target Group')
-    await user.click(groupSelect)
-    const option = await screen.findByRole('option', { name: 'Control' })
-    await user.click(option)
-
-    // Submit
-    await user.click(screen.getByRole('button', { name: /Add Override/iu }))
-
-    // Verify API call
-    await waitFor(() => {
-      const overrideMatcher = expect.objectContaining({
-        groupID: 'Control',
-        name: 'my_new_gate',
-        type: 'gate',
-      })
-      expect(poster).toHaveBeenCalledWith(
-        '/experiments/exp_1/overrides',
-        expect.objectContaining({
-          overrides: expect.arrayContaining([overrideMatcher]),
-        }),
-      )
-    })
-  })
-
-  it('should allow deleting an override with confirmation', async () => {
+  it('should list the other users overrides behind the toggle, without a delete control', async () => {
     setupMocksWithOtherUser()
-
     const { user } = renderWithProviders(<AppContent />)
 
     await openExperimentOverrides(user)
 
-    // Click "Show others" button since other_user is not current user
-    await waitFor(() => {
-      expect(screen.getByText(/Show 1 other overrides/iu)).toBeInTheDocument()
-    })
-    const showOthersBtn = await screen.findByText(/Show 1 other overrides/iu)
-    await user.click(showOthersBtn)
+    await user.click(await screen.findByText(/Show 1 other overrides/iu))
 
-    // Click delete
     const row = screen.getByText('other_user').closest('tr')!
-    const deleteBtn = within(row).getByRole('button', { name: /Delete override/iu })
-    await user.click(deleteBtn)
+    expect(within(row).getByText('Production')).toBeInTheDocument()
+    expect(within(row).queryByRole('button', { name: /Delete override/iu })).not.toBeInTheDocument()
+  })
 
-    // Confirm in dialog
-    const confirmBtn = await screen.findByRole('button', { name: /^Delete$/iu })
-    await user.click(confirmBtn)
+  it('should offer no add, form, or delete control, even with a write key', async () => {
+    setupMocks()
+    const { user } = renderWithProviders(<AppContent />)
 
-    // Verify DELETE API call
-    await waitFor(() => {
-      expect(mockWretch.url).toHaveBeenCalledWith('/experiments/exp_1/overrides')
-      expect(mockWretch.delete).toHaveBeenCalledWith()
-    })
+    await openExperimentOverrides(user)
+    await screen.findByText('gate_1')
+
+    expect(screen.queryByRole('button', { name: /Add Manual/iu })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Delete override/iu })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Override$/iu })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/ID Value/iu)).not.toBeInTheDocument()
+    expect(screen.queryByRole('combobox', { name: 'Select group for detected user' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: /Gate\/Segment Override/iu })).not.toBeInTheDocument()
+  })
+
+  it('should send no write request, whatever button in the overrides panel is clicked', async () => {
+    setupMocksWithOtherUser()
+    const { user } = renderWithProviders(<AppContent />)
+
+    await openExperimentOverrides(user)
+    const panel = await screen.findByRole('tabpanel', { name: /Overrides/iu })
+    await within(panel).findByText(/Show 1 other overrides/iu)
+
+    // The toggle reveals the rows of other users, and their buttons are clicked too
+    const clickedCount = await clickEnabledButtons(user, panel)
+    expect(clickedCount).toBeGreaterThan(1)
+    expect(within(panel).getByText('other_user')).toBeInTheDocument()
+    await flushPendingMutations()
+
+    for (const write of [poster, mockWretch.post, mockWretch.put, mockWretch.patch, mockWretch.delete]) {
+      expect(write).not.toHaveBeenCalled()
+    }
   })
 })

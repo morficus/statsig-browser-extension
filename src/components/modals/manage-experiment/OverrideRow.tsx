@@ -1,33 +1,17 @@
-import { Trash2 } from 'lucide-react'
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useMemo } from 'react'
 
 import type { Group, UserIDOverride } from '@/src/types/statsig'
 
 import { Badge } from '@/src/components/ui/badge'
-import { Button } from '@/src/components/ui/button'
 import { CopyableText } from '@/src/components/ui/copyable-text'
 import { TableCell, TableRow } from '@/src/components/ui/table'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/src/components/ui/tooltip'
 
 interface OverrideRowProps {
   override: UserIDOverride & { isCurrentUser?: boolean }
-  canEdit: boolean
-  isPending?: boolean
-  onDelete: (override: UserIDOverride & { isCurrentUser?: boolean }, isCurrentUser: boolean) => void
   groups: Group[]
 }
 
-export const OverrideRow = memo(function OverrideRow({
-  override,
-  canEdit,
-  isPending,
-  onDelete,
-  groups,
-}: OverrideRowProps) {
-  const handleDelete = useCallback(() => {
-    onDelete(override, Boolean(override.isCurrentUser))
-  }, [onDelete, override])
-
+export const OverrideRow = memo(function OverrideRow({ override, groups }: OverrideRowProps) {
   const groupName = useMemo(
     () => groups.find((group) => group.id === override.groupID)?.name ?? override.groupID,
     [groups, override.groupID],
@@ -57,23 +41,6 @@ export const OverrideRow = memo(function OverrideRow({
             valueClassName="truncate hover:text-foreground transition-colors"
           />
         </div>
-      </TableCell>
-      <TableCell>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-destructive"
-              onClick={handleDelete}
-              disabled={!canEdit || isPending}
-            >
-              <Trash2 className="h-4 w-4" />
-              <span className="sr-only">Delete override</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Delete override</TooltipContent>
-        </Tooltip>
       </TableCell>
     </TableRow>
   )

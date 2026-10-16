@@ -1,7 +1,7 @@
 import type { Group, HealthCheck, Metric } from './common'
 
 /** Console API experiment statuses (WL-016). Not started is `setup`. Running is `active`. */
-export type ExperimentStatus =
+type ExperimentStatus =
   | 'active'
   | 'setup'
   | 'decision_made'
@@ -54,8 +54,6 @@ export interface UserIDOverride {
   environment?: string | null
   unitType?: string | null
 }
-
-export type AnyOverride = UserIDOverride | ExperimentOverride
 
 export interface ExperimentOverridesResponse {
   overrides: ExperimentOverride[]

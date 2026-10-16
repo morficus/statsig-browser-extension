@@ -1,149 +1,64 @@
-import { memo, useCallback, useState } from 'react'
+import { CheckCircle2 } from 'lucide-react'
+import { memo } from 'react'
 
-import type { Experiment, Group } from '@/src/types/statsig'
+import type { Experiment } from '@/src/types/statsig'
 
-import { BaseOverrideContextCard } from '@/src/components/common/BaseOverrideContextCard'
-import { Button } from '@/src/components/ui/button'
-import { Label } from '@/src/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/src/components/ui/select'
-
-export interface AddOverrideParams {
-  userId: string
-  groupId: string
-  environment?: string | null
-  idType?: string | null
-}
+import { SharedPageContextCard } from '@/src/components/common/SharedPageContextCard'
+import { Badge } from '@/src/components/ui/badge'
 
 interface ExperimentPageContextCardProps {
   detectedUser: Record<string, unknown> | undefined
   detectedUserId: string
   detectedUserOverrides?: {
     environment: string | null
-    groupID: string
   }[]
   isDetectedUserOverridden: boolean
-  canEdit: boolean
-  isPending: boolean
-  groups: Group[]
-  onAddOverride: (params: AddOverrideParams) => void
   experiment?: Experiment
 }
 
 const EMPTY_OVERRIDES: {
   environment: string | null
-  groupID: string
 }[] = []
-
-const ExperimentOverrideControls = memo(function ExperimentOverrideControls({
-  currentEnvValue,
-  detectedUserId,
-  selectedGroupId,
-  setSelectedGroupId,
-  onAddOverride,
-  idType,
-  isPending,
-  isCurrentEnvOverridden,
-  groups,
-  canEdit,
-}: {
-  currentEnvValue: string | null
-  detectedUserId: string
-  selectedGroupId: string
-  setSelectedGroupId: (value: string) => void
-  onAddOverride: (params: AddOverrideParams) => void
-  idType: string
-  isPending: boolean
-  isCurrentEnvOverridden: boolean
-  groups: Group[]
-  canEdit: boolean
-}) {
-  const handleOverride = useCallback(() => {
-    if (detectedUserId && selectedGroupId) {
-      onAddOverride({
-        environment: currentEnvValue,
-        groupId: selectedGroupId,
-        idType,
-        userId: detectedUserId,
-      })
-    }
-  }, [detectedUserId, selectedGroupId, currentEnvValue, idType, onAddOverride])
-
-  return (
-    <div className="mt-2 flex flex-col gap-2">
-      <Label className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">Override Group</Label>
-      <div className="flex items-center gap-2">
-        <Select value={selectedGroupId} onValueChange={setSelectedGroupId} disabled={!canEdit}>
-          <SelectTrigger className="h-8 w-full bg-background" aria-label="Select group for detected user">
-            <SelectValue placeholder="Select group" />
-          </SelectTrigger>
-          <SelectContent>
-            {groups.map((group) => (
-              <SelectItem key={group.name} value={group.name}>
-                {group.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-8 border-primary/20 text-xs hover:bg-primary/10 hover:text-primary"
-          onClick={handleOverride}
-          disabled={!canEdit || isPending || !selectedGroupId || isCurrentEnvOverridden}
-        >
-          {isCurrentEnvOverridden ? 'Overridden' : 'Override'}
-        </Button>
-      </div>
-    </div>
-  )
-})
-
-ExperimentOverrideControls.displayName = 'ExperimentOverrideControls'
 
 export const PageContextCard = memo(function PageContextCard({
   detectedUser,
   detectedUserId,
   isDetectedUserOverridden,
   detectedUserOverrides = EMPTY_OVERRIDES,
-  canEdit,
-  isPending,
-  groups,
-  onAddOverride,
   experiment,
 }: ExperimentPageContextCardProps) {
-  const [selectedGroupId, setSelectedGroupId] = useState('')
-
   const idType = experiment?.idType ?? 'userID'
 
   return (
-    <BaseOverrideContextCard
-      detectedUser={detectedUser}
-      detectedUserId={detectedUserId}
-      isDetectedUserOverridden={isDetectedUserOverridden}
-      detectedUserOverrides={detectedUserOverrides}
-      idType={idType}
-    >
-      {(currentEnvValue) => {
-        const isCurrentEnvOverridden = detectedUserOverrides.some(
-          (override) => override.environment === currentEnvValue,
-        )
+    <SharedPageContextCard detectedUser={detectedUser} detectedUserId={detectedUserId}>
+      <div className="mt-1 space-y-5">
+        {idType !== 'userID' && (
+          <div className="text-[11px] text-muted-foreground">
+            Using ID Type: <span className="font-medium text-foreground">{idType}</span>
+          </div>
+        )}
 
-        return (
-          <ExperimentOverrideControls
-            currentEnvValue={currentEnvValue}
-            detectedUserId={detectedUserId}
-            selectedGroupId={selectedGroupId}
-            setSelectedGroupId={setSelectedGroupId}
-            onAddOverride={onAddOverride}
-            idType={idType}
-            isPending={isPending}
-            isCurrentEnvOverridden={isCurrentEnvOverridden}
-            canEdit={canEdit}
-            groups={groups}
-          />
-        )
-      }}
-    </BaseOverrideContextCard>
+        {isDetectedUserOverridden && (
+          <div className="flex flex-col gap-2">
+            <span className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+              Active Overrides
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {detectedUserOverrides.map((override) => (
+                <Badge
+                  key={override.environment ?? 'global'}
+                  variant="secondary"
+                  className="h-5 border-success/20 bg-success/10 px-1.5 text-[10px] text-success"
+                >
+                  <CheckCircle2 className="mr-1 h-3 w-3" />
+                  {override.environment ?? 'Global'}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </SharedPageContextCard>
   )
 })
 

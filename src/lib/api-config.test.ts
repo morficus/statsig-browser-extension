@@ -57,8 +57,6 @@ const ALLOWED_WRITES: [string, string][] = [
   ['DELETE', '/layers/layer_1/overrides/userID/user_1'],
   ['POST', '/gates/gate_1/overrides'],
   ['DELETE', '/gates/gate_1/overrides'],
-  ['POST', '/experiments/exp_1/overrides'],
-  ['DELETE', '/experiments/exp_1/overrides'],
 ]
 
 describe('isAllowedApiRequest', () => {
@@ -70,8 +68,6 @@ describe('isAllowedApiRequest', () => {
       'DELETE /layers/{id}/overrides/userID/{userID}',
       'POST /gates/{id}/overrides',
       'DELETE /gates/{id}/overrides',
-      'POST /experiments/{id}/overrides',
-      'DELETE /experiments/{id}/overrides',
     ])
   })
 
@@ -108,6 +104,8 @@ describe('isAllowedApiRequest', () => {
     ['DELETE', '/gates'],
     ['PATCH', '/gates/gate_1/overrides'],
     ['POST', '/layers/layer_1/overrides'],
+    ['POST', '/experiments/exp_1/overrides'],
+    ['DELETE', '/experiments/exp_1/overrides'],
     ['DELETE', '/experiments/exp_1/overrides/userID'],
     ['DELETE', '/experiments/exp_1/overrides/userID/'],
     ['DELETE', '/gates/gate_1/overrides/userID/user_1'],
@@ -121,14 +119,30 @@ describe('isAllowedApiRequest', () => {
   })
 })
 
-describe('write allowlist covers the base handlers', () => {
-  // Same paths and methods that src/handlers/gate-overrides.ts and experiment-overrides.ts send.
+describe('write allowlist covers the gate handlers', () => {
+  // Same paths and methods that src/handlers/gate-overrides.ts sends.
   it.each([
     ['POST', `${API_BASE_URL}/gates/g1/overrides`],
     ['DELETE', `${API_BASE_URL}/gates/g1/overrides`],
-    ['POST', `${API_BASE_URL}/experiments/e1/overrides`],
-    ['DELETE', `${API_BASE_URL}/experiments/e1/overrides`],
   ])('allows %s %s', (method, url) => {
     expect(isAllowedApiRequest(method, url)).toBeTruthy()
+  })
+})
+
+describe('write allowlist leaves out the base experiment modal calls (Q4, WL-057)', () => {
+  // The base POST replaces the whole list and the base DELETE removes every ID in a row.
+  // Both can remove other Testers' overrides (REQ-OVR-009).
+  it.each([
+    ['POST', `${API_BASE_URL}/experiments/e1/overrides`],
+    ['post', `${API_BASE_URL}/experiments/e1/overrides`],
+    ['DELETE', `${API_BASE_URL}/experiments/e1/overrides`],
+    ['delete', `${API_BASE_URL}/experiments/e1/overrides`],
+  ])('refuses %s %s', (method, url) => {
+    expect(isAllowedApiRequest(method, url)).toBeFalsy()
+  })
+
+  it('still allows the Tester-safe experiment calls', () => {
+    expect(isAllowedApiRequest('PATCH', `${API_BASE_URL}/experiments/e1/overrides`)).toBeTruthy()
+    expect(isAllowedApiRequest('DELETE', `${API_BASE_URL}/experiments/e1/overrides/userID/u1`)).toBeTruthy()
   })
 })
