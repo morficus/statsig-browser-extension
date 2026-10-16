@@ -12,6 +12,8 @@
 
 Confirm the facts that the override code and the values reader depend on before any of that code is written. A wrong guess about OPEN-004 deletes other users' overrides in production. Record every result in `WORKLOG.md`.
 
+**How to run T2 to T5:** follow [`planning/phase0/README.md`](../phase0/README.md). The script and the SDK snippet are in the same folder. See WL-047.
+
 ## Tasks
 
 ### F00-T1: Record the Console API request shapes
@@ -72,17 +74,30 @@ Confirm the facts that the override code and the values reader depend on before 
 - **Verification:** The fixture parses, and the WL entry exists.
 - **Files likely touched:** `src/tests/fixtures/intake-sdk-values.json` (new), `planning/WORKLOG.md`
 
-### F00-T5: Personal Console Key with a non-admin role (OPEN-005, OPEN-008)
+### F00-T5: Personal Console Key errors, admin part (OPEN-005, OPEN-008)
 
 - **Status:** Todo
 - **Owner:** Maurice
 - **Size:** XS
 - **Depends on:** F00-T1
-- **Description:** Spec §8.1 check 4. Sign in to Statsig as a Tester who isn't an admin. Create a Personal Console Key. Add and clear an experiment override with it, and record every error.
+- **Description:** Spec §8.1 check 4, the part an admin can do (WL-048). Record the org setting for Personal Console Keys. Run `t5-401` and `t5-403` from the phase 0 script. The non-admin part is F00-T6.
 - **Acceptance criteria:**
   - [ ] It's recorded whether the org setting allows personal keys
+  - [ ] The real `403` body is recorded, from a read-only key that tries a write (the docs don't cover it, WL-016)
+  - [ ] The real `401` body is recorded, using a made-up key: does it echo the full key? (WL-017)
+  - [ ] Results in a `WORKLOG.md` entry
+- **Verification:** The WL entry exists.
+
+### F00-T6: Personal Console Key with a non-admin role (OPEN-005, OPEN-008)
+
+- **Status:** Todo
+- **Owner:** Maurice, with the first Tester
+- **Size:** XS
+- **Depends on:** F00-T5, a Tester who isn't an admin in Statsig
+- **Blocks:** F12-T3 (release to Testers). It doesn't block F06 (WL-048).
+- **Description:** The non-admin part of spec §8.1 check 4. A Tester who isn't an admin creates a Personal Console Key. With that key, they add and clear an override on a test experiment. Record every error.
+- **Acceptance criteria:**
+  - [ ] It's recorded whether the Tester can create a Personal Console Key
   - [ ] It's recorded whether a non-admin key can add and clear overrides, with the error codes if not
-  - [ ] The real `403` body is recorded (the docs don't cover it, WL-016)
-  - [ ] The real `401` body is recorded, using a revoked or made-up key: does it echo the full key? (WL-017)
   - [ ] Results in a `WORKLOG.md` entry, and OPEN-005 and OPEN-008 have answers
 - **Verification:** The WL entry exists.

@@ -459,3 +459,27 @@ Left as is, on purpose:
 Maurice decided that the login form should ask for a Console API key and send Testers who don't know how to create one to engineering. The intro (`src/components/modals/AuthForm.tsx`) now reads: "Before you can use this extension, log in with a **Statsig Console API Key**. If you don't know how to create one, reach out to someone from engineering for help."
 
 The old "Read Only" wording is gone. So is the link to Project Settings → Keys & Environments: those steps describe project keys, and Testers should use a Personal Console Key. The guidance line under the input stays. The README part is F12-T1.
+
+### WL-047 · 2026-10-15 · Decision · How phase 0 runs: one check script, a git-ignored key file, test objects only
+
+**Tickets:** F00-T2, F00-T3, F00-T4, F00-T5 · OPEN-001, OPEN-004, OPEN-007 · REQ-OVR-009, REQ-SEC-003 · WL-016, WL-017
+
+Maurice decided on these points:
+
+- **One script.** `planning/phase0/f00-check.sh` runs the API checks, with one subcommand per step. Each step prints the request and the response, and checks the result itself (`PASS`, `FAIL`, or `OBSERVE`). It uses only the WL-016 calls: GET, `PATCH …/overrides` with one ID, and the single-ID `DELETE`. It never uses `POST …/overrides` or the bulk `DELETE`. Maurice runs it, and Claude records the results from its output.
+- **The key goes in a file, not in Keychain.** It's in `planning/phase0/.env`. `.gitignore` already ignores `.env*`. The file isn't at the repo root, so WXT doesn't load it. The script refuses a key file that git doesn't ignore. It keeps the key out of the curl arguments, and it replaces the key with `<redacted>` in all output.
+- **Test objects only.** The script writes only to experiments whose name starts with `intake_ext_phase0_` and whose status is `setup`. Maurice creates the test experiment, the test layer, and one gate override in the Console UI. A wrong result from F00-T3 can't touch a real experiment.
+- **Order:** T4 first (a read-only snapshot that gives the Stable ID and the environment tier), then T3, then T2, then T5. T2 reuses the state that T3 leaves: Maurice's ID in `Test` on an experiment that isn't started. A second T4 snapshot then shows whether the SDK serves it.
+- **The SDK snippet** (`planning/phase0/t4-sdk-snippet.js`) only reads. It removes the user object and replaces the Stable ID before it prints. It also tests the hash candidates (djb2, sha256 hex, sha256 base64) against the test experiment's name.
+
+The runbook is `planning/phase0/README.md`.
+
+### WL-048 · 2026-10-15 · Decision · The non-admin part of F00-T5 moves to the first Tester
+
+**Tickets:** F00-T5, F00-T6, F12-T3 · OPEN-005, OPEN-008
+
+Maurice is an admin in Statsig and has no second account. So F00-T5 can't show what a non-admin Personal Console Key is allowed to do.
+
+- **F00-T5 keeps the admin part:** the org setting for Personal Console Keys, the real `401` body from a made-up key (WL-017), and the real `403` body from a read-only key that tries a write.
+- **New task F00-T6:** a non-admin Tester creates a Personal Console Key, then adds and clears an override with it. It runs with the first Tester, before the release.
+- **The checkpoints change.** The phase 0 checkpoint no longer needs the non-admin answer to OPEN-008. The phase 5 checkpoint needs it. The spec marks OPEN-005 and OPEN-008 as blocking "Release to Testers", not the build, so F06 doesn't wait for it.

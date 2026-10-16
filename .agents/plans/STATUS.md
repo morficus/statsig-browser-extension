@@ -8,6 +8,7 @@ Planning of record lives in `planning/` (board, tickets, WORKLOG). This list tra
 
 ## Agreed
 
+- f00-phase0-script — F00-T2 to T5 check script, SDK snippet, and runbook (`planning/phase0/`)
 
 
 ## Done
