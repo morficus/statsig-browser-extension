@@ -10,6 +10,7 @@ Planning of record lives in `planning/` (board, tickets, WORKLOG). This list tra
 
 
 
+
 ## Done
 
 - f06-t3-engine — F06-T3 override engine: routing, record writes, one operation at a time (WL-061) — `fd08521`
@@ -19,6 +20,9 @@ Planning of record lives in `planning/` (board, tickets, WORKLOG). This list tra
 - f06-t4-override-record — F06-T4 override record type, helpers, and storage — `7bcdebd`
 - f06-t5-error-messages — F06-T5 specific write error messages and `NetworkError` — `e292060`
 - (lead) F06 shared types — `0cfe4cd`; F06 plan (WL-059) — `fc044e5`
+- f05-listener-sender-check — WL-031 item 2, the detection listener accepts only the active Intake tab — `bcad1dc`, `fb0737f`
+- f05-t2-manual-stable-id — F05-T2 error and manual Stable ID entry, session storage per origin (WL-065), plus Opus review fixes — `18c0523`, `696c2ba`
+- f05-t1-page-reader — F05-T1 Stable ID lookup order, environment tier, `href` guard (WL-031 item 1), plus Opus review fixes — `e7fcbe5`, `221da76`, `8ba013d`
 - f00-phase0-script — F00-T2 to T5 check script, SDK snippet, and runbook, plus a layer-ID guard added in review — `ffa3bfc`
 - f04-review-fixes — F04 Opus review fixes (WL-043) — `06231a1`
 - f04-t4-audit — F04-T4 audit — `fb187a4`, `cee1114`
