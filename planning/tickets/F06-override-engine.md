@@ -79,7 +79,7 @@ Handlers and storage with no UI. They put the Tester's Stable ID into exactly on
 - **Owner:** Claude
 - **Size:** S
 - **Depends on:** None
-- **Description:** REQ-OVR-016. Map 401 (key not valid), 403 (key not allowed), 429 (rate limit), and a network failure to specific messages, plus a generic fallback. Extend `handleApiError` or add a typed mapper next to it. Check that the background script's network-error path reaches the mapper as a distinct case.
+- **Description:** REQ-OVR-016. Map 401 (key not valid), 403 (key not allowed), 429 (rate limit), and a network failure to specific messages, plus a generic fallback. Extend `handleApiError` or add a typed mapper next to it. Check that the background script's network-error path reaches the mapper as a distinct case. A read-only key's write gets `401` with a JSON `message` that says so, and a bad key gets `401` with a plain-text body (WL-055). Tell these two apart, and don't expect a JSON body.
 - **Acceptance criteria:**
   - [ ] Unit tests for each of the 4 cases and the fallback
   - [ ] T-OVR-5: an invalid key shows "key not valid"

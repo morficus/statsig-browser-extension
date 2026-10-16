@@ -631,3 +631,19 @@ Maurice ran the snippet on Intake staging at 2026-10-16 01:07 UTC, after `t3-mov
 - **Override marker:** `rule_id` ends with `:<idType>:id_override` (here `:stableID:id_override`). Also, `is_user_in_experiment` is `false` under an override, even when it was `true` before. So "My groups" (F10) must use `rule_id` and `group_name`, not `is_user_in_experiment`.
 - **Cache time:** there's no `statsig.cached.evaluations.*` key in localStorage (WL-049), so there's no `receivedAt`. The values' top-level `time` (epoch milliseconds) is the time of the project's last config change. It changed after each Console edit and write.
 - **The override shows up in the SDK at once.** The snapshot was taken six minutes after the writes, and the reload showed the override.
+
+### WL-055 · 2026-10-16 · Discovery · The real 401 bodies: a bad key gets plain text, a read-only key gets JSON (F00-T5)
+
+**Tickets:** F00-T5, F00-T6, F06-T5, F04-T3 · OPEN-008 · REQ-OVR-016, REQ-SEC-003 · WL-016, WL-017
+
+Maurice ran `t5-401` at 2026-10-16 01:10 UTC and `t5-403` at 01:12 UTC, both on the test experiment.
+
+| Step     | Key                                | Request                                               | Status | Body                                                                    |
+| -------- | ---------------------------------- | ----------------------------------------------------- | ------ | ----------------------------------------------------------------------- |
+| `t5-401` | made up (`console-PHASE0FAKEKEY…`) | `GET /experiments/{id}/overrides`                     | 401    | `Unauthorized` (plain text, not JSON)                                   |
+| `t5-403` | a real read-only Console key       | `PATCH /experiments/{id}/overrides` (the WL-016 body) | 401    | `{"message":"Read only API keys can not modify entities","status":401}` |
+
+- **WL-017's risk didn't happen.** The real `401` doesn't echo the key, in full or in part. The documented message that holds the key wasn't seen.
+- **A read-only key's write gets `401`, not `403`.** So `401` has two meanings. The mapper (F06-T5) must check the body. If the JSON `message` says the key is read only, show "key not allowed (read only)". For any other `401`, show "key not valid". The mapper must not expect a JSON body, because the bad-key `401` is plain text.
+- **`403` is still not seen.** It may come from a non-admin role (F00-T6). F00-T6 records any `403` body.
+- The write was refused, so the override state didn't change.
