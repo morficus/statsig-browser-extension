@@ -1,7 +1,7 @@
 # Brief: F00 phase 0 check script, SDK snippet, and runbook
 
 slug: f00-phase0-script
-status: agreed
+status: done (ffa3bfc)
 agent: f00-phase0-script
 
 ## Decision

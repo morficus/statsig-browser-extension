@@ -8,11 +8,11 @@ Planning of record lives in `planning/` (board, tickets, WORKLOG). This list tra
 
 ## Agreed
 
-- f00-phase0-script — F00-T2 to T5 check script, SDK snippet, and runbook (`planning/phase0/`)
 
 
 ## Done
 
+- f00-phase0-script — F00-T2 to T5 check script, SDK snippet, and runbook, plus a layer-ID guard added in review — `ffa3bfc`
 - f04-review-fixes — F04 Opus review fixes (WL-043) — `06231a1`
 - f04-t4-audit — F04-T4 audit — `fb187a4`, `cee1114`
 - f04-t5-t3-keys — F04-T5 guidance + F04-T3 key type and write gating — `b086d7a`, `6370c8a`
