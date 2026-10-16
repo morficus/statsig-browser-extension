@@ -535,3 +535,29 @@ For Job 1 (F09, F10): an experiment that isn't in the values can't be shown from
 **Decision: the layer experiment can have any name.** `f00-check.sh` no longer requires `LAYER_EXPERIMENT` to start with `intake_ext_phase0_`. Layer writes go only to `/layers/{LAYER_ID}`. `LAYER_ID` must still start with the prefix, and the layer experiment must still have that `layerID` and status `setup`. No write goes to the layer experiment directly.
 
 **Still to fix before T3:** the experiment's ID type must be Stable ID, and it needs one gate or segment override.
+
+### WL-052 · 2026-10-16 · Discovery · T4 before T3: the entry fields for the test experiments; `t2-layer` added
+
+**Tickets:** F00-T2, F00-T4, F09-T1, F09-T2, F10 · OPEN-001, OPEN-007 · WL-051
+
+Maurice ran the snippet with the real test names at 2026-10-16 00:56 UTC, before any T3 write. Preflight had passed at 00:53. By then the experiment's ID type was Stable ID, and it had one gate override: `dummy` to `Control`. The `force-control` ID override from WL-051 was gone.
+
+**The experiment not in a layer** (`intake_ext_phase0_maurice-temp-testing`, `setup`, test mode on). Its entry in `dynamic_configs`:
+
+- **`group_name`** holds the group (`"Control"`). This is the group field for OPEN-007.
+- `rule_id` is an opaque rule ID, not `prestart`.
+- `is_experiment_active: false` and `is_user_in_experiment: true`.
+- `secondary_exposures` has the gate override's gate (djb2 of `dummy`, `gateValue: "false"`). So the gate override was evaluated, failed, and a later rule put the Tester in `Control`.
+- The other fields are `name` (the djb2 hash), `id_type`, `value`, and `is_device_based`.
+
+**The experiment in the layer** (`maurice-temp-testing-xp-in-layer`, `setup`). Its entry in `dynamic_configs`:
+
+- **`rule_id: "prestart"`**, no `group_name`, and `is_user_in_experiment: false`. This is how an experiment that isn't started looks.
+- `is_in_layer: true` and `explicit_parameters: []`.
+- It wasn't in the values at 00:37, and it was at 00:55. Maurice is asked what changed.
+
+**The layer** (`intake_ext_phase0_maurice-temp-testing`) in `layer_configs`: `rule_id: "default"`, `value: {}`, and no field that names an allocated experiment. Nobody is allocated yet.
+
+**Override marker.** Still open. The snapshot after `t3-move` shows how an ID override changes `rule_id` and `group_name`.
+
+**Decision: a `t2-layer` step.** `t3-layer` ends by deleting the Tester's ID from the layer, so the snapshot after T3 would show no layer override. The new `t2-layer` step PATCHes the Stable ID into `GROUP_B` in the layer and leaves it there. `cleanup` removes it. The layer experiment is `prestart`, so the snapshot after `t2-layer` answers the open half of OPEN-001: does an override work on an experiment that isn't started and isn't in test mode?

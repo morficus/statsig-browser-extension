@@ -37,7 +37,7 @@ readonly DOTS='.................................................................
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 readonly SCRIPT_DIR
 
-STEPS=(preflight t3-seed t3-write t3-same-id-new-group t3-delete-one t3-move t3-layer t3 t5-401 t5-403 cleanup)
+STEPS=(preflight t3-seed t3-write t3-same-id-new-group t3-delete-one t3-move t3-layer t3 t2-layer t5-401 t5-403 cleanup)
 T3_VARS=(STATSIG_CONSOLE_KEY EXPERIMENT STABLE_ID ENVIRONMENT GROUP_A GROUP_B OTHER_ID_A OTHER_ID_B)
 
 # The names the env file may set. Unset them first, so no value comes from the calling shell and
@@ -339,6 +339,7 @@ Steps:
   t3-move               Move STABLE_ID from GROUP_A to GROUP_B: DELETE, then PATCH. It stays in GROUP_B.
   t3-layer              PATCH and DELETE layer overrides, with LAYER_ID as the path id.
   t3                    Run t3-seed to t3-layer in order. Stop at the first step that does not exit 0.
+  t2-layer              PATCH STABLE_ID into GROUP_B in the layer and leave it there, for the T2 snapshot.
   t5-401                Send a made-up key. Show the 401 body and whether it echoes the key.
   t5-403                PATCH with READ_ONLY_KEY. Show the status and the body. SKIP if it is empty.
   cleanup               DELETE STABLE_ID, OTHER_ID_A, and OTHER_ID_B from the test experiment and layer.
@@ -991,6 +992,38 @@ step_t3() {
   finish_step
 }
 
+# F00-T2 for an experiment in a layer: the layer experiment is "prestart" (WL-052), so the snapshot
+# after this step shows whether an override works without test mode. cleanup removes it.
+step_t2_layer() {
+  local start end mine_b
+  step_header
+  require_vars "${T3_VARS[@]}" LAYER_EXPERIMENT LAYER_ID
+  guard_writes layer
+  if ! is_dry; then
+    guard_item "GROUP_B ($GROUP_B) is a group of LAYER_EXPERIMENT" guard_body_has_group "$GROUP_B"
+    if [ "$GUARD_FAILED" -gt 0 ]; then stop "GROUP_B is not a group of LAYER_EXPERIMENT. No write was sent."; fi
+  fi
+  read_layer_state
+  start=$STATE
+  require_start_state "$start"
+  mine_b=$(layer_tuple "$GROUP_B" "$STABLE_ID")
+  if has_tuple "$start" "$mine_b"; then
+    printf 'SETUP  STABLE_ID is already in %s (%s) in the layer. No PATCH.\n' "$GROUP_B" "$ENVIRONMENT"
+  else
+    patch_layer "$GROUP_B" "$STABLE_ID"
+    check_write "layer PATCH STABLE_ID into $GROUP_B ($ENVIRONMENT)"
+  fi
+  read_layer_state
+  end=$STATE
+  check "STABLE_ID in $GROUP_B only ($ENVIRONMENT) in the layer" only_tuple_in_env "$end" "$mine_b"
+  check "every layer tuple from before is still there" keeps_all "$start" "$end"
+  check "layer conditional overrides unchanged" same_cond "$start" "$end"
+  if [ "$FAILED" -eq 0 ]; then
+    printf 'NEXT  reload the Intake Site and run the T4 snippet again (F00-T2). Run cleanup after that.\n'
+  fi
+  finish_step
+}
+
 longest_key_fragment() {
   local size=${#FAKE_KEY} length start piece
   length=$((size - 1))
@@ -1144,6 +1177,7 @@ run_step() {
     t3-move) step_t3_move ;;
     t3-layer) step_t3_layer ;;
     t3) step_t3 ;;
+    t2-layer) step_t2_layer ;;
     t5-401) step_t5_401 ;;
     t5-403) step_t5_403 ;;
     cleanup) step_cleanup ;;

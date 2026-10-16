@@ -34,10 +34,11 @@ The script writes only to experiments whose name starts with `intake_ext_phase0_
 
 1. Open the staging assessment page (`https://app.staging.talkiatry.com/assessment`).
 2. Open the Chrome DevTools console.
-3. Paste all of `t4-sdk-snippet.js`, then press Enter.
-4. Send the JSON to Claude. The snippet also copies it to the clipboard.
-5. The last line shows your Stable ID. Put it in `STABLE_ID`.
-6. The JSON shows `environmentTier`. Put the Console environment that matches this tier in `ENVIRONMENT`. Use the exact name.
+3. If your test objects have other names, set the three constants at the top of `t4-sdk-snippet.js` first.
+4. Paste all of `t4-sdk-snippet.js`, then press Enter.
+5. Send the JSON to Claude. The snippet also copies it to the clipboard.
+6. The last line shows your Stable ID. Put it in `STABLE_ID`.
+7. The JSON shows `environmentTier`. Put the Console environment that matches this tier in `ENVIRONMENT`. Use the exact name.
 
 The snippet only reads. It does not write to storage, it sends no request, and it does not change the page.
 
@@ -66,11 +67,12 @@ If a step fails, stop. Send the output to Claude.
 
 ## 6. T2 and T4 after the override
 
-1. Reload the staging page.
-2. Run the snippet again.
-3. Send the JSON to Claude.
+1. Run `t2-layer`. It puts your Stable ID in `Test` in the layer, and leaves it there.
+2. Reload the staging page.
+3. Run the snippet again.
+4. Send the JSON to Claude.
 
-This shows if the SDK serves `Test` for an experiment that is not started (OPEN-001).
+This shows if the SDK serves `Test` for an experiment that is not started (OPEN-001). It shows both cases: the experiment not in a layer (from `t3-move`), and the experiment in the layer (from `t2-layer`).
 
 ## 7. T5, admin part
 
