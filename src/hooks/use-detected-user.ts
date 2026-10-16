@@ -124,6 +124,9 @@ export function useDetectedUser() {
   )
 
   useEffect(() => {
+    // Cleared by the cleanup: a tab lookup that settles after the hook unmounts must not write to the store
+    let active = true
+
     // Accept a message only from the tab the Tester is looking at, and only while it is an Intake Site page (WL-031)
     const isActiveIntakeSender = async (sender: Browser.runtime.MessageSender | undefined) => {
       const senderTab = sender?.tab
@@ -137,8 +140,8 @@ export function useDetectedUser() {
 
     const handleDetectionMessage = async (message: unknown, sender: Browser.runtime.MessageSender | undefined) => {
       const msg = parseDetectionMessage(message)
-      // An unparseable message or another type returns before the tab query
-      if (!msg || !DETECTION_MESSAGE_TYPES.has(msg.type) || !(await isActiveIntakeSender(sender))) {
+      // An unparseable message or another type returns before the tab query. `active` is read after that await.
+      if (!msg || !DETECTION_MESSAGE_TYPES.has(msg.type) || !(await isActiveIntakeSender(sender)) || !active) {
         return
       }
 
@@ -162,6 +165,7 @@ export function useDetectedUser() {
     void fetchUser()
 
     return () => {
+      active = false
       browser.runtime.onMessage.removeListener(handleMessage)
     }
   }, [setDetectedUser, setDetectedContext, setDetectionError, fetchUser])

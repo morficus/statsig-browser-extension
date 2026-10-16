@@ -77,8 +77,8 @@ const DETECTED_BUT_ERROR = { error: 'page broken', type: 'STATSIG_DETECTED_BUT_E
 const flush = () => vi.advanceTimersByTimeAsync(0)
 
 // Mounts the hook, waits for the mount-time fetch, then clears the mocks so the tests see only the listener's calls.
-const mountAndGetListener = async () => {
-  renderHook(() => useDetectedUser())
+const mountHook = async () => {
+  const { unmount } = renderHook(() => useDetectedUser())
   await vi.waitFor(() => {
     expect(listeners).toHaveLength(1)
     expect(browserMock.tabs.sendMessage).toHaveBeenCalledTimes(1)
@@ -88,7 +88,12 @@ const mountAndGetListener = async () => {
   setDetectedUserMock.mockClear()
   setDetectedContextMock.mockClear()
   setDetectionErrorMock.mockClear()
-  return listeners[0]
+  return { listener: listeners[0], unmount }
+}
+
+const mountAndGetListener = async () => {
+  const { listener } = await mountHook()
+  return listener
 }
 
 // Every store write the hook made, in one list, so a test can assert that there was none
@@ -450,6 +455,25 @@ describe('useDetectedUser', () => {
         expect(console.error).not.toHaveBeenCalled()
         expect(console.log).not.toHaveBeenCalled()
       })
+    })
+
+    it.each([
+      ['STATSIG_USER_FOUND', USER_FOUND],
+      ['STATSIG_DETECTED_BUT_ERROR', DETECTED_BUT_ERROR],
+    ])('writes nothing for %s when the active tab lookup settles after the hook unmounts', async (_type, message) => {
+      const { listener, unmount } = await mountHook()
+      const lookup = Promise.withResolvers<{ id: number; url: string }>()
+      getActiveIntakeTabMock.mockReturnValue(lookup.promise)
+
+      listener(message, { tab: { id: ACTIVE_TAB_ID, url: INTAKE_URL } })
+      await flush()
+      expect(getActiveIntakeTabMock).toHaveBeenCalledTimes(1)
+
+      unmount()
+      lookup.resolve({ id: ACTIVE_TAB_ID, url: INTAKE_URL })
+      await flush()
+
+      expect(storeWrites()).toStrictEqual([])
     })
 
     it('does not look up the active tab for a message that does not parse', async () => {
