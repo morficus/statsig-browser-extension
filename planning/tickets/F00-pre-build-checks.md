@@ -62,7 +62,7 @@ Confirm the facts that the override code and the values reader depend on before 
 
 ### F00-T4: Capture the real SDK values (OPEN-007)
 
-- **Status:** Todo
+- **Status:** In progress. The baseline is captured (WL-049). The second snapshot comes after `t3-move`.
 - **Owner:** Maurice (Claude provides a DevTools console snippet)
 - **Size:** S
 - **Depends on:** None

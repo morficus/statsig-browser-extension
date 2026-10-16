@@ -483,3 +483,20 @@ Maurice is an admin in Statsig and has no second account. So F00-T5 can't show w
 - **F00-T5 keeps the admin part:** the org setting for Personal Console Keys, the real `401` body from a made-up key (WL-017), and the real `403` body from a read-only key that tries a write.
 - **New task F00-T6:** a non-admin Tester creates a Personal Console Key, then adds and clears an override with it. It runs with the first Tester, before the release.
 - **The checkpoints change.** The phase 0 checkpoint no longer needs the non-admin answer to OPEN-008. The phase 5 checkpoint needs it. The spec marks OPEN-005 and OPEN-008 as blocking "Release to Testers", not the build, so F06 doesn't wait for it.
+
+### WL-049 · 2026-10-16 · Discovery · T4 baseline: the SDK values on Intake staging, before any override
+
+**Tickets:** F00-T4, F00-T2, F05-T1, F09-T1, F09-T2 · OPEN-007, OPEN-001 · Q5 · WL-009, WL-010, WL-047
+
+Maurice ran `planning/phase0/t4-sdk-snippet.js` on `https://app.staging.talkiatry.com/assessment` at 2026-10-16 00:37 UTC. This was before any T3 write. The sanitized output is in the git-ignored scratch folder. This repo is public, so only field names are recorded here.
+
+- **SDK instance:** the first entry of `window.__STATSIG__.instances`. The Stable ID comes from `instance.getContext().stableID`. The environment tier is `staging`, from `getContext().options.environment.tier`.
+- **Values:** `instance.getContext().values` holds them. The top-level keys are `feature_gates`, `dynamic_configs`, `layer_configs`, `time`, `has_updates`, `hash_used`, `sdkInfo`, `sdkParams`, `param_stores`, `can_record_session`, `session_recording_rate`, `recording_blocked`, `session_recording_privacy_settings`, `user`, and `evaluated_keys`. There is no `derived_fields`.
+- **Hashing:** `hash_used` is `djb2`. The keys of `dynamic_configs` and `layer_configs` are djb2 hashes, as decimal strings. One hash is a key in both maps.
+- **Entry fields.** These are from the first entry of each map only.
+  - `dynamic_configs`: `name`, `rule_id`, `secondary_exposures`, `id_type`, `value`, `is_device_based`, `is_experiment_active`, `is_user_in_experiment`.
+  - `layer_configs`: `name`, `rule_id`, `secondary_exposures`, `value`, `id_type`, `is_device_based`, `explicit_parameters`, `undelegated_secondary_exposures`.
+  - Neither entry has a group-name or allocated-experiment field. The field names for the group, the layer allocation, and the override marker are still open. The second snapshot (after `t3-move`) shows a full entry for the test experiment.
+- **localStorage:** there are only `statsig.session_id.<n>` and `statsig.stable_id.<n>`. **There is no `statsig.cached.evaluations.*` key.** So on staging, the values reader (F09) must use `getContext().values`. The localStorage Stable ID fallback (F05-T1) has a key to read.
+- **Risk for Q5 (WL-010):** the injector's `readCachedPayloads` collects gate hashes and SDK keys from `statsig.cached.evaluations.*` for project matching. On staging, that path finds nothing. Check that the project match still works on the Intake Site before F07.
+- **Test objects:** neither `intake_ext_phase0_check` (djb2 `3031949423`) nor `intake_ext_phase0_layer_check` (`2152902337`) is in the values. Neither is the layer `intake_ext_phase0_layer` (`3040071864`). The values' `time` is 00:35:46 UTC, 90 seconds before the capture, so the project config changed just before the capture. If the test objects existed by then, an experiment that isn't started isn't in the values without an override. Maurice confirms the timing, and the second snapshot completes F00-T2.
