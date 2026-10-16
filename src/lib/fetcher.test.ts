@@ -241,7 +241,11 @@ describe('custom fetch bridge', () => {
         success: true,
       })
 
-      const error: unknown = await poster('/experiments/exp/overrides', {}).catch((error_: unknown) => error_)
+      const error: unknown = await api
+        .url('/experiments/exp/overrides')
+        .patch({})
+        .json()
+        .catch((error_: unknown) => error_)
 
       expect(handleApiError(error)).toBe('Read-only key. Add a key with write access to change overrides.')
     })
