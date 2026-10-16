@@ -8,15 +8,17 @@ Planning of record lives in `planning/` (board, tickets, WORKLOG). This list tra
 
 ## Agreed
 
-- f06-t1-experiment-force — F06-T1 force the Stable ID into an experiment group (wave A, WL-059)
-- f06-t2-layer-force — F06-T2 force the Stable ID into a layer group (wave A, WL-059)
-- f06-t4-override-record — F06-T4 override record type, helpers, and storage (wave A)
-- f06-t5-error-messages — F06-T5 specific write error messages and `NetworkError` (wave A, WL-059)
-- f06-t6-read-only-modal — F06-T6 read-only experiment modal, tighter write allowlist (wave A, WL-057)
 
 
 ## Done
 
+- f06-t3-engine — F06-T3 override engine: routing, record writes, one operation at a time (WL-061) — `fd08521`
+- f06-t6-read-only-modal — F06-T6 read-only experiment modal, tighter write allowlist — `6d755b1`
+- f06-t2-layer-force — F06-T2 force into a layer group, confirm before clean-up (WL-060) — `2259a12`
+- f06-t1-experiment-force — F06-T1 force into an experiment group, confirm before clean-up (WL-060) — `74d5c19`
+- f06-t4-override-record — F06-T4 override record type, helpers, and storage — `7bcdebd`
+- f06-t5-error-messages — F06-T5 specific write error messages and `NetworkError` — `e292060`
+- (lead) F06 shared types — `0cfe4cd`; F06 plan (WL-059) — `fc044e5`
 - f00-phase0-script — F00-T2 to T5 check script, SDK snippet, and runbook, plus a layer-ID guard added in review — `ffa3bfc`
 - f04-review-fixes — F04 Opus review fixes (WL-043) — `06231a1`
 - f04-t4-audit — F04-T4 audit — `fb187a4`, `cee1114`

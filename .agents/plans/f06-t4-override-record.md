@@ -1,7 +1,7 @@
 # Brief: F06-T4 Override record
 
 slug: f06-t4-override-record
-status: agreed
+status: done (7bcdebd)
 agent: f06-t4 (Sonnet, shared F06 worktree)
 
 ## Decision

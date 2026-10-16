@@ -1,7 +1,7 @@
 # Brief: F06-T1 Force the Tester into an experiment group (not in a layer)
 
 slug: f06-t1-experiment-force
-status: agreed
+status: done (74d5c19)
 agent: f06-t1 (Sonnet, shared F06 worktree)
 
 ## Decision
@@ -135,3 +135,14 @@ Reply with exactly this shape:
 ```
 
 `checks.json` shape: `{ "slug": "<slug>", "checks": [ { "id": "...", "cmd": "...", "expected": "...", "actual": "...", "pass": true } ] }`.
+
+## Review fixes (Opus review, WL-060)
+
+The first version followed steps 3 to 5 above, which had a defect: the clean-up DELETEs ran before the check. If a PATCH returns 200 without the ID in the target group, that deletes the Tester's old override and leaves them in no group. Fixed order:
+
+1. PATCH.
+2. If the PATCH response doesn't have the ID in the target bucket, throw the "did not confirm" message and send no DELETE.
+3. The clean-up DELETEs.
+4. The final check on the last response.
+
+Also: a missing `data`, a missing list, or an entry without `ids` counts as "no IDs", so a malformed response gives "did not confirm", not a `TypeError`. The input check refuses any field that isn't a non-empty string (`undefined` and `null` too). The wrap tests use a wretch-shaped error, so they prove that `handleApiError` maps the message.

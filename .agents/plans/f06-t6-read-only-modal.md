@@ -1,7 +1,7 @@
 # Brief: F06-T6 Make the base experiment override modal read-only (Q4)
 
 slug: f06-t6-read-only-modal
-status: agreed
+status: done (6d755b1)
 agent: f06-t6 (Sonnet, shared F06 worktree)
 
 ## Decision

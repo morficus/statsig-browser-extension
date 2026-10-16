@@ -1,7 +1,7 @@
 # Brief: F06-T5 Specific error messages for write failures
 
 slug: f06-t5-error-messages
-status: agreed
+status: done (e292060)
 agent: f06-t5 (Sonnet, shared F06 worktree)
 
 ## Decision

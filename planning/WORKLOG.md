@@ -733,3 +733,71 @@ Maurice said to start F06, all six tasks, with as much parallel work as possible
 
 - `404`, `5xx`, and the fallback keep the base behavior.
 - **No network is a distinct error.** The background script marks a failed `fetch` with `networkError: true`. `src/lib/fetcher.ts` then throws a `NetworkError`, and the mapper shows the network message for it.
+
+### WL-060 · 2026-10-16 · Discovery · Opus review of F06 wave A: one brief defect fixed; Q9 opened
+
+**Tickets:** F06-T1, F06-T2, F06-T4, F06-T5, F06-T6, F07, F08 · Q9 · REQ-OVR-009, REQ-OVR-010, REQ-OVR-013, REQ-OVR-016 · WL-053, WL-058, WL-059
+
+Three Opus reviewers read wave A. Each Sonnet agent fixed its own findings.
+
+**The brief defect (F06-T1, F06-T2).** The briefs said to send the clean-up DELETEs and check after. So if a PATCH returned 200 without the ID in the target group, the handler deleted the Tester's old override and then threw. The Tester was then in no group. WL-058 was written to stop this. A scratch probe showed it on both handlers. Now both handlers do this:
+
+1. Send the PATCH.
+2. If the PATCH response doesn't have the ID in the target group, throw "Statsig did not confirm the override. Try again." Send no DELETE.
+3. Send the clean-up DELETEs.
+4. Check the last response.
+
+Also:
+
+- A response without `data`, without the list, or with an entry without `ids` counts as "no IDs". So it gives "did not confirm", not a `TypeError`.
+- The input check refuses any field that isn't a non-empty string, `undefined` and `null` too. A stored record isn't checked at run time, so `stableId: undefined` could otherwise reach `/userID/undefined`.
+- Mutation checks showed that the new tests fail without each fix.
+
+**Correction to WL-059: the 429 copy.** `handleApiError` also maps errors for the login and the list reads, where "changes" is wrong. The new copy is "Too many requests to Statsig right now. Wait a few minutes, then try again."
+
+**Other fixes.**
+
+- A payload `message` that isn't a string no longer skips the key redaction.
+- The settings reset clears the records without subscribing to them, so the hooks that use it don't re-render on each record write.
+- The test that no write is sent from the read-only modal can now fail. It clicks every button, and it checks every write method.
+
+**F06-T6 deviations, accepted.**
+
+- No change to `src/components/common/*` (REQ-GAT-001). The experiment list passes a no-op `onDeleteConfirm` to `SharedOverridesTable`. Its rows never call delete.
+- The information-only `PageContextCard` copies about 25 lines of `BaseOverrideContextCard`. That component always shows an environment select.
+- The read-only reason line is gone from the experiment section. It only explained the removed controls.
+
+**Q9 is open (Maurice).** The settings reset runs on logout, and it clears the override records (F06-T4 said to). The overrides stay in Statsig. Then F08 can't list them or clear them (REQ-OVR-013, REQ-OVR-014). See Q9 in `README.md`.
+
+**Risks for later tasks.**
+
+- **F07.** TanStack Query's default `networkMode: 'online'` pauses a mutation when the browser goes offline. Then the "Cannot reach Statsig" message never shows. Set `networkMode: 'always'` on the override mutations, or show `isPaused`.
+- **T-OVR-2 on staging (F07).** WL-053 tested `overrides: []` only with a gate override on an experiment. Also check that `conditionalOverrides: []` keeps a layer's conditional overrides, and that `overrides: []` keeps a segment override.
+- **Accepted.** The `networkError` flag also covers a refused redirect, a CORS failure, and a failed `response.text()`.
+- **Copy that suggests editing, left as is.** "Manage Experiment Overrides: {id}" is the title of a modal that nothing opens now. "Manual override only." is in a component shared with the gates (REQ-GAT-001).
+- **Optional clean-up.** `useOverridesSectionLogic` still fetches the feature gates, and nothing reads them. The base code did this too.
+
+### WL-061 · 2026-10-16 · Discovery · Final Opus review of F06: the engine runs one operation at a time; records need a project ID
+
+**Tickets:** F06-T3, F07, F08 · Q9 · REQ-OVR-009, REQ-OVR-012, REQ-OVR-013, REQ-OVR-014 · WL-059, WL-060
+
+An Opus reviewer read F06-T3 and the whole F06 branch. A scratch run used the real engine, handlers, fetcher, wretch, and storage, and mocked only `sendMessage`. It confirmed these points:
+
+- The only requests are the two PATCHes and the two single-ID DELETEs.
+- Every request passes the write allowlist, and every request carries only the Tester's Stable ID (REQ-OVR-009).
+- Each error reaches the caller with the WL-059 or WL-060 message, and `cause.status` stays.
+
+**Fixed in F06-T3: a race in the record writes.**
+
+- The engine reads the records, changes them, and writes them back. Two operations at the same time lost a record. For example, `Promise.all` of two forces kept only one record.
+- Now the engine runs each whole force and each whole clear one at a time. A failed operation doesn't stop the next one. This also keeps Clear all (F08-T2) to one call at a time, for the rate limit (WL-016).
+- A clear now removes the stored record only if it still has the same group and layer. If the Tester forced the experiment into another group after, that newer record stays.
+- The engine queue covers one extension page. F07 and F08 must also disable the override actions while one runs.
+- A new integration test runs the real chain, from the engine to a mocked `sendMessage`.
+
+**Records need a project ID (F08), whatever Q9 decides.** `ProjectPicker` changes the active project without a logout. A clear, or the F08 check, for a record from project A then goes out with project B's key. It probably gets a 404, and the engine then drops the record while the override stays in A. WL-053 didn't record the 404 case, so this is plausible, not seen. F08 adds `projectId` to the record and skips records from a project that isn't active.
+
+**Left as is, with a note.**
+
+- **The write succeeds, but saving the record fails.** `forceStableIdIntoGroup` throws the storage error, and the override is live with no record. F07 shows it as a failure with a retry. The retry sends the same PATCH (no change) and saves the record. A clear in the same case heals on a retry, because the DELETE is idempotent.
+- **A stored `layerId: ''`** counts as "not in a layer", the same as on force. The engine never writes one, so it can only come from damaged storage.
