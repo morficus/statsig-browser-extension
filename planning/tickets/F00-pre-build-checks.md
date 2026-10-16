@@ -45,19 +45,19 @@ Confirm the facts that the override code and the values reader depend on before 
 
 ### F00-T3: Overrides of other IDs survive our write and delete (OPEN-004)
 
-- **Status:** Todo
+- **Status:** Done (2026-10-16). See WL-053.
 - **Owner:** Maurice (Claude prepares the curl commands)
 - **Size:** S
 - **Depends on:** F00-T1
 - **Description:** Spec §8.1 check 2, extended to cover delete. On a test experiment, add an override for a second ID. Run the exact write call we plan to use for your ID, then read the overrides back. Next, put two IDs in the same group and delete only yours. Confirm the other ID is still there both times. **Don't skip this check.** The calls under test are the ones WL-016 proposes: `PATCH …/overrides` with only our ID and an empty `overrides: []`, and `DELETE …/overrides/userID/{id}?groupID=…`.
 - **Acceptance criteria:**
-  - [ ] Write: the second ID survives (or the result says it doesn't)
-  - [ ] Write: the PATCH with `overrides: []` keeps the existing gate and segment overrides (an extra case from WL-016)
-  - [ ] Write: record whether the PATCH removes the ID from its old group on its own, or leaves it in two groups
-  - [ ] Delete: deleting one ID from a group with several IDs keeps the others
-  - [ ] Moving an ID from group A to group B leaves it in B only (REQ-OVR-010)
-  - [ ] Layer: for an experiment in a layer, its `layerID` works as the path `id` of `PATCH /layers/{id}/overrides` and the single-ID delete
-  - [ ] Results in a `WORKLOG.md` entry, and OPEN-004 has an answer
+  - [x] Write: the second ID survives (or the result says it doesn't)
+  - [x] Write: the PATCH with `overrides: []` keeps the existing gate and segment overrides (an extra case from WL-016). Tested with a gate override only (WL-053).
+  - [x] Write: record whether the PATCH removes the ID from its old group on its own, or leaves it in two groups. It removes it (WL-053).
+  - [x] Delete: deleting one ID from a group with several IDs keeps the others
+  - [x] Moving an ID from group A to group B leaves it in B only (REQ-OVR-010)
+  - [x] Layer: for an experiment in a layer, its `layerID` works as the path `id` of `PATCH /layers/{id}/overrides` and the single-ID delete
+  - [x] Results in a `WORKLOG.md` entry, and OPEN-004 has an answer
 - **Verification:** The WL entry has the request and response for each step.
 
 ### F00-T4: Capture the real SDK values (OPEN-007)

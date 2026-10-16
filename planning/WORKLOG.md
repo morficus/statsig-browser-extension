@@ -561,3 +561,50 @@ Maurice ran the snippet with the real test names at 2026-10-16 00:56 UTC, before
 **Override marker.** Still open. The snapshot after `t3-move` shows how an ID override changes `rule_id` and `group_name`.
 
 **Decision: a `t2-layer` step.** `t3-layer` ends by deleting the Tester's ID from the layer, so the snapshot after T3 would show no layer override. The new `t2-layer` step PATCHes the Stable ID into `GROUP_B` in the layer and leaves it there. `cleanup` removes it. The layer experiment is `prestart`, so the snapshot after `t2-layer` answers the open half of OPEN-001: does an override work on an experiment that isn't started and isn't in test mode?
+
+### WL-053 · 2026-10-16 · Resolved · OPEN-004: PATCH adds, and the single-ID DELETE removes only one ID (F00-T3)
+
+**Tickets:** F00-T3, F06-T1, F06-T2, F06-T3, F08-T2 · OPEN-004 · REQ-OVR-009, REQ-OVR-010 · WL-016, WL-052
+
+Maurice ran `f00-check.sh t3` at 2026-10-16 01:00 UTC and `t2-layer` at 01:01 UTC. Every check passed. Below, `<stable-id>` stands for Maurice's Stable ID on staging. `other-a` and `other-b` are the made-up IDs `phase0-other-id-a` and `phase0-other-id-b`. All ID overrides used `environment: "staging"` and `unitType`/`idType` `stableID`.
+
+**Experiment** `intake_ext_phase0_maurice-temp-testing`. Its gate override `dummy` → `Control` (`environment: null`) was present the whole time.
+
+| Step                   | Request                                                                                       | Status   | ID overrides after the request                      |
+| ---------------------- | --------------------------------------------------------------------------------------------- | -------- | --------------------------------------------------- |
+| `t3-seed`              | `PATCH …/overrides`, `other-a` → `Control`                                                    | 200      | Control: `other-a`                                  |
+| `t3-seed`              | `PATCH …/overrides`, `other-b` → `Test`                                                       | 200      | Control: `other-a` · Test: `other-b`                |
+| `t3-write`             | `PATCH …/overrides`, `<stable-id>` → `Test`                                                   | 200      | Control: `other-a` · Test: `other-b`, `<stable-id>` |
+| `t3-same-id-new-group` | `PATCH …/overrides`, `<stable-id>` → `Control`                                                | 200      | Control: `other-a`, `<stable-id>` · Test: `other-b` |
+| `t3-delete-one`        | `DELETE …/overrides/userID/<stable-id>?groupID=Control&unitType=stableID&environment=staging` | 200      | Control: `other-a` · Test: `other-b`                |
+| `t3-delete-one`        | the same DELETE again                                                                         | 200      | no change                                           |
+| `t3-move` setup        | `PATCH …/overrides`, `<stable-id>` → `Control`                                                | 200      | Control: `other-a`, `<stable-id>` · Test: `other-b` |
+| `t3-move`              | `DELETE …/userID/<stable-id>?groupID=Control&…`, then `PATCH`, `<stable-id>` → `Test`         | 200, 200 | Control: `other-a` · Test: `other-b`, `<stable-id>` |
+
+Every PATCH body was `{"overrides":[],"userIDOverrides":[{"groupID":<group>,"ids":[<one id>],"environment":"staging","unitType":"stableID"}]}`.
+
+**Layer** `intake_ext_phase0_maurice-temp-testing`, with `experimentName: "maurice-temp-testing-xp-in-layer"` on every entry. There were no conditional overrides.
+
+| Step       | Request                                                                                                                        | Status | ID overrides after the request                             |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------ | ------ | ---------------------------------------------------------- |
+| `t3-layer` | `PATCH /layers/{layerID}/overrides` (`op: "add"`), `other-a` → `Control`                                                       | 200    | Control: `other-a`                                         |
+| `t3-layer` | the same, `<stable-id>` → `Control`                                                                                            | 200    | Control: `other-a`, `<stable-id>`                          |
+| `t3-layer` | `DELETE /layers/{layerID}/overrides/userID/<stable-id>?groupName=Control&experimentName=…&idType=stableID&environment=staging` | 200    | Control: `other-a`                                         |
+| `t2-layer` | `PATCH`, `<stable-id>` → `Test`                                                                                                | 200    | Control: `other-a` · Test: `<stable-id>` (left for F00-T2) |
+
+**Answers:**
+
+- **OPEN-004: PATCH adds to the list.** It doesn't replace it. Other IDs in the same group and in other groups stayed after every PATCH.
+- **`overrides: []` keeps the existing conditional overrides.** This was tested with a gate override only. Segment overrides are in the same `overrides` array, but no test covered them.
+- **A PATCH moves the ID.** A PATCH for an ID that is already in another group, in the same environment and unit type, takes it out of that group. The ID never sat in two groups. A move across environments wasn't tested.
+- **The single-ID DELETE removes one ID from one group.** The other IDs in that group stay. A second DELETE returns 200 and changes nothing.
+- **The planned move works.** DELETE, then PATCH, leaves the ID in the new group only (REQ-OVR-010).
+- **`layerID` works as the layer path `id`** for GET, PATCH, and the single-ID DELETE.
+- **Every PATCH and DELETE returns the full override set** in `data`, in the same shape as the GET. That includes the DELETE (`"Experiment Overrides updated successfully."`).
+- **The GET returns a gate override as `{ groupID, id, type: "gate", environment }`.** It uses `id`, not `name`. WL-016's note about `name` in the GET example doesn't match the real API, and the base `ExperimentOverride` type (with `name`) is wrong (Q4).
+
+**What this means for F06:**
+
+- **F06-T1.** The WL-016 calls are safe for REQ-OVR-009. Because a PATCH moves the ID on its own, a move in one environment can be one PATCH. F06-T1 decides between that and DELETE, then PATCH. Both passed. Either way, check the PATCH response for the ID in the target group only, so no extra GET is needed.
+- **F06-T2.** Use the same rules for layers.
+- **F06-T3 and F08-T2.** The single-ID DELETE is confirmed. Use only it to clear.
