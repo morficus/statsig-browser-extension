@@ -8,6 +8,11 @@ Planning of record lives in `planning/` (board, tickets, WORKLOG). This list tra
 
 ## Agreed
 
+- f06-t1-experiment-force — F06-T1 force the Stable ID into an experiment group (wave A, WL-059)
+- f06-t2-layer-force — F06-T2 force the Stable ID into a layer group (wave A, WL-059)
+- f06-t4-override-record — F06-T4 override record type, helpers, and storage (wave A)
+- f06-t5-error-messages — F06-T5 specific write error messages and `NetworkError` (wave A, WL-059)
+- f06-t6-read-only-modal — F06-T6 read-only experiment modal, tighter write allowlist (wave A, WL-057)
 
 
 ## Done

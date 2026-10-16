@@ -688,3 +688,48 @@ Maurice accepted Claude's two recommendations. Work doesn't start until Maurice 
 1. **Wave 1, in parallel.** Each task owns different files: F05-T1 (page reader), F06-T4 (override record), F06-T5 (error messages, WL-055), F06-T6 (the read-only modal and the write allowlist), F07-T5 (no project gate on the Intake Site). Claude reads the F06-T6 allowlist change line by line.
 2. **Wave 2, one after the other.** F06-T1, then F06-T2, then F06-T3. They share the handler files.
 3. **Wave 3: the Intake tab UI.** F07-T1 to F07-T4, plus F05-T2. Before any UI is built, Claude brings Maurice a layout proposal. Then Claude reviews the screenshots against it.
+
+### WL-059 · 2026-10-16 · Decision · F06 runs in two waves; a new engine file routes force and clear
+
+**Tickets:** F06-T1 to F06-T6, F07, F08 · REQ-OVR-008, REQ-OVR-009, REQ-OVR-010, REQ-OVR-012, REQ-OVR-016 · WL-042, WL-046, WL-053, WL-055, WL-057, WL-058
+
+Maurice said to start F06, all six tasks, with as much parallel work as possible. Claude made these decisions.
+
+**Two waves.** WL-058 put F06-T1, T2, and T3 one after the other, because they share the handler files. The files are now split, so each task has its own files:
+
+- F06-T1 owns `src/handlers/experiment-overrides.ts` only.
+- F06-T2 owns the new `src/handlers/layer-overrides.ts` only.
+- F06-T3 owns the new `src/handlers/override-engine.ts`. It sends force and clear to the layer handler or the experiment handler, and it writes the override record. The routing test from F06-T2 moves there.
+- Wave A, in parallel: F06-T1, T2, T4, T5, and T6. Wave B: F06-T3, after wave A is committed.
+- Claude wrote the shared types first: `ExperimentStatus`, `Experiment.layerID`, `LayerIDOverride`, and `LayerOverridesResponse` in `src/types/statsig/experiments.ts`. No wave A agent edits that file.
+
+**The engine writes the record.**
+
+- `forceStableIdIntoGroup` saves the record only after the write succeeds.
+- `clearStableIdOverride` removes the record after a 200 or a 404. Any other error keeps the record.
+- The F07 and F08 UI call only the engine.
+
+**The layer `experimentName` is the experiment `id`.** The phase 0 script sent the same value as the experiment path id and as `experimentName` (WL-053). WL-016 calls the path id "the experiment name". The record keeps `experimentId` for the API, and `experimentName` for display. T-OVR-2 on staging (F07) confirms it.
+
+**A move looks only in the same bucket.**
+
+- Only entries with the exact same environment and ID type `stableID` count. An entry with `environment: null` (all environments) stays.
+- In a layer, only entries with the same `experimentName` count.
+- Risk: the Tester's ID can stay in another experiment of the same layer. WL-053 didn't test these cases. F07 or F08 decides what to show.
+- If the PATCH succeeds but the clean-up DELETE fails, the Tester can be in two groups, with no record. WL-053 showed that the PATCH moves the ID by itself, so the clean-up is a fallback. The handler throws, and F07 shows the error. A retry repeats the PATCH (no change) and the clean-up.
+
+**The old base handlers go last.** `updateExperimentOverrides` (POST) and `deleteExperimentOverrides` (bulk DELETE) stay until F06-T6 removes their only caller. F06-T3 deletes them. Until then, `pnpm knip` reports them as unused.
+
+**Error copy (F06-T5, REQ-OVR-016).**
+
+| Case                                             | Message                                                                                      |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `401`, any body that isn't the read-only JSON    | "The Console Key is not valid. Check the key, then try again."                               |
+| `401`, JSON `message` says the key is read only  | "Read-only key. Add a key with write access to change overrides." (WL-042)                   |
+| `403`                                            | "The Console Key is not allowed to do this. Ask someone from engineering for help." (WL-046) |
+| `429`                                            | "Too many changes in Statsig right now. Wait a few minutes, then try again."                 |
+| No network                                       | "Cannot reach Statsig. Check your network connection, then try again."                       |
+| The ID isn't in the target group after the write | "Statsig did not confirm the override. Try again."                                           |
+
+- `404`, `5xx`, and the fallback keep the base behavior.
+- **No network is a distinct error.** The background script marks a failed `fetch` with `networkError: true`. `src/lib/fetcher.ts` then throws a `NetworkError`, and the mapper shows the network message for it.

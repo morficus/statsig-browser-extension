@@ -43,7 +43,7 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 |                                  | [F03: Repository hygiene](tickets/F03-repo-hygiene.md)                         | Done        | 5/5   |
 |                                  | [F04: Console API hardening](tickets/F04-console-api-hardening.md)             | Done        | 5/5   |
 | 2: Job 2 (force me into a group) | [F05: Stable ID and environment detection](tickets/F05-stable-id-detection.md) | Todo        | 0/2   |
-|                                  | [F06: Override engine](tickets/F06-override-engine.md)                         | Todo        | 0/6   |
+|                                  | [F06: Override engine](tickets/F06-override-engine.md)                         | In progress | 0/6   |
 |                                  | [F07: "Force me into this group" UI](tickets/F07-force-me-ui.md)               | Todo        | 0/5   |
 |                                  | [F08: Active overrides and badge](tickets/F08-active-overrides.md)             | Todo        | 0/4   |
 | 3: Job 1 (see my group)          | [F09: SDK values reader](tickets/F09-sdk-values-reader.md)                     | Todo        | 0/4   |
@@ -66,7 +66,8 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 2. **Phase 0 passes** (WL-056). F00-T1 to F00-T5 are done. OPEN-001, OPEN-004, and OPEN-007 are answered (WL-053, WL-054).
    - **Maurice:** `cleanup` ran. Delete the test experiments, the layer, and the read-only key in the Console, and delete `planning/phase0/.env`, if that isn't done yet.
    - **F00-T6** (a non-admin key) waits for the first Tester, before the release (WL-048).
-   - **Claude, next (waits for Maurice's go):** F05, F06, and F07, in three waves (WL-058). Wave 1, in parallel: F05-T1, F06-T4, F06-T5, F06-T6, F07-T5. Wave 2: F06-T1, then F06-T2, then F06-T3. Wave 3: the Intake tab UI (F07-T1 to F07-T4, and F05-T2), after Maurice agrees to a layout proposal.
+   - **Claude, now: F06** (Maurice's go, WL-059). Wave A, in parallel: F06-T1, T2, T4, T5, and T6. Wave B: F06-T3.
+   - **Claude, after F06 (waits for Maurice's go):** F05-T1 and F07-T5 (wave 1 of WL-058). Then the Intake tab UI (F07-T1 to F07-T4, and F05-T2), after Maurice agrees to a layout proposal.
 3. **F02 is done** (WL-026 to WL-031). T-SET-1 passes. Merged into `main`. F05-T1 and F05-T2 carry two guard follow-ups (WL-031). F01 is done (WL-019 to WL-022).
 4. **F03 is done** (WL-033 to WL-041). It is merged into `main` and pushed. Each push to `main` runs CI on the fork, and the run uploads the zip artifact.
 5. **F04 is done** (WL-042 to WL-046) and merged into `main`. Two manual checks are still to do (Maurice), in a real browser against the real Statsig API and the Intake Site:
