@@ -1,5 +1,15 @@
 import type { Group, HealthCheck, Metric } from './common'
 
+/** Console API experiment statuses (WL-016). Not started is `setup`. Running is `active`. */
+export type ExperimentStatus =
+  | 'active'
+  | 'setup'
+  | 'decision_made'
+  | 'abandoned'
+  | 'archived'
+  | 'experiment_stopped'
+  | 'assignment_stopped'
+
 export interface Experiment {
   allocation: number
   createdTime: number
@@ -13,7 +23,7 @@ export interface Experiment {
   lastModifiedTime: number
   name: string
   startTime: number
-  status: string
+  status: ExperimentStatus
   tags: string[]
   targetingGateID?: string
   primaryMetrics?: Metric[]
@@ -28,6 +38,8 @@ export interface Experiment {
   }
   isStale?: boolean
   idType?: string
+  /** The experiment's layer, or null when it isn't in one (WL-016). Layer overrides use it as the path id (WL-053). */
+  layerID?: string | null
 }
 
 export interface ExperimentOverride {
@@ -48,4 +60,19 @@ export type AnyOverride = UserIDOverride | ExperimentOverride
 export interface ExperimentOverridesResponse {
   overrides: ExperimentOverride[]
   userIDOverrides: UserIDOverride[]
+}
+
+/** One ID override in a layer. The shape differs from experiments: `groupName`, `idType`, `experimentName` (WL-016). */
+export interface LayerIDOverride {
+  groupName: string
+  ids: string[]
+  idType?: string | null
+  environment?: string | null
+  experimentName?: string | null
+}
+
+export interface LayerOverridesResponse {
+  /** The extension never reads or changes these. Writes always send `[]`. */
+  conditionalOverrides: unknown[]
+  idOverrides: LayerIDOverride[]
 }
