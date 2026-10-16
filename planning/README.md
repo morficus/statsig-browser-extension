@@ -37,7 +37,7 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 
 | Phase                            | Functionality                                                                  | Status      | Tasks |
 | -------------------------------- | ------------------------------------------------------------------------------ | ----------- | ----- |
-| 0: Pre-build checks              | [F00: Pre-build checks (spec §8.1)](tickets/F00-pre-build-checks.md)           | In progress | 2/6   |
+| 0: Pre-build checks              | [F00: Pre-build checks (spec §8.1)](tickets/F00-pre-build-checks.md)           | In progress | 4/6   |
 | 1: Setup & hardening             | [F01: Rebrand and Chrome-only](tickets/F01-rebrand-chrome-only.md)             | Done        | 3/3   |
 |                                  | [F02: Intake Site scoping](tickets/F02-intake-site-scoping.md)                 | Done        | 4/4   |
 |                                  | [F03: Repository hygiene](tickets/F03-repo-hygiene.md)                         | Done        | 5/5   |
@@ -63,7 +63,7 @@ Delivery order follows spec §11. Each phase must pass its checkpoint before the
 ## Next up
 
 1. **Maurice:** move the new private signing key to a password manager before the machine restarts (WL-021).
-2. **F00-T2 to F00-T5** (Maurice): the manual checks against Statsig and the Intake Site. Claude is building the check script, the SDK snippet, and the runbook in `planning/phase0/` (WL-047). Maurice follows the runbook. F00-T3 is done: OPEN-004 is answered, and PATCH adds (WL-053). Next: the T4 snapshot after T3 (F00-T2, F00-T4), then T5 and `cleanup`. F00-T6 (the non-admin key) waits for the first Tester (WL-048).
+2. **F00-T2 to F00-T5** (Maurice): the manual checks against Statsig and the Intake Site. Claude is building the check script, the SDK snippet, and the runbook in `planning/phase0/` (WL-047). Maurice follows the runbook. F00-T2, F00-T3, and F00-T4 are done: OPEN-001, OPEN-004, and OPEN-007 are answered (WL-053, WL-054). Next: F00-T5 (`t5-401`, `t5-403`, and the org setting), then `cleanup`. F00-T6 (the non-admin key) waits for the first Tester (WL-048).
 3. **F02 is done** (WL-026 to WL-031). T-SET-1 passes. Merged into `main`. F05-T1 and F05-T2 carry two guard follow-ups (WL-031). F01 is done (WL-019 to WL-022).
 4. **F03 is done** (WL-033 to WL-041). It is merged into `main` and pushed. Each push to `main` runs CI on the fork, and the run uploads the zip artifact.
 5. **F04 is done** (WL-042 to WL-046) and merged into `main`. Two manual checks are still to do (Maurice), in a real browser against the real Statsig API and the Intake Site:

@@ -608,3 +608,26 @@ Every PATCH body was `{"overrides":[],"userIDOverrides":[{"groupID":<group>,"ids
 - **F06-T1.** The WL-016 calls are safe for REQ-OVR-009. Because a PATCH moves the ID on its own, a move in one environment can be one PATCH. F06-T1 decides between that and DELETE, then PATCH. Both passed. Either way, check the PATCH response for the ID in the target group only, so no extra GET is needed.
 - **F06-T2.** Use the same rules for layers.
 - **F06-T3 and F08-T2.** The single-ID DELETE is confirmed. Use only it to clear.
+
+### WL-054 · 2026-10-16 · Resolved · OPEN-001 and OPEN-007: overrides work before the start; the SDK value fields (F00-T2, F00-T4)
+
+**Tickets:** F00-T2, F00-T4, F09-T1, F09-T2, F10 · OPEN-001, OPEN-007 · REQ-ASG-003, REQ-ASG-004 · WL-049, WL-052, WL-053
+
+Maurice ran the snippet on Intake staging at 2026-10-16 01:07 UTC, after `t3-move` and `t2-layer` (WL-053). By then the Stable ID was in `Test` for both test experiments. The fixture `src/tests/fixtures/intake-sdk-values.json` holds the entries for both snapshots, `beforeOverride` (00:56, WL-052) and `afterOverride` (01:07). It keeps only the test objects, so it holds no user data and no real experiment.
+
+| Entry                                                                   | Before the override                                                                         | After the override                                                                                             |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Experiment not in a layer (`setup`, test mode on), in `dynamic_configs` | `group_name: "Control"`, `rule_id: "37WKqU3Lv4hlQW3r5ORczO"`, `is_user_in_experiment: true` | `group_name: "Test"`, `rule_id: "37WKqVINXmqQalBmGWMPSQ:stableID:id_override"`, `is_user_in_experiment: false` |
+| Experiment in the layer (`setup`), in `dynamic_configs`                 | `rule_id: "prestart"`, no `group_name`                                                      | `group_name: "Test"`, `rule_id: "5v76pESymLjxak6xeaqdmP:stableID:id_override"`                                 |
+| The layer, in `layer_configs`                                           | `rule_id: "default"`, no group, no allocation                                               | `group_name: "Test"`, the same `rule_id` as its experiment, `allocated_experiment_name: "1259935451"`          |
+
+**OPEN-001: yes.** An ID override works on an experiment that isn't started. Before the override, the experiment in the layer had `rule_id: "prestart"`, and after it, the SDK served `Test`. The experiment not in a layer had test mode on, and the override replaced its rule-based `Control` with `Test`. An experiment not in a layer, not started, and without test mode wasn't tested.
+
+**OPEN-007: the fields.**
+
+- **Group name:** `group_name`. It's in experiment entries and in layer entries. It's missing when the user has no group (`prestart`).
+- **Layer allocation:** `allocated_experiment_name` in the layer entry. It's the experiment name, hashed with `hash_used` (here djb2 `1259935451` = `maurice-temp-testing-xp-in-layer`). It's there only when the user is allocated. The experiment's own entry has `is_in_layer: true`.
+- **Hash method:** `hash_used` is `djb2` on staging. All keys and `name` fields are djb2 hashes as decimal strings. `sha256` didn't appear, so its encoding wasn't recorded. The snippet computes it in hex and base64 if a later capture needs it.
+- **Override marker:** `rule_id` ends with `:<idType>:id_override` (here `:stableID:id_override`). Also, `is_user_in_experiment` is `false` under an override, even when it was `true` before. So "My groups" (F10) must use `rule_id` and `group_name`, not `is_user_in_experiment`.
+- **Cache time:** there's no `statsig.cached.evaluations.*` key in localStorage (WL-049), so there's no `receivedAt`. The values' top-level `time` (epoch milliseconds) is the time of the project's last config change. It changed after each Console edit and write.
+- **The override shows up in the SDK at once.** The snapshot was taken six minutes after the writes, and the reload showed the override.

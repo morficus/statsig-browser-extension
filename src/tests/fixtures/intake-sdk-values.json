@@ -1,0 +1,94 @@
+{
+  "_source": "F00-T4 (WL-052, WL-054). Captured with planning/phase0/t4-sdk-snippet.js on Intake staging, 2026-10-16. Only the entries of the phase 0 test objects are kept; the other gates and configs, user, and evaluated_keys are left out. Keys are djb2 hashes: 1451326467 = intake_ext_phase0_maurice-temp-testing (an experiment not in a layer, and also the layer ID), 1259935451 = maurice-temp-testing-xp-in-layer (the experiment in that layer).",
+  "beforeOverride": {
+    "hash_used": "djb2",
+    "time": 1792112024009,
+    "has_updates": true,
+    "feature_gates": {},
+    "dynamic_configs": {
+      "1451326467": {
+        "name": "1451326467",
+        "rule_id": "37WKqU3Lv4hlQW3r5ORczO",
+        "secondary_exposures": [{ "gate": "95945896", "gateValue": "false", "ruleID": "default" }],
+        "id_type": "stableID",
+        "value": { "test-001": "" },
+        "is_device_based": true,
+        "group_name": "Control",
+        "is_experiment_active": false,
+        "is_user_in_experiment": true
+      },
+      "1259935451": {
+        "name": "1259935451",
+        "rule_id": "prestart",
+        "secondary_exposures": [],
+        "id_type": "stableID",
+        "value": {},
+        "is_device_based": true,
+        "is_in_layer": true,
+        "explicit_parameters": [],
+        "is_experiment_active": false,
+        "is_user_in_experiment": false
+      }
+    },
+    "layer_configs": {
+      "1451326467": {
+        "name": "1451326467",
+        "rule_id": "default",
+        "secondary_exposures": [],
+        "value": {},
+        "id_type": "stableID",
+        "is_device_based": true,
+        "explicit_parameters": [],
+        "undelegated_secondary_exposures": []
+      }
+    }
+  },
+  "afterOverride": {
+    "hash_used": "djb2",
+    "time": 1792112489745,
+    "has_updates": true,
+    "feature_gates": {},
+    "dynamic_configs": {
+      "1451326467": {
+        "name": "1451326467",
+        "rule_id": "37WKqVINXmqQalBmGWMPSQ:stableID:id_override",
+        "secondary_exposures": [],
+        "id_type": "stableID",
+        "value": { "test-001": "" },
+        "is_device_based": true,
+        "group_name": "Test",
+        "is_experiment_active": false,
+        "is_user_in_experiment": false
+      },
+      "1259935451": {
+        "name": "1259935451",
+        "rule_id": "5v76pESymLjxak6xeaqdmP:stableID:id_override",
+        "secondary_exposures": [],
+        "id_type": "stableID",
+        "value": {},
+        "is_device_based": true,
+        "is_in_layer": true,
+        "explicit_parameters": [],
+        "group_name": "Test",
+        "is_experiment_active": false,
+        "is_user_in_experiment": false
+      }
+    },
+    "layer_configs": {
+      "1451326467": {
+        "name": "1451326467",
+        "rule_id": "5v76pESymLjxak6xeaqdmP:stableID:id_override",
+        "secondary_exposures": [],
+        "value": {},
+        "id_type": "stableID",
+        "is_device_based": true,
+        "group_name": "Test",
+        "is_experiment_active": false,
+        "is_user_in_experiment": false,
+        "allocated_experiment_name": "1259935451",
+        "explicit_parameters": [],
+        "undelegated_secondary_exposures": []
+      }
+    }
+  }
+}

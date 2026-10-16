@@ -34,13 +34,13 @@ Confirm the facts that the override code and the values reader depend on before 
 
 ### F00-T2: Override on an unstarted experiment (OPEN-001)
 
-- **Status:** Todo
+- **Status:** Done (2026-10-16). See WL-054.
 - **Owner:** Maurice (Claude prepares the steps)
 - **Size:** XS
 - **Depends on:** None
 - **Description:** Spec §8.1 check 1. Create an experiment and don't start it. Add a `stableID` override for your Stable ID. Open the Intake Site and record whether the SDK serves the override group.
 - **Acceptance criteria:**
-  - [ ] The result is in a `WORKLOG.md` entry, and OPEN-001 has an answer
+  - [x] The result is in a `WORKLOG.md` entry, and OPEN-001 has an answer
 - **Verification:** The WL entry exists.
 
 ### F00-T3: Overrides of other IDs survive our write and delete (OPEN-004)
@@ -62,15 +62,15 @@ Confirm the facts that the override code and the values reader depend on before 
 
 ### F00-T4: Capture the real SDK values (OPEN-007)
 
-- **Status:** In progress. The baseline is captured (WL-049). The second snapshot comes after `t3-move`.
+- **Status:** Done (2026-10-16). See WL-049, WL-051, WL-052, WL-054.
 - **Owner:** Maurice (Claude provides a DevTools console snippet)
 - **Size:** S
 - **Depends on:** None
 - **Description:** Spec §8.1 check 3. On the Intake Site (staging first), dump the live SDK values and one `statsig.cached.evaluations.*` entry. Record the fields for the group name, the layer allocation, `hash_used`, the override marker (if any), and the cache time. Save a sanitized copy as a test fixture.
 - **Acceptance criteria:**
-  - [ ] The field names are in a `WORKLOG.md` entry, and OPEN-007 has an answer
-  - [ ] A sanitized fixture (no real user data) at `src/tests/fixtures/intake-sdk-values.json`
-  - [ ] If `hash_used` is `sha256`, the exact encoding (hex, base64, or truncated) is recorded
+  - [x] The field names are in a `WORKLOG.md` entry, and OPEN-007 has an answer
+  - [x] A sanitized fixture (no real user data) at `src/tests/fixtures/intake-sdk-values.json`
+  - [x] If `hash_used` is `sha256`, the exact encoding (hex, base64, or truncated) is recorded. Not needed: `hash_used` is `djb2` (WL-054).
 - **Verification:** The fixture parses, and the WL entry exists.
 - **Files likely touched:** `src/tests/fixtures/intake-sdk-values.json` (new), `planning/WORKLOG.md`
 
