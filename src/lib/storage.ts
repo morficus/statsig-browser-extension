@@ -1,5 +1,6 @@
 import { storage } from 'wxt/utils/storage'
 
+import type { OverrideRecord } from '@/src/lib/override-record'
 import type { ApiKeyType, StatsigProject } from '@/src/lib/projects'
 
 /**
@@ -26,7 +27,8 @@ export const apiKeyTypeStorage = storage.defineItem<ApiKeyType>('local:api_key_t
   fallback: 'write-key',
 })
 
-export const currentOverridesStorage = storage.defineItem<{ name: string }[]>('local:statsig-current-overrides', {
+/** Overrides that the Tester set with this extension (REQ-OVR-012). Extension storage only (REQ-SEC-002). */
+export const overrideRecordsStorage = storage.defineItem<OverrideRecord[]>('local:statsig-override-records', {
   fallback: [],
 })
 
