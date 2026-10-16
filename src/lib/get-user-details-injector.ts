@@ -145,41 +145,45 @@ export const getUserDetailsFromPage = (): PageReadResult | null => {
       return null
     }
 
+    /** Runs one SDK read. A throwing accessor counts as "nothing found", so it cannot lose the whole result. */
+    function attempt<T>(read: () => T): T | undefined {
+      try {
+        return read()
+      } catch {
+        return undefined
+      }
+    }
+
+    /** A step gives an ID only if it reads a string that is not blank. The trimmed value is the ID. */
+    function readUsableStableID(read: () => unknown) {
+      const value = attempt(read)
+      const trimmed = typeof value === 'string' ? value.trim() : ''
+
+      return trimmed === '' ? null : trimmed
+    }
+
     function getStableID(instance: StatsigInstance) {
-      // 1. Try instance.getStableID()
-      if (typeof instance.getStableID === 'function') {
-        const sid = instance.getStableID()
-        if (sid) {
-          return sid
-        }
-      }
+      const steps: (() => unknown)[] = [
+        // 1. Try instance.getStableID()
+        () => (typeof instance.getStableID === 'function' ? instance.getStableID() : undefined),
+        // 2. Try instance.getContext().stableID
+        () => (typeof instance.getContext === 'function' ? instance.getContext()?.stableID : undefined),
+        // 3. Fallback: window.__STATSIG__.firstInstance.getContext()
+        // This is specifically requested by the user for React SDK scenarios
+        () => {
+          const firstInstance = win.__STATSIG__?.firstInstance
+          return typeof firstInstance?.getContext === 'function' ? firstInstance.getContext()?.stableID : undefined
+        },
+        // 4. Fallback: instance properties
+        () => instance._stableID,
+        () => instance.identity?.stableID,
+      ]
 
-      // 2. Try instance.getContext().stableID
-      if (typeof instance.getContext === 'function') {
-        const ctx = instance.getContext()
-        if (ctx?.stableID) {
-          return ctx.stableID
+      for (const step of steps) {
+        const stableID = readUsableStableID(step)
+        if (stableID) {
+          return stableID
         }
-      }
-
-      // 3. Fallback: window.__STATSIG__.firstInstance.getContext()
-      // This is specifically requested by the user for React SDK scenarios
-      if (win.__STATSIG__?.firstInstance) {
-        const { firstInstance } = win.__STATSIG__
-        if (typeof firstInstance.getContext === 'function') {
-          const ctx = firstInstance.getContext()
-          if (ctx?.stableID) {
-            return ctx.stableID
-          }
-        }
-      }
-
-      // 4. Fallback: instance properties
-      if (instance._stableID) {
-        return instance._stableID
-      }
-      if (instance.identity?.stableID) {
-        return instance.identity.stableID
       }
 
       return null
@@ -228,7 +232,7 @@ export const getUserDetailsFromPage = (): PageReadResult | null => {
     /** The SDK instance lookups come first. localStorage is read only when none of them gives an ID. */
     function findStableId(instance: StatsigInstance): PageStableId | undefined {
       const sdkStableID = getStableID(instance)
-      if (typeof sdkStableID === 'string' && sdkStableID !== '') {
+      if (sdkStableID) {
         return { source: 'sdk', value: sdkStableID }
       }
 
@@ -279,8 +283,11 @@ export const getUserDetailsFromPage = (): PageReadResult | null => {
       return null
     }
 
-    const { href } = globalThis.location
-    const instance = getStatsigInstance()
+    // Page code can replace `globalThis` (`globalThis = {...}`), but it cannot replace `window.location`.
+    // The handler trusts this href to tell which page the script ran on.
+    // oxlint-disable-next-line unicorn/prefer-global-this
+    const { href } = window.location
+    const instance = attempt(getStatsigInstance) ?? null
 
     if (!instance) {
       const storedStableID = readLocalStorageStableId()
@@ -292,16 +299,17 @@ export const getUserDetailsFromPage = (): PageReadResult | null => {
       return { href, stableId, user: { stableID: storedStableID } }
     }
 
-    const user = getUser(instance) ?? {}
+    const user = attempt(() => getUser(instance)) ?? {}
     const stableId = findStableId(instance)
 
     if (stableId) {
       user.stableID = stableId.value
     }
 
-    const context = typeof instance.getContext === 'function' ? instance.getContext() : undefined
-    const keys = collectKeys(context)
-    const environmentTier = readEnvironmentTier(context)
+    // None of these may lose the Stable ID found above, so a throwing accessor only drops its own field.
+    const context = attempt(() => (typeof instance.getContext === 'function' ? instance.getContext() : undefined))
+    const keys = attempt(() => collectKeys(context))
+    const environmentTier = attempt(() => readEnvironmentTier(context))
 
     return {
       context,
