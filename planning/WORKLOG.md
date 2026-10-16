@@ -500,3 +500,13 @@ Maurice ran `planning/phase0/t4-sdk-snippet.js` on `https://app.staging.talkiatr
 - **localStorage:** there are only `statsig.session_id.<n>` and `statsig.stable_id.<n>`. **There is no `statsig.cached.evaluations.*` key.** So on staging, the values reader (F09) must use `getContext().values`. The localStorage Stable ID fallback (F05-T1) has a key to read.
 - **Risk for Q5 (WL-010):** the injector's `readCachedPayloads` collects gate hashes and SDK keys from `statsig.cached.evaluations.*` for project matching. On staging, that path finds nothing. Check that the project match still works on the Intake Site before F07.
 - **Test objects:** neither `intake_ext_phase0_check` (djb2 `3031949423`) nor `intake_ext_phase0_layer_check` (`2152902337`) is in the values. Neither is the layer `intake_ext_phase0_layer` (`3040071864`). The values' `time` is 00:35:46 UTC, 90 seconds before the capture, so the project config changed just before the capture. If the test objects existed by then, an experiment that isn't started isn't in the values without an override. Maurice confirms the timing, and the second snapshot completes F00-T2.
+
+### WL-050 · 2026-10-16 · Discovery · An experiment that isn't started, with no override, isn't in the SDK values
+
+**Tickets:** F00-T2, F09-T1, F10 · OPEN-001 · WL-049
+
+Maurice confirmed that the test experiments and the test layer existed before the T4 baseline (WL-049). The SDK values didn't hold any of them. So when an experiment isn't started and has no override, Statsig doesn't send it to the page. That includes its layer when the layer has no started experiment.
+
+This is half of OPEN-001. The other half is whether the SDK serves the override group after `t3-move` puts the Stable ID in `Test`.
+
+For Job 1 (F09, F10): an experiment that isn't in the values can't be shown from them. The Console API list has to supply it, so "My groups" can show it as "not served".
