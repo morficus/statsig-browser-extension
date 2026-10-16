@@ -25,6 +25,7 @@ describe('useLogout', () => {
     resetSettingsMock.mockReset()
     useUIStore.getState().reset()
     useContextStore.getState().reset()
+    useContextStore.setState({ isIntakeSite: undefined })
   })
 
   it('resets settings, query cache, UI store, context store and opens the auth modal', async () => {
@@ -48,6 +49,18 @@ describe('useLogout', () => {
     expect(ui.isAuthModalOpen).toBeTruthy() // Opened after reset
 
     expect(useContextStore.getState().detectedUser).toBeUndefined()
+  })
+
+  it('keeps the Intake Site check, because the tab does not change with the login', async () => {
+    useContextStore.setState({ isIntakeSite: true })
+
+    const { result } = renderHook(() => useLogout())
+
+    await act(async () => {
+      await result.current()
+    })
+
+    expect(useContextStore.getState().isIntakeSite).toBeTruthy()
   })
 
   it('invokes operations in order: settings → query cache → UI reset → context reset → modal open', async () => {

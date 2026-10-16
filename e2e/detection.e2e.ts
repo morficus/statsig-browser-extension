@@ -136,7 +136,7 @@ test.describe('page to project detection', () => {
     await expect(popup.getByRole('row', { name: /first_project_gate/u })).toHaveCount(0)
   })
 
-  test('reports a page whose SDK key belongs to no configured project', async ({
+  test('uses the active project on an Intake page that none of its keys match', async ({
     context,
     extensionId,
     serviceWorker,
@@ -159,11 +159,10 @@ test.describe('page to project detection', () => {
     const statsig = await openStatsigPage(context)
     const popup = await openPopupForPage(context, extensionId, { statsig })
 
-    await expect(popup.getByRole('button', { name: /Other Statsig project/iu })).toBeVisible()
-    // Nothing may load: the page is not owned by the configured project
-    await expect(popup.getByText(/belongs to another Statsig project/iu)).toBeVisible()
-    await expect(popup.getByRole('tab', { name: /Gates/iu })).toBeHidden()
-    await expect(popup.getByLabel('Statsig Console API Key')).toBeVisible()
+    await expect(popup.getByRole('button', { name: /Other Project · this page/iu })).toBeVisible()
+    await expect(popup.getByRole('tab', { name: /Gates/iu })).toBeVisible()
+    await expect(popup.getByText(/belongs to another Statsig project/iu)).toBeHidden()
+    await expect(popup.getByRole('row', { name: /new_checkout_flow/u })).toBeVisible()
   })
 
   test('matches through the gate fingerprint when the client keys are unknown', async ({
@@ -193,7 +192,11 @@ test.describe('page to project detection', () => {
     await expect(popup.getByRole('button', { name: /Fingerprinted Project · this page/iu })).toBeVisible()
   })
 
-  test('says when the inspected page runs no Statsig SDK', async ({ context, extensionId, serviceWorker }) => {
+  test('uses the active project on an Intake page without a Statsig SDK', async ({
+    context,
+    extensionId,
+    serviceWorker,
+  }) => {
     await serviceWorker.evaluate(seedExtensionLocalRecord, {
       'statsig-active-project-id': 'p1',
       'statsig-console-api-key': 'console-mock-key',
@@ -220,39 +223,7 @@ test.describe('page to project detection', () => {
 
     const popup = await openPopupForPage(context, extensionId, { statsig: blank })
 
-    await expect(popup.getByRole('button', { name: /No Statsig on this page/iu })).toBeVisible()
-    await expect(popup.getByRole('tab', { name: /Gates/iu })).toBeHidden()
-  })
-
-  test('loads the project data once the key of the inspected site is added', async ({
-    context,
-    extensionId,
-    serviceWorker,
-  }) => {
-    await serviceWorker.evaluate(seedExtensionLocalRecord, {
-      'statsig-active-project-id': 'p1',
-      'statsig-console-api-key': 'console-mock-key',
-      'statsig-projects': [
-        {
-          apiKey: 'console-mock-key',
-          clientKeys: ['client-some-other-project'],
-          gateHashes: [],
-          id: 'p1',
-          label: 'Other Project',
-          origins: [],
-        },
-      ],
-    })
-
-    const statsig = await openStatsigPage(context)
-    const popup = await openPopupForPage(context, extensionId, { statsig })
-
-    await expect(popup.getByRole('tab', { name: /Gates/iu })).toBeHidden()
-
-    await popup.getByLabel('Statsig Console API Key').fill('console-page-project-key')
-    await popup.getByRole('button', { name: /^Add$/iu }).click()
-
+    await expect(popup.getByRole('button', { name: /Other Project · this page/iu })).toBeVisible()
     await expect(popup.getByRole('tab', { name: /Gates/iu })).toBeVisible()
-    await expect(popup.getByRole('row', { name: /new_checkout_flow/u })).toBeVisible()
   })
 })

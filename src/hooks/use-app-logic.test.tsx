@@ -44,6 +44,7 @@ describe('useAppLogic', () => {
     await storage.removeItem(UI_PREFERENCES_STORAGE_KEY)
     useUIStore.getState().reset()
     useContextStore.getState().reset()
+    useContextStore.setState({ isIntakeSite: undefined })
     useSettingsStore.setState({ activeProjectId: '', apiKey: '', isApiKeyLoading: false, projects: [] })
   })
 
@@ -74,6 +75,27 @@ describe('useAppLogic', () => {
     }))
     useSettingsStore.setState({ activeProjectId: 'p1', apiKey: 'console-p1', projects })
     useContextStore.setState({ detectedKeys: null, manualProjectId, projectMatch: null })
+
+    const { result } = renderHook(() => useAppLogic())
+
+    expect(result.current.isPageMatched).toBeFalsy()
+  })
+
+  it('shows the main tabs on an Intake Site tab with an active project and no SDK-key match', () => {
+    const projects = [
+      { apiKey: 'console-p1', clientKeys: [], gateHashes: [], id: 'p1', label: 'p1', origins: [] as string[] },
+    ]
+    useSettingsStore.setState({ activeProjectId: 'p1', apiKey: 'console-p1', projects })
+    useContextStore.setState({ detectedKeys: null, isIntakeSite: true, projectMatch: null })
+
+    const { result } = renderHook(() => useAppLogic())
+
+    expect(result.current.isPageMatched).toBeTruthy()
+  })
+
+  it('does not match on an Intake Site tab when no project is set up', () => {
+    useSettingsStore.setState({ activeProjectId: '', apiKey: '', projects: [] })
+    useContextStore.setState({ detectedKeys: null, isIntakeSite: true, projectMatch: null })
 
     const { result } = renderHook(() => useAppLogic())
 

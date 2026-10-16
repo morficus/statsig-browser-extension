@@ -79,6 +79,8 @@ function GatePanel({ detectedKey, status }: Readonly<GatePanelProps>) {
  * not belong to a configured project. Nothing is fetched on its own in that case — guessing which
  * project owns the page would be misleading — so the panel asks for the Console API key of the
  * project this site uses, or lets the user pick one of theirs for the life of the popup.
+ *
+ * On the Intake Site the active project counts as matched (Q5, WL-057), so the key form doesn't show there while a project is set up.
  */
 export function PageProjectGate() {
   const { detectedKey, hasProjects, status } = usePageProject()

@@ -19,8 +19,8 @@ export function ProjectsSettings() {
         Statsig Projects
       </h3>
       <p className="text-xs text-muted-foreground">
-        Add one Console API key per project. The extension only loads the project matching the Statsig SDK key detected
-        on the page; selecting one manually pins the current site to it.
+        Add one Console API key per project. On the Intake Site, the extension loads the active project; selecting one
+        manually pins the current site to it.
       </p>
 
       <ProjectDetectionNotice />

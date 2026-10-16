@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 import { getActiveIntakeTab } from '@/src/lib/tabs'
+import { useContextStore } from '@/src/store/use-context-store'
 
 /** Whether the inspected tab is an Intake Site page; `undefined` until the check resolves. */
 export const useIsIntakeSite = () => {
-  const [isIntakeSite, setIsIntakeSite] = useState<boolean>()
+  const isIntakeSite = useContextStore((state) => state.isIntakeSite)
+  const setIsIntakeSite = useContextStore((state) => state.setIsIntakeSite)
 
   useEffect(() => {
     let mounted = true
@@ -18,7 +20,7 @@ export const useIsIntakeSite = () => {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [setIsIntakeSite])
 
   return isIntakeSite
 }

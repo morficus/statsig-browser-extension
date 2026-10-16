@@ -72,6 +72,17 @@ describe('useContextStore', () => {
     expect(state.detectionError).toBeUndefined()
   })
 
+  it('keeps isIntakeSite on reset', () => {
+    useContextStore.getState().setIsIntakeSite(true)
+    useContextStore.getState().setDetectedUser({ userID: 'user_123' })
+
+    useContextStore.getState().reset()
+
+    const state = useContextStore.getState()
+    expect(state.isIntakeSite).toBeTruthy()
+    expect(state.detectedUser).toBeUndefined()
+  })
+
   it('should set the detected statsig keys', () => {
     const keys = { gateHashes: ['h1'], hashedSdkKeys: [], sdkKeys: ['client-a'] }
     useContextStore.getState().setDetectedKeys(keys)

@@ -120,7 +120,7 @@ describe('correct project isolation during activation', () => {
       isApiKeyLoading: false,
       projects: [project('a'), project('b')],
     })
-    useContextStore.setState({ detectedKeys: null, manualProjectId: 'a', projectMatch: null })
+    useContextStore.setState({ detectedKeys: null, isIntakeSite: undefined, manualProjectId: 'a', projectMatch: null })
   })
 
   afterEach(() => {
@@ -142,6 +142,36 @@ describe('correct project isolation during activation', () => {
     let switching = Promise.resolve()
     act(() => {
       useContextStore.getState().setManualProject('b')
+      switching = probe.switchProject!('b')
+    })
+    try {
+      expect(probe.page?.activeLabel).toBe('b')
+      expect(probe.page?.status).toBe('pending')
+      expect(useSettingsStore.getState().apiKey).toBe('')
+      expect(useUIStore.getState().isSettingsSheetOpen).toBeTruthy()
+    } finally {
+      await act(async () => {
+        barrier.resolve()
+        await switching
+      })
+    }
+  })
+
+  it('does not expose the previous project cached gates during a switch on an Intake Site tab', async () => {
+    useContextStore.setState({ isIntakeSite: true, manualProjectId: undefined })
+    render(<PopupProbe />, { wrapper })
+    await waitFor(() => {
+      expect(probe.gates?.isSuccess).toBeTruthy()
+    })
+    const barrier = Promise.withResolvers<void>()
+    projectsWrite.mockReturnValue(barrier.promise)
+    useUIStore.setState({
+      currentItemId: 'shared_gate',
+      isManageGateOverridesModalOpen: true,
+      isSettingsSheetOpen: true,
+    })
+    let switching = Promise.resolve()
+    act(() => {
       switching = probe.switchProject!('b')
     })
     try {
