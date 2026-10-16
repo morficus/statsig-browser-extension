@@ -1,7 +1,7 @@
 # Brief: F07-T5 No project gate on the Intake Site
 
 slug: f07-t5-no-project-gate
-status: agreed
+status: done (e598000)
 agent: f07-t5 (Sonnet, worktree `.claude/worktrees/f07-t5`, branch `f07-t5`)
 
 ## Decision

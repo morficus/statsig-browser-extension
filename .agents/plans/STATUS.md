@@ -10,8 +10,10 @@ Planning of record lives in `planning/` (board, tickets, WORKLOG). This list tra
 
 
 
+
 ## Done
 
+- f07-t5-no-project-gate — F07-T5 no project gate on the Intake Site (Q5, WL-057), plus the Opus review fixes (WL-062) — `e598000`
 - f06-t3-engine — F06-T3 override engine: routing, record writes, one operation at a time (WL-061) — `fd08521`
 - f06-t6-read-only-modal — F06-T6 read-only experiment modal, tighter write allowlist — `6d755b1`
 - f06-t2-layer-force — F06-T2 force into a layer group, confirm before clean-up (WL-060) — `2259a12`

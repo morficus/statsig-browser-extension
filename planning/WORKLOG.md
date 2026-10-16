@@ -801,3 +801,85 @@ An Opus reviewer read F06-T3 and the whole F06 branch. A scratch run used the re
 
 - **The write succeeds, but saving the record fails.** `forceStableIdIntoGroup` throws the storage error, and the override is live with no record. F07 shows it as a failure with a retry. The retry sends the same PATCH (no change) and saves the record. A clear in the same case heals on a retry, because the DELETE is idempotent.
 - **A stored `layerId: ''`** counts as "not in a layer", the same as on force. The engine never writes one, so it can only come from damaged storage.
+
+### WL-062 · 2026-10-16 · Decision · F07-T5: on the Intake Site, `usePageProject()` uses the active project
+
+**Tickets:** F07-T5, F07, F10 · Q5 · WL-010, WL-011, WL-049, WL-057
+
+Claude made these decisions to build Q5 (WL-057). The brief is `.agents/plans/f07-t5-no-project-gate.md`.
+
+**The change is in `usePageProject()` only.** `src/hooks/use-page-project.ts` applies these rules, in this order:
+
+1. While the key loads, the status is `pending`. This rule doesn't change. During a project switch, it stops the old project's cached data from showing under the new project's label.
+2. **New:** on an Intake Site tab, if the active project exists, the status is `matched` and the reason is `intake-site`. The SDK-key match isn't used. This rule wins over a manual pick, with one exception (see "After the review" below).
+3. The manual pick, as before.
+4. The SDK-key detection, as before.
+
+- All the consumers agree: `useAppLogic`, `ProjectStatus`, `ProjectDetectionNotice`, and `PageProjectGate`. `entrypoints/popup/App.tsx` doesn't change.
+- Off the Intake Site, and before the tab check resolves, the result is the same as before.
+- With no project, the status isn't `matched`. `PageProjectGate` renders nothing, and the login modal opens, as before.
+- The new label is "Used for every Intake Site page" (`MATCH_REASON_LABELS`).
+
+**The Intake flag is in the context store.** `useContextStore.isIntakeSite` holds it. `useIsIntakeSite()` checks the tab once and writes the flag, and `usePageProject()` reads it. If each consumer checked the tab, each one would first show its own "not known yet" state. `reset()` keeps the flag, because the tab doesn't change while the popup is open. `useLogout()` calls `reset()` on each logout. If `reset()` cleared the flag, the popup body would stay blank after a logout and a new login, until the popup opens again. A test in `use-context-store.test.ts` protects this.
+
+**Detection still runs.** The page reads, the project matching, and the injector don't change. F05 and F09 need the page reads, and the Settings sheet still shows each project's match reason.
+
+**Three e2e tests changed on purpose (WL-011).** `e2e/detection.e2e.ts` runs on the faked Intake origin.
+
+- "reports a page whose SDK key belongs to no configured project" is now "uses the active project on an Intake page that none of its keys match".
+- "says when the inspected page runs no Statsig SDK" is now "uses the active project on an Intake page without a Statsig SDK".
+- "loads the project data once the key of the inspected site is added" is deleted. On the Intake Site with a project set up, the gate doesn't show, so this flow can't happen. `PageProjectGate.test.tsx` still covers the form.
+
+**Discovery: the key form of `PageProjectGate` can't show now.**
+
+- On the Intake Site with a project set up, rule 2 matches.
+- If the active project ID doesn't resolve, the settings store marks the key as loading, so the gate shows its spinner (the Opus review found this by reading the code).
+- Off the Intake Site, `NotIntakeSitePanel` shows instead (F02-T3).
+- F07-T5 keeps the gate. Removing `GatePanel` is a later clean-up.
+
+**Tests.** There are 19 new unit tests:
+
+- `use-page-project.test.tsx` (new, 13).
+- `use-is-intake-site.test.tsx` (1).
+- `use-app-logic.test.tsx` (2).
+- `ProjectTransition.test.tsx` (1): a project switch on an Intake Site tab stays `pending`.
+- `use-context-store.test.ts` (1) and `use-logout.test.tsx` (1): the Intake flag stays after `reset()` and after a logout.
+
+These checks pass: `pnpm vitest run` (1088 tests), `pnpm type-check`, `pnpm lint`, `pnpm format:check`, `pnpm knip`, and `pnpm test:e2e` (69 tests).
+
+**After the review.** An Opus reviewer read the change, and it ran six mutations of the rules. Each mutation of rules 1 and 2 failed at least one test. The reviewer confirmed these points:
+
+- Off the Intake Site, and before the tab check resolves, the code path is the same as before.
+- While the key loads, the status is always `pending`.
+- When the status is `matched`, the key is always the active project's key.
+
+The reviewer found these points, and Claude decided each one:
+
+- **Fixed: the reset test.** The brief said that nothing calls `reset()`. That was wrong (`useLogout`), and no test failed when `reset()` cleared the flag. There are now tests in `use-context-store.test.ts` and `use-logout.test.tsx`.
+- **Fixed: a manual pick against a positive match.** Suppose the Tester picks project b by hand, and the detection positively matched another project a that exists. Then the manual rule applies, and the header says "b · picked by hand". In every other case, rule 2 wins. On staging the detection finds nothing (WL-049), so the claim "this page does not use b" can't be checked there.
+- **Fixed:** the e2e test now shows that the active project's gates load. The Settings text no longer says that only the matching project loads. It says: "On the Intake Site, the extension loads the active project; selecting one manually pins the current site to it."
+- **Accepted: a short load before the automatic switch.** Rule 2 doesn't wait for the detection. If the page's key belongs to another configured project, the active project's gates load first, and then `useProjectMatching` switches. The data never shows under the wrong label. Waiting for the detection could leave a spinner that never ends if the detection doesn't settle. Q5 removes exactly that failure.
+- **Left as is:** `ProjectDetectionNotice` lower-cases the label, so the Settings sheet shows "used for every intake site page". The old labels have the same problem ("sdk key").
+- **Accepted: test mocks.** `GateOverrides.test.tsx` and `ExperimentOverrides.test.tsx` mock `usePageProject` completely, so the flag doesn't matter there.
+
+### WL-063 · 2026-10-16 · Discovery · F05 was built on a separate branch; WL-059 to WL-061 are used twice
+
+**Tickets:** F05-T1, F05-T2, F07-T5 · WL-031, WL-058
+
+This session was told to build F05-T1 and F07-T5 from `f06-override-engine`. Before it started, it found the branch `f05-stable-id`. A separate session built that branch from `9d247c4` (WL-058), at the same time as F06. These are the commits:
+
+- `e7fcbe5`: the Stable ID contract.
+- `221da76`: F05-T1.
+- `bcad1dc`: WL-031 item 2, the listener check.
+- `18c0523`: F05-T2.
+- `8ba013d`, `fb0737f`, `696c2ba`: review fixes.
+- `0d205a6`: its planning docs, with F05 marked as done.
+
+So this session didn't build F05-T1 a second time. It built F07-T5 only. The F05 row on this branch stays Todo, because the F05 code isn't here.
+
+**Risk for the merge.** `0d205a6` adds WL-059, WL-060, and WL-061 for F05. This branch already has those numbers, for F06 (the plan, the two reviews, and Q9). This entry and WL-062 come after them.
+
+- When the branches merge, give the F05 entries new numbers after the last entry on this line.
+- Also change each citation of those numbers in the F05 ticket, the F07 ticket, and `README.md` on that branch.
+
+The F07-T5 code files don't overlap with the F05 files. Both branches edit `planning/tickets/F07-force-me-ui.md`: F05 edits the F07-T2 description, and F07-T5 edits the header and the F07-T5 section.
