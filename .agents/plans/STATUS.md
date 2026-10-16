@@ -9,7 +9,6 @@ Planning of record lives in `planning/` (board, tickets, WORKLOG). This list tra
 ## Agreed
 
 - f05-t2-manual-stable-id — F05-T2 error and manual Stable ID entry, session storage per origin (WL-060)
-- f05-listener-sender-check — WL-031 item 2, the detection listener accepts only the active Intake tab
 
 
 
