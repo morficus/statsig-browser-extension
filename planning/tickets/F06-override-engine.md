@@ -26,7 +26,7 @@ Handlers and storage with no UI. They put the Tester's Stable ID into exactly on
 - **Owner:** Claude
 - **Size:** M
 - **Depends on:** F00-T1, F00-T3
-- **Description:** A handler like `forceStableIdIntoGroup({ experimentId, groupName, stableId, environment })`. Use the call F00-T3 proved safe; WL-016 proposes `PATCH` with only this ID and `overrides: []`. If the ID is in another group for the same experiment and environment (found by a GET), remove it there with the single-ID DELETE first, so it ends up in one group only (REQ-OVR-010). Decide the order (remove then add, or add then remove) and log it. Removing first means a failure leaves the Tester in no group, never in two.
+- **Description:** A handler like `forceStableIdIntoGroup({ experimentId, groupName, stableId, environment })`. Use the call F00-T3 proved safe; WL-016 proposes `PATCH` with only this ID and `overrides: []`. If the ID is in another group for the same experiment and environment (found by a GET), remove it there with the single-ID DELETE first, so it ends up in one group only (REQ-OVR-010). Decide the order (remove then add, or add then remove) and log it. Removing first means a failure leaves the Tester in no group, never in two. **Decided (WL-058):** one PATCH for the new group, then check the response. If the ID is still in another group in that environment, use the single-ID DELETE there. No DELETE before the PATCH.
 - **Acceptance criteria:**
   - [ ] Unit tests: the request body has only the Tester's ID, and other IDs in a mocked current state are untouched
   - [ ] Unit tests: moving from group A to group B leaves the ID in B only

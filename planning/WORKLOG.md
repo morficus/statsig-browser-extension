@@ -669,3 +669,22 @@ Maurice decided these points. Each one was Claude's recommendation.
 - **Q2 is closed.** Phase 0 passed (WL-056), so it no longer matters who runs it or when.
 
 Maurice also ran `cleanup` from `planning/phase0/` after T5.
+
+### WL-058 · 2026-10-16 · Decision · F06-T1 moves the Tester with one PATCH; the build order for F05 to F07
+
+**Tickets:** F05, F06-T1, F06-T2, F06-T3, F06-T6, F07 · REQ-OVR-009, REQ-OVR-010 · WL-053, WL-057
+
+Maurice accepted Claude's two recommendations. Work doesn't start until Maurice says so.
+
+**How F06-T1 moves the Tester to another group.**
+
+- Send one `PATCH …/overrides` with only the Tester's ID, for the new group. WL-053 showed that this PATCH takes the ID out of its old group in the same environment and unit type.
+- Then check the PATCH response, which holds the full override set (WL-053). The Stable ID must be in the new group only, in that environment. If it's still in another group in that environment, remove it there with the single-ID `DELETE`.
+- Don't send a DELETE before the PATCH. That takes two calls, and a failure between them leaves the Tester in no group.
+- F06-T2 uses the same rules for layers.
+
+**Build order.**
+
+1. **Wave 1, in parallel.** Each task owns different files: F05-T1 (page reader), F06-T4 (override record), F06-T5 (error messages, WL-055), F06-T6 (the read-only modal and the write allowlist), F07-T5 (no project gate on the Intake Site). Claude reads the F06-T6 allowlist change line by line.
+2. **Wave 2, one after the other.** F06-T1, then F06-T2, then F06-T3. They share the handler files.
+3. **Wave 3: the Intake tab UI.** F07-T1 to F07-T4, plus F05-T2. Before any UI is built, Claude brings Maurice a layout proposal. Then Claude reviews the screenshots against it.
